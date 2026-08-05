@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Çözüm Öğeleri/">
+    <File Path="README.md" />
+  </Folder>
   <Project Path="Sys.Domain/Sys.Domain.csproj" />
   <Project Path="Sys.Infrastructure/Sys.Infrastructure.csproj" />
   <Project Path="Sys.Services/Sys.Services.csproj" />
