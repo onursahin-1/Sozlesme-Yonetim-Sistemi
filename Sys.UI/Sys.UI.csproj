@@ -28,4 +28,10 @@
     <ProjectReference Include="..\Sys.Infrastructure\Sys.Infrastructure.csproj" />
     <ProjectReference Include="..\Sys.Services\Sys.Services.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.Local.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
