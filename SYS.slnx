@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Sys.Domain/Sys.Domain.csproj" />
+  <Project Path="Sys.Infrastructure/Sys.Infrastructure.csproj" />
+  <Project Path="Sys.Services/Sys.Services.csproj" />
+  <Project Path="Sys.UI/Sys.UI.csproj" />
+</Solution>
