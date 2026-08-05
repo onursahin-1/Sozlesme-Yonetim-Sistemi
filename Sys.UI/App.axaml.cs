@@ -1,10 +1,12 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Sys.Infrastructure;
+using Sys.Services;
 using Sys.UI.ViewModels;
 using Sys.UI.Views;
 
@@ -21,14 +23,12 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var connectionString = LoadConnectionString();
+            var db = DbConnectionFactory.CreateContext(connectionString);
+
             try
             {
-                var connectionString = LoadConnectionString();
-                System.Threading.Tasks.Task.Run(async () =>
-                {
-                    using var db = DbConnectionFactory.CreateContext(connectionString);
-                    await DbSeeder.SeedAsync(db);
-                }).GetAwaiter().GetResult();
+                Task.Run(async () => await DbSeeder.SeedAsync(db)).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -38,9 +38,12 @@ public partial class App : Application
                 File.WriteAllText(logPath, ex.ToString());
             }
 
+            var userRepository = new UserRepository(db);
+            var authService = new AuthService(userRepository);
+
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(),
+                DataContext = new MainViewModel(authService),
             };
         }
 
