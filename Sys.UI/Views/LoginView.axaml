@@ -1,0 +1,28 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="350"
+             x:Class="Sys.UI.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+    <Design.DataContext>
+        <vm:LoginViewModel />
+    </Design.DataContext>
+
+    <StackPanel Margin="30" VerticalAlignment="Center" Spacing="12">
+        <TextBlock Text="SYS — Sözleşme Yönetim Sistemi" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <TextBlock Text="Kullanıcı Adı"/>
+        <TextBox Text="{Binding Username}"/>
+
+        <TextBlock Text="Şifre"/>
+        <TextBox Text="{Binding Password}" PasswordChar="•"/>
+
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
+
+        <Button Content="Giriş Yap" Command="{Binding LoginCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+    </StackPanel>
+
+</UserControl>

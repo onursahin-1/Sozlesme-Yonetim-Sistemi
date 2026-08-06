@@ -3,31 +3,17 @@
         xmlns:vm="using:Sys.UI.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="350"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="650"
         x:Class="Sys.UI.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="SYS - Giriş"
-        Width="400" Height="350"
-        CanResize="False">
+        Title="SYS — Sözleşme Yönetim Sistemi"
+        Width="1100" Height="700">
 
 	<Design.DataContext>
 		<vm:MainViewModel />
 	</Design.DataContext>
 
-	<StackPanel Margin="30" VerticalAlignment="Center" Spacing="12">
-		<TextBlock Text="SYS — Sözleşme Yönetim Sistemi" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-
-		<TextBlock Text="Kullanıcı Adı"/>
-		<TextBox Text="{Binding Username}"/>
-
-		<TextBlock Text="Şifre"/>
-		<TextBox Text="{Binding Password}" PasswordChar="•"/>
-
-		<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
-		<TextBlock Text="{Binding WelcomeMessage}" Foreground="Green" TextWrapping="Wrap"/>
-
-		<Button Content="Giriş Yap" Command="{Binding LoginCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-	</StackPanel>
+	<ContentControl Content="{Binding CurrentViewModel}"/>
 
 </Window>

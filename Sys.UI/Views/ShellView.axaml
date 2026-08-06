@@ -1,0 +1,41 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="Sys.UI.Views.ShellView"
+             x:DataType="vm:ShellViewModel">
+
+    <Design.DataContext>
+        <vm:ShellViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="16,10">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="SYS — Sözleşme Yönetim Sistemi" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White" VerticalAlignment="Center"/>
+                    <Button Content="Çıkış" Command="{Binding LogoutCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ListBox DockPanel.Dock="Left" Width="220"
+                 ItemsSource="{Binding NavItems}"
+                 SelectedItem="{Binding SelectedNavItem}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:NavItem">
+                    <TextBlock Text="{Binding Label}" Padding="8,4"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Padding="20">
+            <TextBlock Text="{Binding CurrentPageTitle}" FontSize="20" FontWeight="Bold"/>
+        </Border>
+    </DockPanel>
+
+</UserControl>
