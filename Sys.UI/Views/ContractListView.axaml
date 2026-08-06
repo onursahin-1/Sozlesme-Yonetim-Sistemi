@@ -1,0 +1,59 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="500"
+             x:Class="Sys.UI.Views.ContractListView"
+             x:DataType="vm:ContractListViewModel">
+
+    <Design.DataContext>
+        <vm:ContractListViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Filtre butonları -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
+            <Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"/>
+            <Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"/>
+            <Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"/>
+            <Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"/>
+            <Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"/>
+            <Button Content="Tamamlandı" Command="{Binding SetFilterCommand}" CommandParameter="tamamlandi"/>
+        </StackPanel>
+
+        <TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+
+        <ListBox ItemsSource="{Binding FilteredContracts}"
+                 SelectedItem="{Binding SelectedContract}"
+                 IsVisible="{Binding !IsLoading}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:ContractCardViewModel">
+                    <Border Background="White" BorderBrush="#D0D8E4" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8">
+                        <StackPanel Spacing="4">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14"/>
+                                    <TextBlock FontSize="11" Foreground="#888">
+                                        <Run Text="{Binding RequestRefNo}"/>
+                                        <Run Text=" · "/>
+                                        <Run Text="{Binding CompanyName}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <Border Grid.Column="1" Background="{Binding StatusBgHex}" CornerRadius="10" Padding="8,3">
+                                    <TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}" FontSize="11" FontWeight="Bold"/>
+                                </Border>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,0,0">
+                                <TextBlock Text="{Binding Type}" FontSize="11" Foreground="#555"/>
+                                <TextBlock Text="{Binding BedelText}" FontSize="11" Foreground="#555"/>
+                                <TextBlock Text="{Binding GunKalanText}" FontSize="11" Foreground="#555"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+
+</UserControl>

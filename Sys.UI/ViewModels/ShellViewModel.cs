@@ -64,6 +64,7 @@ public partial class ShellViewModel : ViewModelBase
         CurrentPageContent = value?.Key switch
         {
             "dashboard" => new DashboardViewModel(_contractService, CurrentUser),
+            "sozlesmeList" => new ContractListViewModel(_contractService, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
     }

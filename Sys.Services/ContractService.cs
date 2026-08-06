@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Sys.Domain;
 
@@ -34,5 +35,12 @@ public class ContractService
             Uyari = contracts.Count(c => c.Status == ContractStatus.Uyari),
             Ihlal = contracts.Count(c => c.Status == ContractStatus.Ihlal),
         };
+    }
+
+    public async Task<List<Contract>> GetContractsAsync(User currentUser)
+    {
+        return currentUser.Role == UserRole.Personel
+            ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
+            : await _contracts.GetAllAsync();
     }
 }
