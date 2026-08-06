@@ -12,14 +12,16 @@ public partial class ContractItemRowViewModel : ViewModelBase
     public partial string Description { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial int Quantity { get; set; } = 1;
+    public partial string QuantityText { get; set; } = "1";
 
     [ObservableProperty]
     public partial string Unit { get; set; } = "adet";
 
     [ObservableProperty]
-    public partial decimal UnitPrice { get; set; }
+    public partial string UnitPriceText { get; set; } = "0";
 
+    public int Quantity => int.TryParse(QuantityText, out var q) ? q : 0;
+    public decimal UnitPrice => decimal.TryParse(UnitPriceText, out var p) ? p : 0;
     public decimal LineTotal => Quantity * UnitPrice;
 
     public ContractItemRowViewModel(Action<ContractItemRowViewModel> onRemove)
@@ -27,8 +29,17 @@ public partial class ContractItemRowViewModel : ViewModelBase
         _onRemove = onRemove;
     }
 
-    partial void OnQuantityChanged(int value) => OnPropertyChanged(nameof(LineTotal));
-    partial void OnUnitPriceChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
+    partial void OnQuantityTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(Quantity));
+        OnPropertyChanged(nameof(LineTotal));
+    }
+
+    partial void OnUnitPriceTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(UnitPrice));
+        OnPropertyChanged(nameof(LineTotal));
+    }
 
     [RelayCommand]
     private void Remove() => _onRemove(this);

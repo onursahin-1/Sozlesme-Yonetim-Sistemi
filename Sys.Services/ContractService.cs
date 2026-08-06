@@ -60,4 +60,23 @@ public class ContractService
     {
         await _attachments.AddAsync(attachment);
     }
+
+    public async Task FinalizeContractAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, User actingUser)
+    {
+        contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
+        contract.Status = ContractStatus.OnayBekliyor;
+        contract.Stage = 1;
+
+        var auditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = "SözleşmeOluşturuldu",
+            ActingUserId = actingUser.Id,
+            Detail = $"{contract.Title} sözleşmesi SYB tarafından oluşturuldu.",
+            ActionDate = DateTime.Now,
+        };
+
+        await _contracts.FinalizeCreationAsync(contract, items, attachments, auditLog);
+    }
 }

@@ -24,4 +24,24 @@ public class ContractRepository : IContractRepository
         _db.Contracts.Add(contract);
         await _db.SaveChangesAsync();
     }
+
+    public async Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog)
+    {
+        foreach (var item in items)
+        {
+            item.ContractId = contract.Id;
+            _db.ContractItems.Add(item);
+        }
+
+        foreach (var attachment in attachments)
+        {
+            attachment.ContractId = contract.Id;
+            _db.Attachments.Add(attachment);
+        }
+
+        _db.AuditLogs.Add(auditLog);
+        _db.Contracts.Update(contract);
+
+        await _db.SaveChangesAsync();
+    }
 }
