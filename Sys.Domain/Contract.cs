@@ -10,6 +10,7 @@ public class Contract
     public string CompanyName { get; set; } = string.Empty;
     public string TaxNo { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public ContractStatus Status { get; set; }
     public int Stage { get; set; }
     public DateTime? StartDate { get; set; }

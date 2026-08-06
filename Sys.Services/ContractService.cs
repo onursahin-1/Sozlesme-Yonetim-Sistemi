@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Sys.Domain;
@@ -16,10 +17,12 @@ public class DashboardStats
 public class ContractService
 {
     private readonly IContractRepository _contracts;
+    private readonly IAttachmentRepository _attachments;
 
-    public ContractService(IContractRepository contracts)
+    public ContractService(IContractRepository contracts, IAttachmentRepository attachments)
     {
         _contracts = contracts;
+        _attachments = attachments;
     }
 
     public async Task<DashboardStats> GetDashboardStatsAsync(User currentUser)
@@ -42,5 +45,19 @@ public class ContractService
         return currentUser.Role == UserRole.Personel
             ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
             : await _contracts.GetAllAsync();
+    }
+
+    public async Task<Contract> CreateRequestAsync(Contract contract)
+    {
+        contract.Status = ContractStatus.Talep;
+        contract.Stage = 0;
+        contract.CreatedAt = DateTime.Now;
+        await _contracts.AddAsync(contract);
+        return contract;
+    }
+
+    public async Task AddAttachmentAsync(Attachment attachment)
+    {
+        await _attachments.AddAsync(attachment);
     }
 }

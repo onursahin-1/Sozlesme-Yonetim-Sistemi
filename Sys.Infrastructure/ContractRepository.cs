@@ -18,4 +18,10 @@ public class ContractRepository : IContractRepository
 
     public Task<List<Contract>> GetByCreatedUserAsync(int userId)
         => _db.Contracts.Where(c => c.CreatedByUserId == userId).ToListAsync();
+
+    public async Task AddAsync(Contract contract)
+    {
+        _db.Contracts.Add(contract);
+        await _db.SaveChangesAsync();
+    }
 }

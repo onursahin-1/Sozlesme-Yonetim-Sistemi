@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -23,8 +22,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var connectionString = LoadConnectionString();
-            var db = DbConnectionFactory.CreateContext(connectionString);
+            var settings = AppSettingsLoader.Load();
+            var db = DbConnectionFactory.CreateContext(settings.ConnectionString);
 
             try
             {
@@ -42,22 +41,15 @@ public partial class App : Application
             var authService = new AuthService(userRepository);
 
             var contractRepository = new ContractRepository(db);
-            var contractService = new ContractService(contractRepository);
+            var attachmentRepository = new AttachmentRepository(db);
+            var contractService = new ContractService(contractRepository, attachmentRepository);
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(authService, contractService),
+                DataContext = new MainViewModel(authService, contractService, settings.AttachmentsPath),
             };
         }
 
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private static string LoadConnectionString()
-    {
-        var path = Path.Combine(AppContext.BaseDirectory, "appsettings.Local.json");
-        var json = File.ReadAllText(path);
-        using var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("ConnectionString").GetString()!;
     }
 }

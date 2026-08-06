@@ -8,16 +8,18 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly AuthService _authService;
     private readonly ContractService _contractService;
+    private readonly string _attachmentsPath;
 
     [ObservableProperty]
     public partial ViewModelBase CurrentViewModel { get; set; }
 
-    public MainViewModel() : this(null!, null!) { }
+    public MainViewModel() : this(null!, null!, string.Empty) { }
 
-    public MainViewModel(AuthService authService, ContractService contractService)
+    public MainViewModel(AuthService authService, ContractService contractService, string attachmentsPath)
     {
         _authService = authService;
         _contractService = contractService;
+        _attachmentsPath = attachmentsPath;
         CurrentViewModel = CreateLogin();
     }
 
@@ -30,7 +32,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnLoginSucceeded(User user)
     {
-        var shell = new ShellViewModel(user, _contractService);
+        var shell = new ShellViewModel(user, _contractService, _attachmentsPath);
         shell.LogoutRequested += OnLogoutRequested;
         CurrentViewModel = shell;
     }

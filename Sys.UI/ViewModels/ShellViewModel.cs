@@ -12,6 +12,7 @@ public record NavItem(string Key, string Label);
 public partial class ShellViewModel : ViewModelBase
 {
     private readonly ContractService? _contractService;
+    private readonly string _attachmentsPath;
 
     public User CurrentUser { get; }
     public event Action? LogoutRequested;
@@ -35,12 +36,13 @@ public partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     public partial ViewModelBase? CurrentPageContent { get; set; }
 
-    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null) { }
+    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null, string.Empty) { }
 
-    public ShellViewModel(User currentUser, ContractService? contractService)
+    public ShellViewModel(User currentUser, ContractService? contractService, string attachmentsPath)
     {
         CurrentUser = currentUser;
         _contractService = contractService;
+        _attachmentsPath = attachmentsPath;
         NavItems = new ObservableCollection<NavItem>(BuildNavItems(currentUser.Role));
         SelectedNavItem = NavItems.Count > 0 ? NavItems[0] : null;
         UpdateCurrentPage(SelectedNavItem);
@@ -65,6 +67,7 @@ public partial class ShellViewModel : ViewModelBase
         {
             "dashboard" => new DashboardViewModel(_contractService, CurrentUser),
             "sozlesmeList" => new ContractListViewModel(_contractService, CurrentUser),
+            "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
     }
