@@ -41,9 +41,12 @@ public partial class App : Application
             var userRepository = new UserRepository(db);
             var authService = new AuthService(userRepository);
 
+            var contractRepository = new ContractRepository(db);
+            var contractService = new ContractService(contractRepository);
+
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(authService),
+                DataContext = new MainViewModel(authService, contractService),
             };
         }
 

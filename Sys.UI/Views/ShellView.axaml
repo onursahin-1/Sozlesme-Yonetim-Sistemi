@@ -33,9 +33,10 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <Border Padding="20">
-            <TextBlock Text="{Binding CurrentPageTitle}" FontSize="20" FontWeight="Bold"/>
-        </Border>
+		<DockPanel>
+			<TextBlock DockPanel.Dock="Top" Text="{Binding CurrentPageTitle}" FontSize="20" FontWeight="Bold" Margin="20,20,20,10"/>
+			<ContentControl Content="{Binding CurrentPageContent}" Margin="20,0,20,20"/>
+		</DockPanel>
     </DockPanel>
 
 </UserControl>

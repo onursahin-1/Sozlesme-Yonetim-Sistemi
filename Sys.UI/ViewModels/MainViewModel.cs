@@ -7,15 +7,17 @@ namespace Sys.UI.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     private readonly AuthService _authService;
+    private readonly ContractService _contractService;
 
     [ObservableProperty]
     public partial ViewModelBase CurrentViewModel { get; set; }
 
-    public MainViewModel() : this(null!) { } // yalnızca tasarımcı önizlemesi için
+    public MainViewModel() : this(null!, null!) { }
 
-    public MainViewModel(AuthService authService)
+    public MainViewModel(AuthService authService, ContractService contractService)
     {
         _authService = authService;
+        _contractService = contractService;
         CurrentViewModel = CreateLogin();
     }
 
@@ -28,7 +30,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnLoginSucceeded(User user)
     {
-        var shell = new ShellViewModel(user);
+        var shell = new ShellViewModel(user, _contractService);
         shell.LogoutRequested += OnLogoutRequested;
         CurrentViewModel = shell;
     }

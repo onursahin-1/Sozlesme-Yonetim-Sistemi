@@ -1,0 +1,45 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="300"
+             x:Class="Sys.UI.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <Design.DataContext>
+        <vm:DashboardViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="20">
+        <TextBlock Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+
+        <UniformGrid Columns="4" IsVisible="{Binding !IsLoading}">
+            <Border Background="#E6F4E7" CornerRadius="8" Margin="6" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Aktif" FontSize="12" Foreground="#555"/>
+                    <TextBlock Text="{Binding Aktif}" FontSize="28" FontWeight="Bold" Foreground="#1A6B2A"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#D6E9F8" CornerRadius="8" Margin="6" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Onay Bekliyor" FontSize="12" Foreground="#555"/>
+                    <TextBlock Text="{Binding OnayBekliyor}" FontSize="28" FontWeight="Bold" Foreground="#2D6EA8"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#FFF3CD" CornerRadius="8" Margin="6" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Bitiş Uyarısı" FontSize="12" Foreground="#555"/>
+                    <TextBlock Text="{Binding Uyari}" FontSize="28" FontWeight="Bold" Foreground="#B06A00"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#FDECEA" CornerRadius="8" Margin="6" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="İhlal" FontSize="12" Foreground="#555"/>
+                    <TextBlock Text="{Binding Ihlal}" FontSize="28" FontWeight="Bold" Foreground="#A32D2D"/>
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+    </Grid>
+
+</UserControl>

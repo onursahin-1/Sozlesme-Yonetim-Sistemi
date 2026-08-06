@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
+using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
@@ -10,6 +11,8 @@ public record NavItem(string Key, string Label);
 
 public partial class ShellViewModel : ViewModelBase
 {
+    private readonly ContractService? _contractService;
+
     public User CurrentUser { get; }
     public event Action? LogoutRequested;
 
@@ -29,19 +32,40 @@ public partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     public partial string CurrentPageTitle { get; set; } = string.Empty;
 
-    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }) { }
+    [ObservableProperty]
+    public partial ViewModelBase? CurrentPageContent { get; set; }
 
-    public ShellViewModel(User currentUser)
+    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null) { }
+
+    public ShellViewModel(User currentUser, ContractService? contractService)
     {
         CurrentUser = currentUser;
+        _contractService = contractService;
         NavItems = new ObservableCollection<NavItem>(BuildNavItems(currentUser.Role));
         SelectedNavItem = NavItems.Count > 0 ? NavItems[0] : null;
-        CurrentPageTitle = SelectedNavItem?.Label ?? string.Empty;
+        UpdateCurrentPage(SelectedNavItem);
     }
 
     partial void OnSelectedNavItemChanged(NavItem? value)
     {
+        UpdateCurrentPage(value);
+    }
+
+    private void UpdateCurrentPage(NavItem? value)
+    {
         CurrentPageTitle = value?.Label ?? string.Empty;
+
+        if (_contractService is null)
+        {
+            CurrentPageContent = new PlaceholderViewModel { Title = CurrentPageTitle };
+            return;
+        }
+
+        CurrentPageContent = value?.Key switch
+        {
+            "dashboard" => new DashboardViewModel(_contractService, CurrentUser),
+            _ => new PlaceholderViewModel { Title = CurrentPageTitle }
+        };
     }
 
     private static NavItem[] BuildNavItems(UserRole role) => role switch
