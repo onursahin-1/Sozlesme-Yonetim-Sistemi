@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -43,6 +44,18 @@ public partial class ApprovalQueueViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string DetailEnd { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool IsPendingTermination { get; set; }
+
+    [ObservableProperty]
+    public partial string TerminationInfo { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool HasRevisionHistory { get; set; }
+
+    [ObservableProperty]
+    public partial string RevisionInfo { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
@@ -93,6 +106,10 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         Items = new ObservableCollection<ContractItem>();
         Attachments = new ObservableCollection<Attachment>();
         Detail = null;
+        IsPendingTermination = false;
+        TerminationInfo = string.Empty;
+        HasRevisionHistory = false;
+        RevisionInfo = string.Empty;
 
         if (summary is null) return;
 
@@ -113,6 +130,28 @@ public partial class ApprovalQueueViewModel : ViewModelBase
 
         Items = new ObservableCollection<ContractItem>(full.Items);
         Attachments = new ObservableCollection<Attachment>(full.Attachments);
+
+        IsPendingTermination = full.PendingTermination;
+        if (full.PendingTermination)
+        {
+            var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
+            if (term is not null)
+            {
+                var compensation = term.CompensationAmount.HasValue
+                    ? term.CompensationAmount.Value.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL — " + term.CompensationDirection
+                    : "Yok";
+                TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}\nTazminat: {compensation}";
+            }
+        }
+        else if (full.Revisions.Count > 0)
+        {
+            var rev = full.Revisions.OrderByDescending(r => r.ChangedAt).FirstOrDefault();
+            if (rev is not null)
+            {
+                HasRevisionHistory = true;
+                RevisionInfo = $"Değişiklik Türü: {rev.ChangeType}\nGerekçe: {rev.Reason}\nÖnceki Bedel: {rev.PreviousTotalAmount:N2} TL";
+            }
+        }
     }
 
     [RelayCommand]

@@ -13,6 +13,7 @@ public class Contract
     public string Description { get; set; } = string.Empty;
     public ContractStatus Status { get; set; }
     public int Stage { get; set; }
+    public bool PendingTermination { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public decimal TotalAmount { get; set; }
@@ -24,6 +25,7 @@ public class Contract
     public List<ApprovalLog> ApprovalLogs { get; set; } = new();
     public List<Violation> Violations { get; set; } = new();
     public List<ContractRevision> Revisions { get; set; } = new();
+    public List<ContractTermination> Terminations { get; set; } = new();
 }
 
 public enum ContractStatus

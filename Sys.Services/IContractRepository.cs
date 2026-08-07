@@ -13,4 +13,5 @@ public interface IContractRepository
     Task<List<Contract>> GetByStageAsync(int stage);
     Task ApplyEditAsync(Contract contract, ContractRevision revision);
     Task ApplyViolationAsync(Contract contract, Violation violation);
+    Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination);
 }

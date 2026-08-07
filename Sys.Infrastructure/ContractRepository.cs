@@ -19,13 +19,13 @@ public class ContractRepository : IContractRepository
     public Task<List<Contract>> GetByCreatedUserAsync(int userId)
         => _db.Contracts.Where(c => c.CreatedByUserId == userId).ToListAsync();
 
-    public Task<Contract?> GetByIdWithDetailsAsync(int id)
-        => _db.Contracts
-            .Include(c => c.Items)
-            .Include(c => c.Attachments)
-            .Include(c => c.ApprovalLogs)
-            .FirstOrDefaultAsync(c => c.Id == id);
-
+    public Task<Contract?> GetByIdWithDetailsAsync(int id) => _db.Contracts
+    .Include(c => c.Items)
+    .Include(c => c.Attachments)
+    .Include(c => c.ApprovalLogs)
+    .Include(c => c.Terminations)
+    .Include(c => c.Revisions)
+    .FirstOrDefaultAsync(c => c.Id == id);
     public async Task AddAsync(Contract contract)
     {
         _db.Contracts.Add(contract);
@@ -71,6 +71,12 @@ public class ContractRepository : IContractRepository
     public async Task ApplyViolationAsync(Contract contract, Violation violation)
     {
         _db.Violations.Add(violation);
+        _db.Contracts.Update(contract);
+        await _db.SaveChangesAsync();
+    }
+    public async Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination)
+    {
+        _db.ContractTerminations.Add(termination);
         _db.Contracts.Update(contract);
         await _db.SaveChangesAsync();
     }

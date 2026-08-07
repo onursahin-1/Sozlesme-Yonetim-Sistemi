@@ -106,35 +106,61 @@ public class ContractService
         var log = new ApprovalLog
         {
             StepNumber = contract.Stage,
-            StepName = stepName,
+            StepName = contract.PendingTermination ? stepName + " (Fesih)" : stepName,
             ActingUserId = actingUser.Id,
             Decision = decision,
             Note = note,
             ActionDate = DateTime.Now
         };
 
-        if (decision == ApprovalDecision.Onay)
+        if (contract.PendingTermination)
         {
-            if (contract.Stage == 1)
+            if (decision == ApprovalDecision.Onay)
             {
-                contract.Stage = 2; // Müdür onayına geçti
+                if (contract.Stage == 1)
+                {
+                    contract.Stage = 2;
+                }
+                else
+                {
+                    contract.Stage = 3;
+                    contract.Status = ContractStatus.Feshedildi;
+                    contract.PendingTermination = false;
+                }
             }
             else
             {
+                // Fesih talebi reddedildi — sözleşme Aktif olarak devam eder
                 contract.Stage = 3;
                 contract.Status = ContractStatus.Aktif;
+                contract.PendingTermination = false;
             }
         }
         else
         {
-            if (contract.Stage == 1)
+            if (decision == ApprovalDecision.Onay)
             {
-                contract.Stage = 0; // Talep'e geri düştü
-                contract.Status = ContractStatus.Talep;
+                if (contract.Stage == 1)
+                {
+                    contract.Stage = 2;
+                }
+                else
+                {
+                    contract.Stage = 3;
+                    contract.Status = ContractStatus.Aktif;
+                }
             }
             else
             {
-                contract.Stage = 1; // SYB Son Kontrol'e geri döndü
+                if (contract.Stage == 1)
+                {
+                    contract.Stage = 0;
+                    contract.Status = ContractStatus.Talep;
+                }
+                else
+                {
+                    contract.Stage = 1;
+                }
             }
         }
 
@@ -202,6 +228,32 @@ public class ContractService
         contract.Status = ContractStatus.Ihlal;
 
         await _contracts.ApplyViolationAsync(contract, violation);
+    }
+    public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
+    {
+        var all = await GetContractsAsync(currentUser);
+        return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari).ToList();
+    }
+
+    public async Task RequestTerminationAsync(Contract contract, User actingUser, string terminationType, DateTime terminationDate, string reason, decimal? compensationAmount, string compensationDirection)
+    {
+        var termination = new ContractTermination
+        {
+            ContractId = contract.Id,
+            TerminationType = terminationType,
+            TerminationDate = terminationDate,
+            Reason = reason,
+            CompensationAmount = compensationAmount,
+            CompensationDirection = compensationDirection,
+            RequestedByUserId = actingUser.Id,
+            RequestedAt = DateTime.Now
+        };
+
+        contract.PendingTermination = true;
+        contract.Stage = 1;
+        contract.Status = ContractStatus.OnayBekliyor;
+
+        await _contracts.ApplyTerminationRequestAsync(contract, termination);
     }
 
 }

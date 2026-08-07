@@ -1,0 +1,70 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             x:Class="Sys.UI.Views.ContractTerminationView"
+             x:DataType="vm:ContractTerminationViewModel">
+
+    <ScrollViewer Margin="24">
+        <StackPanel Spacing="16" MaxWidth="560">
+
+            <TextBlock Text="Sözleşme Fesih" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Fesih işlemi geri alınamaz. SYB onayı ve ardından Müdür onayı gerekir; onaylanmadan sözleşme feshedilmez."
+                       Foreground="#A32D2D" TextWrapping="Wrap"/>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
+                       IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Sözleşme Seç *" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding AvailableContracts}"
+                          SelectedItem="{Binding SelectedContract}"
+                          DisplayMemberBinding="{Binding Title}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Fesih Türü *" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding TerminationTypes}"
+                          SelectedItem="{Binding SelectedTerminationType}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Fesih Tarihi *" FontWeight="Bold"/>
+                <DatePicker SelectedDate="{Binding TerminationDate}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Fesih Gerekçesi *" FontWeight="Bold"/>
+                <TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
+                         Watermark="Feshin gerekçesini detaylı açıklayın. Bu bilgi hukuki kayıt niteliği taşır."/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Fesih Tazminatı (TL)" FontWeight="Bold"/>
+                <TextBox Text="{Binding CompensationAmountText}" Watermark="0 — ödeme yoksa boş bırakın"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Tazminat Yönü" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding CompensationDirections}"
+                          SelectedItem="{Binding SelectedCompensationDirection}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Fesih Bildirimi / Tutanak (PDF) *" FontWeight="Bold"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
+                    <TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Button Content="Fesih Talebini Gönder" Background="#A32D2D" Foreground="White"
+                    Padding="16,8" Margin="0,8,0,0" Command="{Binding SubmitCommand}"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

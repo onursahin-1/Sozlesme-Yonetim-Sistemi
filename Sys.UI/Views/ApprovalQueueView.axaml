@@ -48,6 +48,22 @@
                     </StackPanel>
                 </Border>
 
+				<Border IsVisible="{Binding IsPendingTermination}"
+                        Background="#FBE4E4" BorderBrush="#A32D2D" BorderThickness="1" CornerRadius="8" Padding="16">
+					<StackPanel Spacing="4">
+						<TextBlock Text="⚠ BU BİR FESİH TALEBİDİR" FontWeight="Bold" Foreground="#A32D2D"/>
+						<TextBlock Text="{Binding TerminationInfo}" Foreground="Black" TextWrapping="Wrap"/>
+					</StackPanel>
+				</Border>
+
+				<Border IsVisible="{Binding HasRevisionHistory}"
+                        Background="#FFF3CD" BorderBrush="#B06A00" BorderThickness="1" CornerRadius="8" Padding="16">
+					<StackPanel Spacing="4">
+						<TextBlock Text="ℹ BU BİR DEĞİŞİKLİK (REVİZYON) ONAYIDIR" FontWeight="Bold" Foreground="#B06A00"/>
+						<TextBlock Text="{Binding RevisionInfo}" Foreground="Black" TextWrapping="Wrap"/>
+					</StackPanel>
+				</Border>
+
                 <StackPanel IsVisible="{Binding Items.Count}">
                     <TextBlock Text="Kalemler" FontWeight="Bold" Margin="0,0,0,8"/>
                     <ItemsControl ItemsSource="{Binding Items}">

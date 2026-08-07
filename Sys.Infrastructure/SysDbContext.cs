@@ -15,6 +15,7 @@ public class SysDbContext : DbContext
     public DbSet<Violation> Violations => Set<Violation>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ContractRevision> ContractRevisions => Set<ContractRevision>();
+    public DbSet<ContractTermination> ContractTerminations => Set<ContractTermination>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Contract>()
@@ -42,13 +43,22 @@ public class SysDbContext : DbContext
             .WithOne()
             .HasForeignKey(r => r.ContractId);
 
+        modelBuilder.Entity<Contract>()
+            .HasMany(c => c.Terminations)
+            .WithOne()
+            .HasForeignKey(t => t.ContractId);
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
             .IsUnique();
 
         modelBuilder.Entity<ContractItem>()
-            .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");
+                    .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");
         modelBuilder.Entity<Contract>()
             .Property(c => c.TotalAmount).HasColumnType("decimal(18,2)");
+        modelBuilder.Entity<ContractRevision>()
+            .Property(r => r.PreviousTotalAmount).HasColumnType("decimal(18,2)");
+        modelBuilder.Entity<ContractTermination>()
+            .Property(t => t.CompensationAmount).HasColumnType("decimal(18,2)");
     }
 }
