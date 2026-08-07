@@ -8,4 +8,6 @@ public class ContractItem
     public int Quantity { get; set; }
     public string Unit { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
+    public decimal LineTotal => Quantity * UnitPrice;
+
 }

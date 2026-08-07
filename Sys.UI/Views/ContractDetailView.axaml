@@ -1,0 +1,100 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             x:Class="Sys.UI.Views.ContractDetailView"
+             x:DataType="vm:ContractDetailViewModel">
+
+	<Grid RowDefinitions="Auto,Auto,*" Margin="24">
+
+		<TextBlock Grid.Row="0" Text="Sözleşme Görüntüle" FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/>
+
+		<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+			<TextBlock Text="Sözleşme Seç:" VerticalAlignment="Center"/>
+			<ComboBox Width="360"
+                      ItemsSource="{Binding AvailableContracts}"
+                      SelectedItem="{Binding SelectedContract}"
+                      DisplayMemberBinding="{Binding Title}"/>
+		</StackPanel>
+
+		<ScrollViewer Grid.Row="2">
+			<StackPanel Spacing="16">
+
+				<TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
+                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+				<Border IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"
+        Background="#F5F5F5" CornerRadius="8" Padding="16">
+					<StackPanel Spacing="8">
+						<TextBlock Text="{Binding DetailTitle}" FontSize="18" FontWeight="Bold" Foreground="Black"/>
+						<TextBlock Text="{Binding DetailCompany}" Foreground="Black"/>
+						<TextBlock Text="{Binding DetailStatus}" Foreground="Black"/>
+						<TextBlock Text="{Binding DetailTotal}" Foreground="Black"/>
+						<TextBlock Text="{Binding DetailStart}" Foreground="Black"/>
+						<TextBlock Text="{Binding DetailEnd}" Foreground="Black"/>
+					</StackPanel>
+				</Border>
+
+				<StackPanel IsVisible="{Binding Items.Count}">
+					<TextBlock Text="Kalemler" FontWeight="Bold" Margin="0,0,0,8"/>
+					<ItemsControl ItemsSource="{Binding Items}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
+									<Grid ColumnDefinitions="2*,*,*,*">
+										<TextBlock Grid.Column="0" Text="{Binding Description}"/>
+										<TextBlock Grid.Column="1" Text="{Binding Quantity}"/>
+										<TextBlock Grid.Column="2" Text="{Binding UnitPrice}"/>
+										<TextBlock Grid.Column="3" Text="{Binding LineTotal}"/>
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<StackPanel IsVisible="{Binding Attachments.Count}">
+					<TextBlock Text="Dosyalar" FontWeight="Bold" Margin="0,0,0,8"/>
+					<ItemsControl ItemsSource="{Binding Attachments}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
+									<Grid ColumnDefinitions="*,Auto">
+										<TextBlock Grid.Column="0" Text="{Binding FileName}" VerticalAlignment="Center"/>
+										<Button Grid.Column="1" Content="Aç"
+                                                Command="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).OpenAttachmentCommand}"
+                                                CommandParameter="{Binding}"/>
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<StackPanel IsVisible="{Binding ApprovalLogs.Count}">
+					<TextBlock Text="Aşama Geçmişi" FontWeight="Bold" Margin="0,0,0,8"/>
+					<ItemsControl ItemsSource="{Binding ApprovalLogs}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
+									<StackPanel Spacing="2">
+										<TextBlock FontWeight="Bold">
+											<Run Text="{Binding StepNumber}"/>
+											<Run Text=". Adım — "/>
+											<Run Text="{Binding StepName}"/>
+											<Run Text=" — "/>
+											<Run Text="{Binding Decision}"/>
+										</TextBlock>
+										<TextBlock Text="{Binding Note}" IsVisible="{Binding Note, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" FontStyle="Italic"/>
+										<TextBlock Text="{Binding ActionDate, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="Gray"/>
+									</StackPanel>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+			</StackPanel>
+		</ScrollViewer>
+
+	</Grid>
+</UserControl>

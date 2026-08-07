@@ -19,6 +19,13 @@ public class ContractRepository : IContractRepository
     public Task<List<Contract>> GetByCreatedUserAsync(int userId)
         => _db.Contracts.Where(c => c.CreatedByUserId == userId).ToListAsync();
 
+    public Task<Contract?> GetByIdWithDetailsAsync(int id)
+        => _db.Contracts
+            .Include(c => c.Items)
+            .Include(c => c.Attachments)
+            .Include(c => c.ApprovalLogs)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
     public async Task AddAsync(Contract contract)
     {
         _db.Contracts.Add(contract);
@@ -44,4 +51,14 @@ public class ContractRepository : IContractRepository
 
         await _db.SaveChangesAsync();
     }
+
+    public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log)
+    {
+        log.ContractId = contract.Id;
+        _db.ApprovalLogs.Add(log);
+        _db.Contracts.Update(contract);
+        await _db.SaveChangesAsync();
+    }
+
+    public Task<List<Contract>> GetByStageAsync(int stage) => _db.Contracts.Where(c => c.Stage == stage).ToListAsync();
 }

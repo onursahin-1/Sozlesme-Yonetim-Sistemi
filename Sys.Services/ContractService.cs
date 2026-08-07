@@ -79,4 +79,79 @@ public class ContractService
 
         await _contracts.FinalizeCreationAsync(contract, items, attachments, auditLog);
     }
+
+    public async Task<Contract?> GetContractDetailAsync(int id, User currentUser)
+    {
+        var contract = await _contracts.GetByIdWithDetailsAsync(id);
+        if (contract is null) return null;
+
+        if (currentUser.Role == UserRole.Personel && contract.CreatedByUserId != currentUser.Id)
+            return null; // başkasının talebini görmesin
+
+        return contract;
+    }
+
+    public async Task DecideApprovalAsync(Contract contract, User actingUser, ApprovalDecision decision, string? note)
+    {
+        var (stepName, expectedRole) = contract.Stage switch
+        {
+            1 => ("SYB Son Kontrol", UserRole.SYB),
+            2 => ("Müdür (YK) Onayı", UserRole.Mudur),
+            _ => throw new InvalidOperationException("Bu aşamada onay/red işlemi yapılamaz.")
+        };
+
+        if (actingUser.Role != expectedRole)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        var log = new ApprovalLog
+        {
+            StepNumber = contract.Stage,
+            StepName = stepName,
+            ActingUserId = actingUser.Id,
+            Decision = decision,
+            Note = note,
+            ActionDate = DateTime.Now
+        };
+
+        if (decision == ApprovalDecision.Onay)
+        {
+            if (contract.Stage == 1)
+            {
+                contract.Stage = 2; // Müdür onayına geçti
+            }
+            else
+            {
+                contract.Stage = 3;
+                contract.Status = ContractStatus.Aktif;
+            }
+        }
+        else
+        {
+            if (contract.Stage == 1)
+            {
+                contract.Stage = 0; // Talep'e geri düştü
+                contract.Status = ContractStatus.Talep;
+            }
+            else
+            {
+                contract.Stage = 1; // SYB Son Kontrol'e geri döndü
+            }
+        }
+
+        await _contracts.ApplyDecisionAsync(contract, log);
+    }
+
+    public async Task<List<Contract>> GetPendingApprovalsAsync(User currentUser)
+    {
+        int stage = currentUser.Role switch
+        {
+            UserRole.SYB => 1,
+            UserRole.Mudur => 2,
+            _ => -1
+        };
+
+        if (stage == -1) return new List<Contract>();
+
+        return await _contracts.GetByStageAsync(stage);
+    }
 }

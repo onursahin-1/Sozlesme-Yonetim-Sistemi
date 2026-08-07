@@ -69,6 +69,7 @@ public partial class ShellViewModel : ViewModelBase
             "sozlesmeList" => new ContractListViewModel(_contractService, CurrentUser),
             "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeYarat" => new ContractWizardViewModel(_contractService, CurrentUser, _attachmentsPath),
+            "sozlesmeGoruntule" => new ContractDetailViewModel(_contractService, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
     }
