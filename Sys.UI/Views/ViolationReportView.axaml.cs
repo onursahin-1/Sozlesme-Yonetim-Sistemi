@@ -6,16 +6,16 @@ using Sys.UI.ViewModels;
 
 namespace Sys.UI.Views;
 
-public partial class ContractEditView : UserControl
+public partial class ViolationReportView : UserControl
 {
-    public ContractEditView()
+    public ViolationReportView()
     {
         InitializeComponent();
     }
 
     private async void OnPickFileClick(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is not ContractEditViewModel vm) return;
+        if (DataContext is not ViolationReportViewModel vm) return;
 
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel is null) return;

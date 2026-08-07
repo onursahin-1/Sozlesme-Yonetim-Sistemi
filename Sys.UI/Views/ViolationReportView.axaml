@@ -1,0 +1,58 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             x:Class="Sys.UI.Views.ViolationReportView"
+             x:DataType="vm:ViolationReportViewModel">
+
+    <ScrollViewer Margin="24">
+        <StackPanel Spacing="16" MaxWidth="520">
+
+            <TextBlock Text="İhlal Bildir" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="İhlal bildirimi yapıldığında sözleşme SYB'nin aksiyon almasını bekleyen bir duruma geçer."
+                       Foreground="#E24B4A" TextWrapping="Wrap"/>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
+                       IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="İlgili Sözleşme *" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding AvailableContracts}"
+                          SelectedItem="{Binding SelectedContract}"
+                          DisplayMemberBinding="{Binding Title}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="İhlal Türü *" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding ViolationTypes}"
+                          SelectedItem="{Binding SelectedViolationType}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="İhlal Tarihi *" FontWeight="Bold"/>
+                <DatePicker SelectedDate="{Binding ViolationDate}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Açıklama *" FontWeight="Bold"/>
+                <TextBox Text="{Binding Description}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
+                         Watermark="İhlalin ayrıntılı açıklaması, belge referansları, kanıtlar..."/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Destekleyici Belge" FontWeight="Bold"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
+                    <TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Button Content="SYB'ye İlet" Background="#E24B4A" Foreground="White"
+                    Padding="16,8" Margin="0,8,0,0" Command="{Binding SubmitCommand}"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

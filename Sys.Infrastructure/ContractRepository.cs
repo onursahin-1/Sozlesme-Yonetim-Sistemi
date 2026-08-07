@@ -68,4 +68,10 @@ public class ContractRepository : IContractRepository
         _db.Contracts.Update(contract);
         await _db.SaveChangesAsync();
     }
+    public async Task ApplyViolationAsync(Contract contract, Violation violation)
+    {
+        _db.Violations.Add(violation);
+        _db.Contracts.Update(contract);
+        await _db.SaveChangesAsync();
+    }
 }

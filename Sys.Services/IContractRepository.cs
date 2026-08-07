@@ -12,4 +12,5 @@ public interface IContractRepository
     Task ApplyDecisionAsync(Contract contract, ApprovalLog log);
     Task<List<Contract>> GetByStageAsync(int stage);
     Task ApplyEditAsync(Contract contract, ContractRevision revision);
+    Task ApplyViolationAsync(Contract contract, Violation violation);
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,19 +9,18 @@ using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
-public partial class ContractEditViewModel : ViewModelBase
+public partial class ViolationReportViewModel : ViewModelBase
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;
 
-    public string[] ChangeTypes { get; } =
+    public string[] ViolationTypes { get; } =
     {
-        "Bedel Değişikliği",
-        "Süre Uzatımı / Kısalması",
-        "Kapsam Değişikliği",
-        "Firma Bilgisi Güncelleme",
-        "Ödeme Koşulları Değişikliği",
+        "Gecikme / Zamanında ifa etmeme",
+        "Eksik ifa / Kapsam dışı",
+        "Kalite uyumsuzluğu",
+        "Sözleşme şartlarına aykırılık",
         "Diğer"
     };
 
@@ -33,16 +31,13 @@ public partial class ContractEditViewModel : ViewModelBase
     public partial Contract? SelectedContract { get; set; }
 
     [ObservableProperty]
-    public partial string SelectedChangeType { get; set; } = string.Empty;
+    public partial string SelectedViolationType { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string Reason { get; set; } = string.Empty;
+    public partial DateTimeOffset? ViolationDate { get; set; }
 
     [ObservableProperty]
-    public partial string NewTotalAmountText { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial DateTimeOffset? NewEndDate { get; set; }
+    public partial string Description { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string? SelectedFilePath { get; set; }
@@ -56,38 +51,28 @@ public partial class ContractEditViewModel : ViewModelBase
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
 
-    public ContractEditViewModel() : this(null!, new User(), string.Empty) { } // tasarımcı önizlemesi için
+    public ViolationReportViewModel() : this(null!, new User(), string.Empty) { } // tasarımcı önizlemesi için
 
-    public ContractEditViewModel(ContractService contractService, User currentUser, string attachmentsBasePath)
+    public ViolationReportViewModel(ContractService contractService, User currentUser, string attachmentsBasePath)
     {
         _contractService = contractService;
         _currentUser = currentUser;
         _attachmentsBasePath = attachmentsBasePath;
-        SelectedChangeType = ChangeTypes[0];
+        SelectedViolationType = ViolationTypes[0];
+        ViolationDate = DateTimeOffset.Now;
         _ = LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var list = await _contractService.GetViolationReportableContractsAsync(_currentUser);
+        AvailableContracts = new ObservableCollection<Contract>(list);
     }
 
     public void SetSelectedFile(string path)
     {
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
-    }
-
-    private async Task LoadAsync()
-    {
-        var list = await _contractService.GetEditableContractsAsync(_currentUser);
-        AvailableContracts = new ObservableCollection<Contract>(list);
-    }
-
-    partial void OnSelectedContractChanged(Contract? value)
-    {
-        ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
-        Reason = string.Empty;
-        NewTotalAmountText = string.Empty;
-        NewEndDate = null;
-        SelectedFilePath = null;
-        SelectedFileName = string.Empty;
     }
 
     [RelayCommand]
@@ -102,29 +87,22 @@ public partial class ContractEditViewModel : ViewModelBase
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(Reason))
+        if (string.IsNullOrWhiteSpace(Description))
         {
-            ErrorMessage = "Değişiklik gerekçesi zorunludur.";
+            ErrorMessage = "Açıklama zorunludur.";
             return;
         }
 
-        decimal? newAmount = null;
-        if (!string.IsNullOrWhiteSpace(NewTotalAmountText))
+        if (ViolationDate is null)
         {
-            if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed))
-            {
-                ErrorMessage = "Yeni bedel geçerli bir sayı olmalı.";
-                return;
-            }
-            newAmount = parsed;
+            ErrorMessage = "İhlal tarihi zorunludur.";
+            return;
         }
-
-        DateTime? newEnd = NewEndDate?.DateTime;
 
         try
         {
             var contractId = SelectedContract.Id;
-            await _contractService.EditContractAsync(SelectedContract, _currentUser, SelectedChangeType, Reason, newAmount, newEnd);
+            await _contractService.ReportViolationAsync(SelectedContract, _currentUser, SelectedViolationType, ViolationDate.Value.DateTime, Description);
 
             if (!string.IsNullOrEmpty(SelectedFilePath))
             {
@@ -132,7 +110,7 @@ public partial class ContractEditViewModel : ViewModelBase
                 await _contractService.AddAttachmentAsync(new Attachment
                 {
                     ContractId = contractId,
-                    Category = AttachmentCategory.Ek,
+                    Category = AttachmentCategory.Ihlal,
                     FileName = SelectedFileName,
                     FilePath = savedPath,
                     UploadedAt = DateTime.Now,
@@ -140,13 +118,12 @@ public partial class ContractEditViewModel : ViewModelBase
                 });
             }
 
-            SuccessMessage = "Değişiklik talebi gönderildi. Sözleşme yeniden onay sürecine alındı.";
+            SuccessMessage = "İhlal formu SYB'ye iletildi.";
             SelectedContract = null;
-            Reason = string.Empty;
-            NewTotalAmountText = string.Empty;
-            NewEndDate = null;
+            Description = string.Empty;
             SelectedFilePath = null;
             SelectedFileName = string.Empty;
+            ViolationDate = DateTimeOffset.Now;
             await LoadAsync();
         }
         catch (Exception ex)

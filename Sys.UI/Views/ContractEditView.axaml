@@ -39,6 +39,11 @@
 
                 <TextBlock Text="Yeni Bitiş Tarihi" FontWeight="Bold" Margin="0,8,0,0"/>
                 <DatePicker SelectedDate="{Binding NewEndDate}"/>
+				<TextBlock Text="Ek Belge" FontWeight="Bold" Margin="0,8,0,0"/>
+				<StackPanel Orientation="Horizontal" Spacing="8">
+					<Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
+					<TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
+				</StackPanel>
 
                 <Button Content="Değişiklik Talebini Gönder" Background="#B06A00" Foreground="White"
                         Padding="16,8" Margin="0,16,0,0" Command="{Binding SubmitCommand}"/>

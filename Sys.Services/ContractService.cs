@@ -181,5 +181,27 @@ public class ContractService
 
         await _contracts.ApplyEditAsync(contract, revision);
     }
+    public async Task<List<Contract>> GetViolationReportableContractsAsync(User currentUser)
+    {
+        var all = await GetContractsAsync(currentUser);
+        return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Ihlal).ToList();
+    }
+
+    public async Task ReportViolationAsync(Contract contract, User reporter, string violationType, DateTime violationDate, string description)
+    {
+        var violation = new Violation
+        {
+            ContractId = contract.Id,
+            ViolationType = violationType,
+            ViolationDate = violationDate,
+            Description = description,
+            ReportedByUserId = reporter.Id,
+            ReportedAt = DateTime.Now
+        };
+
+        contract.Status = ContractStatus.Ihlal;
+
+        await _contracts.ApplyViolationAsync(contract, violation);
+    }
 
 }
