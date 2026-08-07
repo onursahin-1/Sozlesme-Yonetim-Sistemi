@@ -235,6 +235,12 @@ public class ContractService
         return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari).ToList();
     }
 
+    public async Task<List<Contract>> GetArchivedContractsAsync(User currentUser)
+    {
+        var all = await GetContractsAsync(currentUser);
+        return all.Where(c => c.Status == ContractStatus.Tamamlandi || c.Status == ContractStatus.Feshedildi).ToList();
+    }
+
     public async Task RequestTerminationAsync(Contract contract, User actingUser, string terminationType, DateTime terminationDate, string reason, decimal? compensationAmount, string compensationDirection)
     {
         var termination = new ContractTermination

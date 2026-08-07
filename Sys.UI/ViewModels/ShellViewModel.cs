@@ -74,6 +74,7 @@ public partial class ShellViewModel : ViewModelBase
             "sozlesmeDegistir" => new ContractEditViewModel(_contractService, CurrentUser, _attachmentsPath),
             "ihlal" => new ViolationReportViewModel(_contractService, CurrentUser, _attachmentsPath),
             "fesih" => new ContractTerminationViewModel(_contractService, CurrentUser, _attachmentsPath),
+            "arsiv" => new ArchiveViewModel(_contractService, CurrentUser),
             "onayBekleyen" => new ApprovalQueueViewModel(_contractService, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
