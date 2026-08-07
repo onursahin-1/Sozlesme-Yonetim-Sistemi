@@ -61,4 +61,11 @@ public class ContractRepository : IContractRepository
     }
 
     public Task<List<Contract>> GetByStageAsync(int stage) => _db.Contracts.Where(c => c.Stage == stage).ToListAsync();
+    public async Task ApplyEditAsync(Contract contract, ContractRevision revision)
+    {
+        revision.ContractId = contract.Id;
+        _db.ContractRevisions.Add(revision);
+        _db.Contracts.Update(contract);
+        await _db.SaveChangesAsync();
+    }
 }

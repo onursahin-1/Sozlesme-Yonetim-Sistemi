@@ -154,4 +154,32 @@ public class ContractService
 
         return await _contracts.GetByStageAsync(stage);
     }
+    public async Task<List<Contract>> GetEditableContractsAsync(User currentUser)
+    {
+        var all = await GetContractsAsync(currentUser);
+        return all.Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi).ToList();
+    }
+
+    public async Task EditContractAsync(Contract contract, User actingUser, string changeType, string reason, decimal? newTotalAmount, DateTime? newEndDate)
+    {
+        var revision = new ContractRevision
+        {
+            ChangeType = changeType,
+            Reason = reason,
+            PreviousTotalAmount = contract.TotalAmount,
+            PreviousEndDate = contract.EndDate,
+            PreviousDescription = contract.Description,
+            ChangedByUserId = actingUser.Id,
+            ChangedAt = DateTime.Now
+        };
+
+        if (newTotalAmount.HasValue) contract.TotalAmount = newTotalAmount.Value;
+        if (newEndDate.HasValue) contract.EndDate = newEndDate.Value;
+
+        contract.Stage = 1;
+        contract.Status = ContractStatus.OnayBekliyor;
+
+        await _contracts.ApplyEditAsync(contract, revision);
+    }
+
 }

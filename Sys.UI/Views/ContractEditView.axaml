@@ -1,0 +1,49 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sys.UI.ViewModels"
+             x:Class="Sys.UI.Views.ContractEditView"
+             x:DataType="vm:ContractEditViewModel">
+
+    <ScrollViewer Margin="24">
+        <StackPanel Spacing="16" MaxWidth="620">
+
+            <TextBlock Text="Sözleşme Değiştir" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Sözleşme değişikliği yeniden onay akışı başlatır. Önceki değerler kayıt altına alınır."
+                       Foreground="#B06A00" TextWrapping="Wrap"/>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            <TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
+                       IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Sözleşme Seç *" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding AvailableContracts}"
+                          SelectedItem="{Binding SelectedContract}"
+                          DisplayMemberBinding="{Binding Title}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4" IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <TextBlock Text="Ne Değişiyor? *" FontWeight="Bold"/>
+                <ComboBox HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding ChangeTypes}"
+                          SelectedItem="{Binding SelectedChangeType}"/>
+
+                <TextBlock Text="Değişiklik Gerekçesi *" FontWeight="Bold" Margin="0,8,0,0"/>
+                <TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"
+                         Watermark="Neden bu değişikliğe ihtiyaç var? Detaylı açıklayın..."/>
+
+                <TextBlock Text="Yeni Bedel (TL)" FontWeight="Bold" Margin="0,8,0,0"/>
+                <TextBox Text="{Binding NewTotalAmountText}" Watermark="Değişmiyorsa boş bırakın"/>
+
+                <TextBlock Text="Yeni Bitiş Tarihi" FontWeight="Bold" Margin="0,8,0,0"/>
+                <DatePicker SelectedDate="{Binding NewEndDate}"/>
+
+                <Button Content="Değişiklik Talebini Gönder" Background="#B06A00" Foreground="White"
+                        Padding="16,8" Margin="0,16,0,0" Command="{Binding SubmitCommand}"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

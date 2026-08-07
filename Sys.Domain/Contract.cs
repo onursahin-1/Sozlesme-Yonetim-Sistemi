@@ -23,6 +23,7 @@ public class Contract
     public List<Attachment> Attachments { get; set; } = new();
     public List<ApprovalLog> ApprovalLogs { get; set; } = new();
     public List<Violation> Violations { get; set; } = new();
+    public List<ContractRevision> Revisions { get; set; } = new();
 }
 
 public enum ContractStatus

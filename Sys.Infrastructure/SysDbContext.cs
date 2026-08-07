@@ -14,7 +14,7 @@ public class SysDbContext : DbContext
     public DbSet<ApprovalLog> ApprovalLogs => Set<ApprovalLog>();
     public DbSet<Violation> Violations => Set<Violation>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-
+    public DbSet<ContractRevision> ContractRevisions => Set<ContractRevision>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Contract>()
@@ -36,6 +36,11 @@ public class SysDbContext : DbContext
             .HasMany(c => c.Violations)
             .WithOne()
             .HasForeignKey(v => v.ContractId);
+
+        modelBuilder.Entity<Contract>()
+            .HasMany(c => c.Revisions)
+            .WithOne()
+            .HasForeignKey(r => r.ContractId);
 
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Username)
