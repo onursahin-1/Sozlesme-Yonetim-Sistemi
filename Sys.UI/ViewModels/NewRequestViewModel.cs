@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,7 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
-using System.Globalization;
 
 namespace Sys.UI.ViewModels;
 
@@ -32,14 +32,6 @@ public partial class NewRequestViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string EstimatedAmountPreview { get; set; } = string.Empty;
-
-    partial void OnEstimatedAmountTextChanged(string value)
-    {
-        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var amount))
-            EstimatedAmountPreview = "→ " + amount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL";
-        else
-            EstimatedAmountPreview = string.Empty;
-    }
 
     [ObservableProperty]
     public partial string Description { get; set; } = string.Empty;
@@ -77,23 +69,35 @@ public partial class NewRequestViewModel : ViewModelBase
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
 
+    partial void OnEstimatedAmountTextChanged(string value)
+    {
+        if (decimal.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out var amount))
+            EstimatedAmountPreview = "→ " + amount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) + " TL";
+        else
+            EstimatedAmountPreview = string.Empty;
+    }
+
     [RelayCommand]
     private async Task SubmitAsync()
     {
         ErrorMessage = string.Empty;
         SuccessMessage = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(Title) || string.IsNullOrWhiteSpace(CompanyName) ||
-        string.IsNullOrWhiteSpace(TaxNo) || string.IsNullOrWhiteSpace(Description) ||
-        string.IsNullOrWhiteSpace(Type))
-        {
-            ErrorMessage = "Lütfen zorunlu alanları (Başlık, Sözleşme Türü, Firma, Vergi No, İşin Tanımı) doldurun.";
-            return;
-        }
+        var errors = new List<string>();
 
-        if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
+        if (string.IsNullOrWhiteSpace(Title)) errors.Add("Konu / Başlık");
+        if (string.IsNullOrWhiteSpace(Type)) errors.Add("Sözleşme Türü");
+        if (string.IsNullOrWhiteSpace(Description)) errors.Add("İşin Tanımı");
+        if (string.IsNullOrWhiteSpace(CompanyName)) errors.Add("Firma Adı");
+
+        if (string.IsNullOrWhiteSpace(TaxNo))
+            errors.Add("Vergi No");
+        else if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
+            errors.Add("Vergi No (10 haneli rakamdan oluşmalı)");
+
+        if (errors.Count > 0)
         {
-            ErrorMessage = "Vergi No 10 haneli rakamlardan oluşmalıdır.";
+            ErrorMessage = "Lütfen şu alanları kontrol edin: " + string.Join(", ", errors);
             return;
         }
 
@@ -131,11 +135,13 @@ public partial class NewRequestViewModel : ViewModelBase
 
             SuccessMessage = "Talep başarıyla oluşturuldu.";
             Title = string.Empty;
+            Type = string.Empty;
             CompanyName = string.Empty;
             TaxNo = string.Empty;
             Description = string.Empty;
             RequestRefNo = string.Empty;
             EstimatedAmountText = string.Empty;
+            EstimatedAmountPreview = string.Empty;
             SelectedFilePath = null;
             SelectedFileName = string.Empty;
         }

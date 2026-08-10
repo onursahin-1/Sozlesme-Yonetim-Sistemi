@@ -128,10 +128,19 @@ public partial class ContractWizardViewModel : ViewModelBase
             return;
         }
 
-        if (CurrentStep == 2 && (Items.Count == 0 || Items.Any(i => string.IsNullOrWhiteSpace(i.Description))))
+        if (CurrentStep == 2)
         {
-            ErrorMessage = "Lütfen en az bir kalem ekleyin ve açıklamalarını doldurun.";
-            return;
+            if (Items.Count == 0)
+            {
+                ErrorMessage = "Lütfen en az bir kalem ekleyin.";
+                return;
+            }
+
+            if (Items.Any(i => string.IsNullOrWhiteSpace(i.Description)))
+            {
+                ErrorMessage = "Lütfen tüm kalemlerin açıklamasını doldurun.";
+                return;
+            }
         }
 
         if (CurrentStep < 3) CurrentStep++;
