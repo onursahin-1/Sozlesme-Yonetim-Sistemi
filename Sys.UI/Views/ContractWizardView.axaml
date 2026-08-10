@@ -53,7 +53,10 @@
 							<TextBox Grid.Column="0" Watermark="Tanım" Text="{Binding Description}" Margin="0,0,4,0"/>
 							<TextBox Grid.Column="1" Width="60" Text="{Binding QuantityText}" Margin="0,0,4,0"/>
 							<TextBox Grid.Column="2" Width="70" Text="{Binding Unit}" Margin="0,0,4,0"/>
-							<TextBox Grid.Column="3" Width="100" Text="{Binding UnitPriceText}" Margin="0,0,4,0"/>
+							<StackPanel Grid.Column="3" Width="100" Margin="0,0,4,0">
+								<TextBox Text="{Binding UnitPriceText}"/>
+								<TextBlock Text="{Binding UnitPricePreview}" FontSize="10" Foreground="Gray"/>
+							</StackPanel>
 							<TextBlock Grid.Column="4" Width="100" Text="{Binding LineTotal}" VerticalAlignment="Center" Margin="0,0,4,0"/>
 							<Button Grid.Column="5" Content="Sil" Command="{Binding RemoveCommand}"/>
 						</Grid>

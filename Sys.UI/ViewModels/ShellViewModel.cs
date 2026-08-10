@@ -67,6 +67,7 @@ public partial class ShellViewModel : ViewModelBase
         {
             "dashboard" => new DashboardViewModel(_contractService, CurrentUser),
             "sozlesmeList" => new ContractListViewModel(_contractService, CurrentUser),
+            "talepList" => new ContractListViewModel(_contractService, CurrentUser),
             "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeYarat" => new ContractWizardViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeGoruntule" => new ContractDetailViewModel(_contractService, CurrentUser),

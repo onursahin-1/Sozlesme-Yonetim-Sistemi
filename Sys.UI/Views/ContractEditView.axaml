@@ -35,7 +35,8 @@
                          Watermark="Neden bu değişikliğe ihtiyaç var? Detaylı açıklayın..."/>
 
                 <TextBlock Text="Yeni Bedel (TL)" FontWeight="Bold" Margin="0,8,0,0"/>
-                <TextBox Text="{Binding NewTotalAmountText}" Watermark="Değişmiyorsa boş bırakın"/>
+				<TextBlock Text="{Binding NewTotalAmountPreview}" FontSize="11" Foreground="Gray"/>
+				<TextBox Text="{Binding NewTotalAmountText}" Watermark="Değişmiyorsa boş bırakın" LostFocus="OnAmountLostFocus"/>
 
                 <TextBlock Text="Yeni Bitiş Tarihi" FontWeight="Bold" Margin="0,8,0,0"/>
                 <DatePicker SelectedDate="{Binding NewEndDate}"/>

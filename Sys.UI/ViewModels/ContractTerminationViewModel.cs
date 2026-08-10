@@ -50,6 +50,17 @@ public partial class ContractTerminationViewModel : ViewModelBase
     public partial string CompensationAmountText { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string CompensationAmountPreview { get; set; } = string.Empty;
+
+    partial void OnCompensationAmountTextChanged(string value)
+    {
+        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var amount))
+            CompensationAmountPreview = "→ " + amount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL";
+        else
+            CompensationAmountPreview = string.Empty;
+    }
+
+    [ObservableProperty]
     public partial string SelectedCompensationDirection { get; set; } = string.Empty;
 
     [ObservableProperty]

@@ -44,7 +44,8 @@
 
             <StackPanel Spacing="4">
                 <TextBlock Text="Fesih Tazminatı (TL)" FontWeight="Bold"/>
-                <TextBox Text="{Binding CompensationAmountText}" Watermark="0 — ödeme yoksa boş bırakın"/>
+				<TextBlock Text="{Binding CompensationAmountPreview}" FontSize="11" Foreground="Gray"/>
+				<TextBox Text="{Binding CompensationAmountText}" Watermark="0 — ödeme yoksa boş bırakın" LostFocus="OnAmountLostFocus"/>
             </StackPanel>
 
             <StackPanel Spacing="4">

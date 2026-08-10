@@ -4,6 +4,7 @@
   </Folder>
   <Project Path="Sys.Domain/Sys.Domain.csproj" />
   <Project Path="Sys.Infrastructure/Sys.Infrastructure.csproj" />
+  <Project Path="Sys.Services.Tests/Sys.Services.Tests.csproj" Id="51e28f2a-cf1e-460d-ae89-326b9070b758" />
   <Project Path="Sys.Services/Sys.Services.csproj" />
   <Project Path="Sys.UI/Sys.UI.csproj" />
 </Solution>

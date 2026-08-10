@@ -39,4 +39,5 @@ public partial class ContractEditView : UserControl
             }
         }
     }
+    private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);
 }

@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Globalization;
 
 namespace Sys.UI.ViewModels;
 
@@ -19,6 +20,9 @@ public partial class ContractItemRowViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string UnitPriceText { get; set; } = "0";
+
+    [ObservableProperty]
+    public partial string UnitPricePreview { get; set; } = string.Empty;
 
     public int Quantity => int.TryParse(QuantityText, out var q) ? q : 0;
     public decimal UnitPrice => decimal.TryParse(UnitPriceText, out var p) ? p : 0;
@@ -39,6 +43,11 @@ public partial class ContractItemRowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(UnitPrice));
         OnPropertyChanged(nameof(LineTotal));
+
+        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var amount))
+            UnitPricePreview = "→ " + amount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
+        else
+            UnitPricePreview = string.Empty;
     }
 
     [RelayCommand]

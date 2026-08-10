@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
+using System.Globalization;
 
 namespace Sys.UI.ViewModels;
 
@@ -15,7 +16,7 @@ public partial class NewRequestViewModel : ViewModelBase
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;
 
-    public string[] TypeOptions { get; } = { "Hizmet", "Tedarik", "Eser", "Danışmanlık", "Kira" };
+    public string[] TypeOptions { get; } = { "Hizmet", "Tedarik", "Eser", "Danışmanlık", "Kira", "Diğer" };
 
     [ObservableProperty]
     public partial string RequestRefNo { get; set; } = string.Empty;
@@ -24,10 +25,21 @@ public partial class NewRequestViewModel : ViewModelBase
     public partial string Title { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string Type { get; set; } = "Hizmet";
+    public partial string Type { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string EstimatedAmountText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string EstimatedAmountPreview { get; set; } = string.Empty;
+
+    partial void OnEstimatedAmountTextChanged(string value)
+    {
+        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var amount))
+            EstimatedAmountPreview = "→ " + amount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL";
+        else
+            EstimatedAmountPreview = string.Empty;
+    }
 
     [ObservableProperty]
     public partial string Description { get; set; } = string.Empty;
@@ -72,9 +84,10 @@ public partial class NewRequestViewModel : ViewModelBase
         SuccessMessage = string.Empty;
 
         if (string.IsNullOrWhiteSpace(Title) || string.IsNullOrWhiteSpace(CompanyName) ||
-            string.IsNullOrWhiteSpace(TaxNo) || string.IsNullOrWhiteSpace(Description))
+        string.IsNullOrWhiteSpace(TaxNo) || string.IsNullOrWhiteSpace(Description) ||
+        string.IsNullOrWhiteSpace(Type))
         {
-            ErrorMessage = "Lütfen zorunlu alanları (Başlık, Firma, Vergi No, İşin Tanımı) doldurun.";
+            ErrorMessage = "Lütfen zorunlu alanları (Başlık, Sözleşme Türü, Firma, Vergi No, İşin Tanımı) doldurun.";
             return;
         }
 
