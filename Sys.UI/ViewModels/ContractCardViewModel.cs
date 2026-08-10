@@ -19,10 +19,12 @@ public class ContractCardViewModel
     public string Type => _contract.Type;
     public ContractStatus Status => _contract.Status;
 
+    public int Stage => _contract.Stage;
+
     public string StatusLabel => Status switch
     {
         ContractStatus.Talep => "Talep",
-        ContractStatus.OnayBekliyor => "Onay Bekliyor",
+        ContractStatus.OnayBekliyor => "Onay Bekliyor" + StageDetail,
         ContractStatus.Aktif => "Aktif",
         ContractStatus.Uyari => "Bitiş Yaklaşıyor",
         ContractStatus.Ihlal => "İhlal Mevcut",
@@ -30,6 +32,23 @@ public class ContractCardViewModel
         ContractStatus.Feshedildi => "Feshedildi",
         _ => Status.ToString()
     };
+
+    private string StageDetail
+    {
+        get
+        {
+            var who = Stage switch
+            {
+                1 => "SYB Son Kontrol",
+                2 => "YK Onayı",
+                _ => null
+            };
+
+            if (who is null) return string.Empty;
+
+            return _contract.PendingTermination ? $" ({who} — Fesih)" : $" ({who})";
+        }
+    }
 
     public string StatusColorHex => Status switch
     {
