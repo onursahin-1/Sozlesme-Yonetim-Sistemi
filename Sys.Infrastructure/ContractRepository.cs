@@ -6,64 +6,96 @@ namespace Sys.Infrastructure;
 
 public class ContractRepository : IContractRepository
 {
-    private readonly SysDbContext _db;
+    private readonly string _connectionString;
 
-    public ContractRepository(SysDbContext db)
+    public ContractRepository(string connectionString)
     {
-        _db = db;
+        _connectionString = connectionString;
     }
 
-    public Task<List<Contract>> GetAllAsync()
-        => _db.Contracts.ToListAsync();
+    public async Task<List<Contract>> GetAllAsync()
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Contracts.ToListAsync();
+    }
 
-    public Task<List<Contract>> GetByCreatedUserAsync(int userId)
-        => _db.Contracts.Where(c => c.CreatedByUserId == userId).ToListAsync();
+    public async Task<List<Contract>> GetByCreatedUserAsync(int userId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Contracts.Where(c => c.CreatedByUserId == userId).ToListAsync();
+    }
 
-    public Task<Contract?> GetByIdWithDetailsAsync(int id) => _db.Contracts
-    .Include(c => c.Items)
-    .Include(c => c.Attachments)
-    .Include(c => c.ApprovalLogs)
-    .Include(c => c.Terminations)
-    .Include(c => c.Revisions)
-    .FirstOrDefaultAsync(c => c.Id == id);
+    public async Task<Contract?> GetByIdWithDetailsAsync(int id)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Contracts
+            .Include(c => c.Items)
+            .Include(c => c.Attachments)
+            .Include(c => c.ApprovalLogs)
+            .Include(c => c.Terminations)
+            .Include(c => c.Revisions)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
     public async Task AddAsync(Contract contract)
     {
-        _db.Contracts.Add(contract);
-        await _db.SaveChangesAsync();
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        db.Contracts.Add(contract);
+        await db.SaveChangesAsync();
     }
 
     public async Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog)
     {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        tracked.TotalAmount = contract.TotalAmount;
+        tracked.Status = contract.Status;
+        tracked.Stage = contract.Stage;
+
         foreach (var item in items)
         {
             item.ContractId = contract.Id;
-            _db.ContractItems.Add(item);
+            db.ContractItems.Add(item);
         }
 
         foreach (var attachment in attachments)
         {
             attachment.ContractId = contract.Id;
-            _db.Attachments.Add(attachment);
+            db.Attachments.Add(attachment);
         }
 
-        _db.AuditLogs.Add(auditLog);
-        _db.Contracts.Update(contract);
+        db.AuditLogs.Add(auditLog);
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
     }
 
     public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log)
     {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        tracked.Stage = contract.Stage;
+        tracked.Status = contract.Status;
+        tracked.PendingTermination = contract.PendingTermination;
+
         log.ContractId = contract.Id;
-        _db.ApprovalLogs.Add(log);
-        _db.Contracts.Update(contract);
-        await _db.SaveChangesAsync();
+        db.ApprovalLogs.Add(log);
+
+        await db.SaveChangesAsync();
     }
 
-    public Task<List<Contract>> GetByStageAsync(int stage) => _db.Contracts.Where(c => c.Stage == stage).ToListAsync();
+    public async Task<List<Contract>> GetByStageAsync(int stage)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Contracts.Where(c => c.Stage == stage).ToListAsync();
+    }
+
     public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
     {
-        var candidates = await _db.Contracts
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var candidates = await db.Contracts
             .Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari)
             .Where(c => c.EndDate != null)
             .ToListAsync();
@@ -84,26 +116,49 @@ public class ContractRepository : IContractRepository
             }
         }
 
-        if (updated > 0) await _db.SaveChangesAsync();
+        if (updated > 0) await db.SaveChangesAsync();
         return updated;
     }
+
     public async Task ApplyEditAsync(Contract contract, ContractRevision revision)
     {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        tracked.TotalAmount = contract.TotalAmount;
+        tracked.EndDate = contract.EndDate;
+        tracked.Stage = contract.Stage;
+        tracked.Status = contract.Status;
+
         revision.ContractId = contract.Id;
-        _db.ContractRevisions.Add(revision);
-        _db.Contracts.Update(contract);
-        await _db.SaveChangesAsync();
+        db.ContractRevisions.Add(revision);
+
+        await db.SaveChangesAsync();
     }
+
     public async Task ApplyViolationAsync(Contract contract, Violation violation)
     {
-        _db.Violations.Add(violation);
-        _db.Contracts.Update(contract);
-        await _db.SaveChangesAsync();
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        tracked.Status = contract.Status;
+
+        db.Violations.Add(violation);
+
+        await db.SaveChangesAsync();
     }
+
     public async Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination)
     {
-        _db.ContractTerminations.Add(termination);
-        _db.Contracts.Update(contract);
-        await _db.SaveChangesAsync();
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        tracked.PendingTermination = contract.PendingTermination;
+        tracked.Stage = contract.Stage;
+        tracked.Status = contract.Status;
+
+        db.ContractTerminations.Add(termination);
+
+        await db.SaveChangesAsync();
     }
 }

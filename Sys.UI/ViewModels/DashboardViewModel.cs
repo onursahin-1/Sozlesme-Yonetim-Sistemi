@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Sys.Domain;
 using Sys.Services;
@@ -25,6 +26,9 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsLoading { get; set; } = true;
 
+    [ObservableProperty]
+    public partial string ErrorMessage { get; set; } = string.Empty;
+
     public DashboardViewModel(ContractService contractService, User currentUser)
     {
         _contractService = contractService;
@@ -34,11 +38,21 @@ public partial class DashboardViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var stats = await _contractService.GetDashboardStatsAsync(_currentUser);
-        Aktif = stats.Aktif;
-        OnayBekliyor = stats.OnayBekliyor;
-        Uyari = stats.Uyari;
-        Ihlal = stats.Ihlal;
-        IsLoading = false;
+        try
+        {
+            var stats = await _contractService.GetDashboardStatsAsync(_currentUser);
+            Aktif = stats.Aktif;
+            OnayBekliyor = stats.OnayBekliyor;
+            Uyari = stats.Uyari;
+            Ihlal = stats.Ihlal;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Panel yüklenemedi: " + ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

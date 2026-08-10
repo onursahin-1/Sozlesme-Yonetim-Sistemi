@@ -23,20 +23,20 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = AppSettingsLoader.Load();
-            var db = DbConnectionFactory.CreateContext(settings.ConnectionString);
 
-            var userRepository = new UserRepository(db);
+            var userRepository = new UserRepository(settings.ConnectionString);
             var authService = new AuthService(userRepository);
 
-            var contractRepository = new ContractRepository(db);
-            var attachmentRepository = new AttachmentRepository(db);
+            var contractRepository = new ContractRepository(settings.ConnectionString);
+            var attachmentRepository = new AttachmentRepository(settings.ConnectionString);
             var contractService = new ContractService(contractRepository, attachmentRepository);
 
             try
             {
                 Task.Run(async () =>
                 {
-                    await DbSeeder.SeedAsync(db);
+                    using var seedDb = DbConnectionFactory.CreateContext(settings.ConnectionString);
+                    await DbSeeder.SeedAsync(seedDb);
                     await contractService.ReconcileContractStatusesAsync();
                 }).GetAwaiter().GetResult();
             }

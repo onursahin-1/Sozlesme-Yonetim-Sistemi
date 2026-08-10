@@ -5,16 +5,17 @@ namespace Sys.Infrastructure;
 
 public class AttachmentRepository : IAttachmentRepository
 {
-    private readonly SysDbContext _db;
+    private readonly string _connectionString;
 
-    public AttachmentRepository(SysDbContext db)
+    public AttachmentRepository(string connectionString)
     {
-        _db = db;
+        _connectionString = connectionString;
     }
 
     public async Task AddAsync(Attachment attachment)
     {
-        _db.Attachments.Add(attachment);
-        await _db.SaveChangesAsync();
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        db.Attachments.Add(attachment);
+        await db.SaveChangesAsync();
     }
 }

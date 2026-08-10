@@ -6,19 +6,23 @@ namespace Sys.Infrastructure;
 
 public class UserRepository : IUserRepository
 {
-    private readonly SysDbContext _db;
+    private readonly string _connectionString;
 
-    public UserRepository(SysDbContext db)
+    public UserRepository(string connectionString)
     {
-        _db = db;
+        _connectionString = connectionString;
     }
 
-    public Task<User?> GetByUsernameAsync(string username)
-        => _db.Users.FirstOrDefaultAsync(u => u.Username == username);
+    public async Task<User?> GetByUsernameAsync(string username)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Users.FirstOrDefaultAsync(u => u.Username == username);
+    }
 
     public async Task UpdateAsync(User user)
     {
-        _db.Users.Update(user);
-        await _db.SaveChangesAsync();
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        db.Users.Update(user);
+        await db.SaveChangesAsync();
     }
 }
