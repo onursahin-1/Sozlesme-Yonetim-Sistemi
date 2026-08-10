@@ -25,9 +25,20 @@ public partial class App : Application
             var settings = AppSettingsLoader.Load();
             var db = DbConnectionFactory.CreateContext(settings.ConnectionString);
 
+            var userRepository = new UserRepository(db);
+            var authService = new AuthService(userRepository);
+
+            var contractRepository = new ContractRepository(db);
+            var attachmentRepository = new AttachmentRepository(db);
+            var contractService = new ContractService(contractRepository, attachmentRepository);
+
             try
             {
-                Task.Run(async () => await DbSeeder.SeedAsync(db)).GetAwaiter().GetResult();
+                Task.Run(async () =>
+                {
+                    await DbSeeder.SeedAsync(db);
+                    await contractService.ReconcileContractStatusesAsync();
+                }).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -36,13 +47,6 @@ public partial class App : Application
                     "sys-startup-error.txt");
                 File.WriteAllText(logPath, ex.ToString());
             }
-
-            var userRepository = new UserRepository(db);
-            var authService = new AuthService(userRepository);
-
-            var contractRepository = new ContractRepository(db);
-            var attachmentRepository = new AttachmentRepository(db);
-            var contractService = new ContractService(contractRepository, attachmentRepository);
 
             desktop.MainWindow = new MainWindow
             {

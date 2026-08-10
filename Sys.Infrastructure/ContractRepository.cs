@@ -61,6 +61,32 @@ public class ContractRepository : IContractRepository
     }
 
     public Task<List<Contract>> GetByStageAsync(int stage) => _db.Contracts.Where(c => c.Stage == stage).ToListAsync();
+    public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
+    {
+        var candidates = await _db.Contracts
+            .Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari)
+            .Where(c => c.EndDate != null)
+            .ToListAsync();
+
+        int updated = 0;
+        foreach (var c in candidates)
+        {
+            var newStatus = c.EndDate!.Value.Date < today
+                ? ContractStatus.Tamamlandi
+                : c.EndDate.Value.Date <= warningThreshold
+                    ? ContractStatus.Uyari
+                    : ContractStatus.Aktif;
+
+            if (newStatus != c.Status)
+            {
+                c.Status = newStatus;
+                updated++;
+            }
+        }
+
+        if (updated > 0) await _db.SaveChangesAsync();
+        return updated;
+    }
     public async Task ApplyEditAsync(Contract contract, ContractRevision revision)
     {
         revision.ContractId = contract.Id;

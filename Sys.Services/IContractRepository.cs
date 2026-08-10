@@ -14,4 +14,5 @@ public interface IContractRepository
     Task ApplyEditAsync(Contract contract, ContractRevision revision);
     Task ApplyViolationAsync(Contract contract, Violation violation);
     Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination);
+    Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold);
 }

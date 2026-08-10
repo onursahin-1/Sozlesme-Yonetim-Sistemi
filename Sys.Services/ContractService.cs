@@ -241,6 +241,13 @@ public class ContractService
         return all.Where(c => c.Status == ContractStatus.Tamamlandi || c.Status == ContractStatus.Feshedildi).ToList();
     }
 
+    public async Task<int> ReconcileContractStatusesAsync()
+    {
+        var today = DateTime.Today;
+        var warningThreshold = today.AddDays(30);
+        return await _contracts.ReconcileStatusesAsync(today, warningThreshold);
+    }
+
     public async Task RequestTerminationAsync(Contract contract, User actingUser, string terminationType, DateTime terminationDate, string reason, decimal? compensationAmount, string compensationDirection)
     {
         var termination = new ContractTermination
