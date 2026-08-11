@@ -82,6 +82,13 @@ public partial class ContractEditViewModel : ViewModelBase
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
+   
+    [RelayCommand]
+    private void ClearFile()
+    {
+        SelectedFilePath = null;
+        SelectedFileName = string.Empty;
+    }
 
     private async Task LoadAsync()
     {

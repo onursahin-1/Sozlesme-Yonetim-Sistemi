@@ -76,6 +76,13 @@ public partial class ViolationReportViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ClearFile()
+    {
+        SelectedFilePath = null;
+        SelectedFileName = string.Empty;
+    }
+
+    [RelayCommand]
     private async Task Submit()
     {
         ErrorMessage = string.Empty;

@@ -81,7 +81,12 @@
 				<ItemsControl ItemsSource="{Binding SozlesmeFileNames}">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate>
-							<TextBlock Text="{Binding}" FontSize="12" Foreground="Gray"/>
+							<Grid ColumnDefinitions="*,Auto" Margin="0,2">
+								<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+								<Button Grid.Column="1" Content="Kaldır" FontSize="11"
+										Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveSozlesmeFileCommand}"
+										CommandParameter="{Binding}"/>
+							</Grid>
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
@@ -93,7 +98,12 @@
 				<ItemsControl ItemsSource="{Binding EkFileNames}">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate>
-							<TextBlock Text="{Binding}" FontSize="12" Foreground="Gray"/>
+							<Grid ColumnDefinitions="*,Auto" Margin="0,2">
+								<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+								<Button Grid.Column="1" Content="Kaldır" FontSize="11"
+										Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveEkFileCommand}"
+										CommandParameter="{Binding}"/>
+							</Grid>
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
@@ -105,7 +115,12 @@
 				<ItemsControl ItemsSource="{Binding TeminatFileNames}">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate>
-							<TextBlock Text="{Binding}" FontSize="12" Foreground="Gray"/>
+							<Grid ColumnDefinitions="*,Auto" Margin="0,2">
+								<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+								<Button Grid.Column="1" Content="Kaldır" FontSize="11"
+										Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveTeminatFileCommand}"
+										CommandParameter="{Binding}"/>
+							</Grid>
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>

@@ -36,7 +36,10 @@ public partial class ContractListViewModel : ViewModelBase
     private async Task LoadAsync()
     {
         var contracts = await _contractService.GetContractsAsync(_currentUser);
-        _allContracts = contracts.Select(c => new ContractCardViewModel(c)).ToList();
+        _allContracts = contracts
+            .Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi)
+            .Select(c => new ContractCardViewModel(c))
+            .ToList();
         ApplyFilter();
         IsLoading = false;
     }

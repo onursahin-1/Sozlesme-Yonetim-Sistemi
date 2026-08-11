@@ -36,11 +36,13 @@
             <TextBlock Text="Vergi No *"/>
             <TextBox Text="{Binding TaxNo}"/>
 
-            <TextBlock Text="Sözleşme Dosyası"/>
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <Button Content="Dosya Seç" Click="OnPickFileClick"/>
-                <TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
-            </StackPanel>
+			<TextBlock Text="Sözleşme Dosyası"/>
+			<StackPanel Orientation="Horizontal" Spacing="10">
+				<Button Content="Dosya Seç" Click="OnPickFileClick"/>
+				<TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
+				<Button Content="Kaldır" FontSize="11" Command="{Binding ClearFileCommand}"
+                        IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+			</StackPanel>
 
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
             <TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>

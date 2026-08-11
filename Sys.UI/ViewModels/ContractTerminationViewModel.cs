@@ -99,6 +99,13 @@ public partial class ContractTerminationViewModel : ViewModelBase
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
+   
+    [RelayCommand]
+    private void ClearFile()
+    {
+        SelectedFilePath = null;
+        SelectedFileName = string.Empty;
+    }
 
     [RelayCommand]
     private async Task Submit()

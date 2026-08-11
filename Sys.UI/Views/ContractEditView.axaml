@@ -44,6 +44,8 @@
 				<StackPanel Orientation="Horizontal" Spacing="8">
 					<Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
 					<TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
+					<Button Content="Kaldır" FontSize="11" Command="{Binding ClearFileCommand}"
+							IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 				</StackPanel>
 
                 <Button Content="Değişiklik Talebini Gönder" Background="#B06A00" Foreground="White"

@@ -19,7 +19,6 @@
             <Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"/>
             <Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"/>
             <Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"/>
-            <Button Content="Tamamlandı" Command="{Binding SetFilterCommand}" CommandParameter="tamamlandi"/>
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>

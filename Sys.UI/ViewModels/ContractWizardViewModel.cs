@@ -12,15 +12,23 @@ using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
+public class WizardFileItem
+{
+    public string FilePath { get; }
+    public string FileName { get; }
+
+    public WizardFileItem(string filePath)
+    {
+        FilePath = filePath;
+        FileName = Path.GetFileName(filePath);
+    }
+}
+
 public partial class ContractWizardViewModel : ViewModelBase
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;
-
-    private readonly List<string> _sozlesmeFilePaths = new();
-    private readonly List<string> _ekFilePaths = new();
-    private readonly List<string> _teminatFilePaths = new();
 
     [ObservableProperty]
     public partial int CurrentStep { get; set; } = 1;
@@ -44,9 +52,9 @@ public partial class ContractWizardViewModel : ViewModelBase
     public partial string SuccessMessage { get; set; } = string.Empty;
 
     public ObservableCollection<ContractItemRowViewModel> Items { get; } = new();
-    public ObservableCollection<string> SozlesmeFileNames { get; } = new();
-    public ObservableCollection<string> EkFileNames { get; } = new();
-    public ObservableCollection<string> TeminatFileNames { get; } = new();
+    public ObservableCollection<WizardFileItem> SozlesmeFileNames { get; } = new();
+    public ObservableCollection<WizardFileItem> EkFileNames { get; } = new();
+    public ObservableCollection<WizardFileItem> TeminatFileNames { get; } = new();
 
     public decimal Toplam => Items.Sum(i => i.LineTotal);
 
@@ -100,22 +108,30 @@ public partial class ContractWizardViewModel : ViewModelBase
 
     public void AddFile(string path, AttachmentCategory category)
     {
+        var item = new WizardFileItem(path);
+
         switch (category)
         {
             case AttachmentCategory.Sozlesme:
-                _sozlesmeFilePaths.Add(path);
-                SozlesmeFileNames.Add(Path.GetFileName(path));
+                SozlesmeFileNames.Add(item);
                 break;
             case AttachmentCategory.Ek:
-                _ekFilePaths.Add(path);
-                EkFileNames.Add(Path.GetFileName(path));
+                EkFileNames.Add(item);
                 break;
             case AttachmentCategory.Teminat:
-                _teminatFilePaths.Add(path);
-                TeminatFileNames.Add(Path.GetFileName(path));
+                TeminatFileNames.Add(item);
                 break;
         }
     }
+
+    [RelayCommand]
+    private void RemoveSozlesmeFile(WizardFileItem item) => SozlesmeFileNames.Remove(item);
+
+    [RelayCommand]
+    private void RemoveEkFile(WizardFileItem item) => EkFileNames.Remove(item);
+
+    [RelayCommand]
+    private void RemoveTeminatFile(WizardFileItem item) => TeminatFileNames.Remove(item);
 
     [RelayCommand]
     private void NextStep()
@@ -176,9 +192,9 @@ public partial class ContractWizardViewModel : ViewModelBase
             }).ToList();
 
             var attachments = new List<Attachment>();
-            attachments.AddRange(SaveFiles(_sozlesmeFilePaths, AttachmentCategory.Sozlesme));
-            attachments.AddRange(SaveFiles(_ekFilePaths, AttachmentCategory.Ek));
-            attachments.AddRange(SaveFiles(_teminatFilePaths, AttachmentCategory.Teminat));
+            attachments.AddRange(SaveFiles(SozlesmeFileNames, AttachmentCategory.Sozlesme));
+            attachments.AddRange(SaveFiles(EkFileNames, AttachmentCategory.Ek));
+            attachments.AddRange(SaveFiles(TeminatFileNames, AttachmentCategory.Teminat));
 
             await _contractService.FinalizeContractAsync(SelectedRequest, items, attachments, _currentUser);
 
@@ -194,16 +210,16 @@ public partial class ContractWizardViewModel : ViewModelBase
         }
     }
 
-    private List<Attachment> SaveFiles(List<string> sourcePaths, AttachmentCategory category)
+    private List<Attachment> SaveFiles(IEnumerable<WizardFileItem> files, AttachmentCategory category)
     {
         var result = new List<Attachment>();
-        foreach (var path in sourcePaths)
+        foreach (var file in files)
         {
-            var savedPath = AttachmentFileHelper.SaveFile(path, _attachmentsBasePath, SelectedRequest!.Id);
+            var savedPath = AttachmentFileHelper.SaveFile(file.FilePath, _attachmentsBasePath, SelectedRequest!.Id);
             result.Add(new Attachment
             {
                 Category = category,
-                FileName = Path.GetFileName(path),
+                FileName = file.FileName,
                 FilePath = savedPath,
                 UploadedAt = DateTime.Now,
                 UploadedByUserId = _currentUser.Id,

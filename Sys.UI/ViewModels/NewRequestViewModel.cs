@@ -68,7 +68,13 @@ public partial class NewRequestViewModel : ViewModelBase
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
-
+    
+    [RelayCommand]
+    private void ClearFile()
+    {
+        SelectedFilePath = null;
+        SelectedFileName = string.Empty;
+    }
     partial void OnEstimatedAmountTextChanged(string value)
     {
         if (decimal.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out var amount))
