@@ -16,19 +16,21 @@ public class ContractRepository : IContractRepository
     public async Task<List<Contract>> GetAllAsync()
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
-        return await db.Contracts.ToListAsync();
+        return await db.Contracts.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<Contract>> GetByCreatedUserAsync(int userId)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
-        return await db.Contracts.Where(c => c.CreatedByUserId == userId).ToListAsync();
+        return await db.Contracts.AsNoTracking().Where(c => c.CreatedByUserId == userId).ToListAsync();
     }
 
     public async Task<Contract?> GetByIdWithDetailsAsync(int id)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
         return await db.Contracts
+            .AsNoTracking()
+            .AsSplitQuery()
             .Include(c => c.Items)
             .Include(c => c.Attachments)
             .Include(c => c.ApprovalLogs)
@@ -88,7 +90,7 @@ public class ContractRepository : IContractRepository
     public async Task<List<Contract>> GetByStageAsync(int stage)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
-        return await db.Contracts.Where(c => c.Stage == stage).ToListAsync();
+        return await db.Contracts.AsNoTracking().Where(c => c.Stage == stage).ToListAsync();
     }
 
     public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
