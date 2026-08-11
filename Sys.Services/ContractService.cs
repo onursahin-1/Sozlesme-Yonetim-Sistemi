@@ -63,6 +63,9 @@ public class ContractService
 
     public async Task FinalizeContractAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, User actingUser)
     {
+        if (actingUser.Role != UserRole.SYB)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
         contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
         contract.Status = ContractStatus.OnayBekliyor;
         contract.Stage = 1;
@@ -188,6 +191,9 @@ public class ContractService
 
     public async Task EditContractAsync(Contract contract, User actingUser, string changeType, string reason, decimal? newTotalAmount, DateTime? newEndDate)
     {
+        if (actingUser.Role != UserRole.SYB)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
         var revision = new ContractRevision
         {
             ChangeType = changeType,
@@ -215,6 +221,9 @@ public class ContractService
 
     public async Task ReportViolationAsync(Contract contract, User reporter, string violationType, DateTime violationDate, string description)
     {
+        if (reporter.Role == UserRole.Mudur)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
         var violation = new Violation
         {
             ContractId = contract.Id,
@@ -250,6 +259,9 @@ public class ContractService
 
     public async Task RequestTerminationAsync(Contract contract, User actingUser, string terminationType, DateTime terminationDate, string reason, decimal? compensationAmount, string compensationDirection)
     {
+        if (actingUser.Role != UserRole.SYB)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
         var termination = new ContractTermination
         {
             ContractId = contract.Id,
