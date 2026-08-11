@@ -41,4 +41,21 @@ public partial class ContractTerminationView : UserControl
     }
     private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);
     private void OnAmountTextChanged(object? sender, TextChangedEventArgs e) => AmountFormatHelper.FormatLive(sender);
+
+    private async void OnSubmitClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ContractTerminationViewModel vm) return;
+
+        if (!vm.CanSubmit()) return; // zorunlu alanlar eksikse onay penceresi açılmadan hata gösterilir
+
+        var owner = TopLevel.GetTopLevel(this) as Window;
+        if (owner is null) return;
+
+        var confirmed = await ConfirmDialog.ShowAsync(owner,
+            "Fesih işlemi geri alınamaz. Bu sözleşme için fesih talebi göndermek istediğinizden emin misiniz?",
+            "Evet, Fesih Talebini Gönder");
+
+        if (confirmed)
+            vm.SubmitCommand.Execute(null);
+    }
 }

@@ -96,7 +96,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
-   
+
     [RelayCommand]
     private void ClearFile()
     {
@@ -104,53 +104,64 @@ public partial class ContractTerminationViewModel : ViewModelBase
         SelectedFileName = string.Empty;
     }
 
-    [RelayCommand]
-    private async Task Submit()
+    private bool ValidateForm(out decimal? compensation)
     {
+        compensation = null;
         ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
 
         if (SelectedContract is null)
         {
             ErrorMessage = "Önce bir sözleşme seçin.";
-            return;
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(Reason))
         {
             ErrorMessage = "Fesih gerekçesi zorunludur.";
-            return;
+            return false;
         }
 
         if (TerminationDate is null)
         {
             ErrorMessage = "Fesih tarihi zorunludur.";
-            return;
+            return false;
         }
 
         if (string.IsNullOrEmpty(SelectedFilePath))
         {
             ErrorMessage = "Fesih belgesi (PDF) zorunludur.";
-            return;
+            return false;
         }
 
-        decimal? compensation = null;
         if (!string.IsNullOrWhiteSpace(CompensationAmountText))
         {
             if (!decimal.TryParse(CompensationAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
             {
                 ErrorMessage = "Tazminat tutarı geçerli, negatif olmayan bir sayı olmalı.";
-                return;
+                return false;
             }
             compensation = parsed;
         }
 
+        return true;
+    }
+
+    public bool CanSubmit() => ValidateForm(out _);
+
+    [RelayCommand]
+    private async Task Submit()
+    {
+        SuccessMessage = string.Empty;
+
+        if (!ValidateForm(out var compensation))
+            return;
+
         try
         {
-            var contractId = SelectedContract.Id;
-            await _contractService.RequestTerminationAsync(SelectedContract, _currentUser, SelectedTerminationType, TerminationDate.Value.DateTime, Reason, compensation, SelectedCompensationDirection);
+            var contractId = SelectedContract!.Id;
+            await _contractService.RequestTerminationAsync(SelectedContract, _currentUser, SelectedTerminationType, TerminationDate!.Value.DateTime, Reason, compensation, SelectedCompensationDirection);
 
-            var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, contractId);
+            var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath!, _attachmentsBasePath, contractId);
             await _contractService.AddAttachmentAsync(new Attachment
             {
                 ContractId = contractId,

@@ -1,0 +1,15 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Sys.UI.Views.ConfirmDialog"
+        Title="Onay"
+        Width="420" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <StackPanel Margin="24" Spacing="16">
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="14"/>
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+            <Button x:Name="CancelButton" Content="Vazgeç" Click="OnCancelClick"/>
+            <Button x:Name="ConfirmButton" Content="Evet, Devam Et" Background="#B06A00" Foreground="White" Click="OnConfirmClick"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

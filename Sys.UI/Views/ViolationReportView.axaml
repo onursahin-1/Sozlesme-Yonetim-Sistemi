@@ -16,13 +16,14 @@
             <TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
                        IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="İlgili Sözleşme *" FontWeight="Bold"/>
-                <ComboBox HorizontalAlignment="Stretch"
+			<StackPanel Spacing="4">
+				<TextBlock Text="İlgili Sözleşme *" FontWeight="Bold"/>
+				<ComboBox HorizontalAlignment="Stretch"
                           ItemsSource="{Binding AvailableContracts}"
                           SelectedItem="{Binding SelectedContract}"
                           DisplayMemberBinding="{Binding Title}"/>
-            </StackPanel>
+				<TextBlock Text="İhlal bildirilebilecek uygun sözleşme yok." IsVisible="{Binding !AvailableContracts.Count}" Foreground="Gray"/>
+			</StackPanel>
 
             <StackPanel Spacing="4">
                 <TextBlock Text="İhlal Türü *" FontWeight="Bold"/>

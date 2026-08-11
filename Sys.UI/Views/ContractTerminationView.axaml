@@ -22,6 +22,7 @@
                           ItemsSource="{Binding AvailableContracts}"
                           SelectedItem="{Binding SelectedContract}"
                           DisplayMemberBinding="{Binding Title}"/>
+				<TextBlock Text="Feshedilebilecek uygun sözleşme yok." IsVisible="{Binding !AvailableContracts.Count}" Foreground="Gray"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
@@ -65,7 +66,7 @@
 			</StackPanel>
 
 			<Button Content="Fesih Talebini Gönder" Background="#A32D2D" Foreground="White"
-                    Padding="16,8" Margin="0,8,0,0" Command="{Binding SubmitCommand}"/>
+                    Padding="16,8" Margin="0,8,0,0" Click="OnSubmitClick"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
