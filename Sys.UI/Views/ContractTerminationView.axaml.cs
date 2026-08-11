@@ -40,4 +40,5 @@ public partial class ContractTerminationView : UserControl
         }
     }
     private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);
+    private void OnAmountTextChanged(object? sender, TextChangedEventArgs e) => AmountFormatHelper.FormatLive(sender);
 }

@@ -50,17 +50,6 @@ public partial class ContractTerminationViewModel : ViewModelBase
     public partial string CompensationAmountText { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string CompensationAmountPreview { get; set; } = string.Empty;
-
-    partial void OnCompensationAmountTextChanged(string value)
-    {
-        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var amount))
-            CompensationAmountPreview = "→ " + amount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL";
-        else
-            CompensationAmountPreview = string.Empty;
-    }
-
-    [ObservableProperty]
     public partial string SelectedCompensationDirection { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -140,9 +129,9 @@ public partial class ContractTerminationViewModel : ViewModelBase
         decimal? compensation = null;
         if (!string.IsNullOrWhiteSpace(CompensationAmountText))
         {
-            if (!decimal.TryParse(CompensationAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed))
+            if (!decimal.TryParse(CompensationAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
             {
-                ErrorMessage = "Tazminat tutarı geçerli bir sayı olmalı.";
+                ErrorMessage = "Tazminat tutarı geçerli, negatif olmayan bir sayı olmalı.";
                 return;
             }
             compensation = parsed;

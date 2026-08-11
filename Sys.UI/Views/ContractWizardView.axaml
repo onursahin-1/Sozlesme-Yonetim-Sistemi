@@ -49,16 +49,13 @@
             <ItemsControl ItemsSource="{Binding Items}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ContractItemRowViewModel">
-						<Grid ColumnDefinitions="3*,Auto,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
+						<Grid ColumnDefinitions="3*,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
 							<TextBox Grid.Column="0" Watermark="Tanım" Text="{Binding Description}" Margin="0,0,4,0"/>
 							<TextBox Grid.Column="1" Width="60" Text="{Binding QuantityText}" Margin="0,0,4,0"/>
 							<TextBox Grid.Column="2" Width="70" Text="{Binding Unit}" Margin="0,0,4,0"/>
-							<StackPanel Grid.Column="3" Width="100" Margin="0,0,4,0">
-								<TextBox Text="{Binding UnitPriceText}"/>
-								<TextBlock Text="{Binding UnitPricePreview}" FontSize="10" Foreground="Gray"/>
-							</StackPanel>
-							<TextBlock Grid.Column="4" Width="100" Text="{Binding LineTotal}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-							<Button Grid.Column="5" Content="Sil" Command="{Binding RemoveCommand}"/>
+							<TextBox Grid.Column="3" Width="100" Margin="0,0,4,0" Text="{Binding UnitPriceText}"
+									 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+							<Button Grid.Column="4" Content="Sil" Command="{Binding RemoveCommand}"/>
 						</Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -66,11 +63,10 @@
 
             <Button Content="+ Kalem Ekle" Command="{Binding AddItemCommand}"/>
 
-            <TextBlock FontWeight="Bold" FontSize="16">
-                <Run Text="Toplam: "/>
-                <Run Text="{Binding Toplam}"/>
-                <Run Text=" TL"/>
-            </TextBlock>
+			<TextBlock FontWeight="Bold" FontSize="16">
+				<Run Text="Toplam: "/>
+				<Run Text="{Binding ToplamText}"/>
+			</TextBlock>
         </StackPanel>
 
 		<!-- ADIM 3 -->

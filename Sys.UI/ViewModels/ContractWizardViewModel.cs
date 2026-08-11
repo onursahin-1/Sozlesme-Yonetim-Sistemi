@@ -57,6 +57,7 @@ public partial class ContractWizardViewModel : ViewModelBase
     public ObservableCollection<WizardFileItem> TeminatFileNames { get; } = new();
 
     public decimal Toplam => Items.Sum(i => i.LineTotal);
+    public string ToplamText => Toplam.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) + " TL";
 
     public bool IsStep1 => CurrentStep == 1;
     public bool IsStep2 => CurrentStep == 2;
@@ -94,16 +95,21 @@ public partial class ContractWizardViewModel : ViewModelBase
         row.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(ContractItemRowViewModel.LineTotal))
+            {
                 OnPropertyChanged(nameof(Toplam));
+                OnPropertyChanged(nameof(ToplamText));
+            }
         };
         Items.Add(row);
         OnPropertyChanged(nameof(Toplam));
+        OnPropertyChanged(nameof(ToplamText));
     }
 
     private void RemoveItemRow(ContractItemRowViewModel row)
     {
         Items.Remove(row);
         OnPropertyChanged(nameof(Toplam));
+        OnPropertyChanged(nameof(ToplamText));
     }
 
     public void AddFile(string path, AttachmentCategory category)
@@ -155,6 +161,18 @@ public partial class ContractWizardViewModel : ViewModelBase
             if (Items.Any(i => string.IsNullOrWhiteSpace(i.Description)))
             {
                 ErrorMessage = "Lütfen tüm kalemlerin açıklamasını doldurun.";
+                return;
+            }
+
+            if (Items.Any(i => i.Quantity <= 0))
+            {
+                ErrorMessage = "Kalem miktarı 0'dan büyük olmalı.";
+                return;
+            }
+
+            if (Items.Any(i => i.UnitPrice < 0))
+            {
+                ErrorMessage = "Birim fiyat negatif olamaz.";
                 return;
             }
         }

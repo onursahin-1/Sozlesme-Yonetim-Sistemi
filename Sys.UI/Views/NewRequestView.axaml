@@ -24,8 +24,7 @@
             <ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch"/>
 
             <TextBlock Text="Tahmini Bedel (TL)"/>
-			<TextBlock Text="{Binding EstimatedAmountPreview}" FontSize="11" Foreground="Gray"/>
-			<TextBox Text="{Binding EstimatedAmountText}" LostFocus="OnAmountLostFocus"/>
+			<TextBox Text="{Binding EstimatedAmountText}" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 
             <TextBlock Text="İşin Tanımı *"/>
             <TextBox Text="{Binding Description}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"/>

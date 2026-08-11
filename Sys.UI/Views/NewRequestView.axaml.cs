@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Sys.UI.ViewModels;
 
+
 namespace Sys.UI.Views;
 
 public partial class NewRequestView : UserControl
@@ -40,4 +41,6 @@ public partial class NewRequestView : UserControl
         }
     }
     private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);
+    private void OnAmountTextChanged(object? sender, TextChangedEventArgs e) => AmountFormatHelper.FormatLive(sender);
+
 }

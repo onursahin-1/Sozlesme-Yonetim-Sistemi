@@ -31,9 +31,6 @@ public partial class NewRequestViewModel : ViewModelBase
     public partial string EstimatedAmountText { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string EstimatedAmountPreview { get; set; } = string.Empty;
-
-    [ObservableProperty]
     public partial string Description { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -75,13 +72,7 @@ public partial class NewRequestViewModel : ViewModelBase
         SelectedFilePath = null;
         SelectedFileName = string.Empty;
     }
-    partial void OnEstimatedAmountTextChanged(string value)
-    {
-        if (decimal.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out var amount))
-            EstimatedAmountPreview = "→ " + amount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) + " TL";
-        else
-            EstimatedAmountPreview = string.Empty;
-    }
+    
 
     [RelayCommand]
     private async Task SubmitAsync()
@@ -101,13 +92,18 @@ public partial class NewRequestViewModel : ViewModelBase
         else if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
             errors.Add("Vergi No (10 haneli rakamdan oluşmalı)");
 
+        decimal amount = 0;
+        if (!string.IsNullOrWhiteSpace(EstimatedAmountText))
+        {
+            if (!decimal.TryParse(EstimatedAmountText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out amount) || amount < 0)
+                errors.Add("Tahmini Bedel (negatif olamaz)");
+        }
+
         if (errors.Count > 0)
         {
             ErrorMessage = "Lütfen şu alanları kontrol edin: " + string.Join(", ", errors);
             return;
         }
-
-        decimal.TryParse(EstimatedAmountText, out var amount);
 
         var contract = new Contract
         {
@@ -147,7 +143,6 @@ public partial class NewRequestViewModel : ViewModelBase
             Description = string.Empty;
             RequestRefNo = string.Empty;
             EstimatedAmountText = string.Empty;
-            EstimatedAmountPreview = string.Empty;
             SelectedFilePath = null;
             SelectedFileName = string.Empty;
         }

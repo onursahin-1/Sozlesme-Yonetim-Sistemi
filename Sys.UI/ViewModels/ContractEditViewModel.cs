@@ -42,16 +42,6 @@ public partial class ContractEditViewModel : ViewModelBase
     public partial string NewTotalAmountText { get; set; } = string.Empty;
     
     [ObservableProperty]
-    public partial string NewTotalAmountPreview { get; set; } = string.Empty;
-
-    partial void OnNewTotalAmountTextChanged(string value)
-    {
-        if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var amount))
-            NewTotalAmountPreview = "→ " + amount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL";
-        else
-            NewTotalAmountPreview = string.Empty;
-    }
-    [ObservableProperty]
     public partial DateTimeOffset? NewEndDate { get; set; }
 
     [ObservableProperty]
@@ -128,9 +118,9 @@ public partial class ContractEditViewModel : ViewModelBase
         decimal? newAmount = null;
         if (!string.IsNullOrWhiteSpace(NewTotalAmountText))
         {
-            if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed))
+            if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
             {
-                ErrorMessage = "Yeni bedel geçerli bir sayı olmalı.";
+                ErrorMessage = "Yeni bedel geçerli, negatif olmayan bir sayı olmalı.";
                 return;
             }
             newAmount = parsed;
