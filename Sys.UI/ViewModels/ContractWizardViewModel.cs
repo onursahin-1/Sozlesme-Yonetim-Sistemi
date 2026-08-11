@@ -83,9 +83,20 @@ public partial class ContractWizardViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var all = await _contractService.GetContractsAsync(_currentUser);
-        PendingRequests = new ObservableCollection<Contract>(all.Where(c => c.Status == ContractStatus.Talep));
-        IsLoading = false;
+        IsLoading = true;
+        try
+        {
+            var all = await _contractService.GetContractsAsync(_currentUser);
+            PendingRequests = new ObservableCollection<Contract>(all.Where(c => c.Status == ContractStatus.Talep));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Talepler yüklenirken bir hata oluştu: " + ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]

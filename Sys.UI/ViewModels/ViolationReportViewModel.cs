@@ -65,8 +65,16 @@ public partial class ViolationReportViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var list = await _contractService.GetViolationReportableContractsAsync(_currentUser);
-        AvailableContracts = new ObservableCollection<Contract>(list);
+        ErrorMessage = string.Empty;
+        try
+        {
+            var list = await _contractService.GetViolationReportableContractsAsync(_currentUser);
+            AvailableContracts = new ObservableCollection<Contract>(list);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+        }
     }
 
     public void SetSelectedFile(string path)

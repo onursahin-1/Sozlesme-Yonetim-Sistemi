@@ -22,6 +22,8 @@
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
         <ListBox ItemsSource="{Binding FilteredContracts}"
                  SelectedItem="{Binding SelectedContract}"

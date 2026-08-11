@@ -82,8 +82,16 @@ public partial class ContractEditViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var list = await _contractService.GetEditableContractsAsync(_currentUser);
-        AvailableContracts = new ObservableCollection<Contract>(list);
+        ErrorMessage = string.Empty;
+        try
+        {
+            var list = await _contractService.GetEditableContractsAsync(_currentUser);
+            AvailableContracts = new ObservableCollection<Contract>(list);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+        }
     }
 
     partial void OnSelectedContractChanged(Contract? value)

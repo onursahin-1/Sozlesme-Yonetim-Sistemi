@@ -88,9 +88,20 @@ public partial class ApprovalQueueViewModel : ViewModelBase
     private async Task LoadQueueAsync()
     {
         IsLoading = true;
-        var list = await _contractService.GetPendingApprovalsAsync(_currentUser);
-        PendingContracts = new ObservableCollection<Contract>(list);
-        IsLoading = false;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var list = await _contractService.GetPendingApprovalsAsync(_currentUser);
+            PendingContracts = new ObservableCollection<Contract>(list);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Liste yüklenirken bir hata oluştu: " + ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     partial void OnSelectedContractChanged(Contract? value)
@@ -113,44 +124,51 @@ public partial class ApprovalQueueViewModel : ViewModelBase
 
         if (summary is null) return;
 
-        var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
-        if (full is null)
+        try
         {
-            ErrorMessage = "Sözleşme yüklenemedi.";
-            return;
-        }
-
-        Detail = full;
-        DetailTitle = full.Title;
-        DetailCompany = "Firma: " + full.CompanyName;
-        DetailStatus = "Durum: " + full.Status;
-        DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
-        DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
-        DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
-
-        Items = new ObservableCollection<ContractItem>(full.Items);
-        Attachments = new ObservableCollection<Attachment>(full.Attachments);
-
-        IsPendingTermination = full.PendingTermination;
-        if (full.PendingTermination)
-        {
-            var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
-            if (term is not null)
+            var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
+            if (full is null)
             {
-                var compensation = term.CompensationAmount.HasValue
-                    ? term.CompensationAmount.Value.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL — " + term.CompensationDirection
-                    : "Yok";
-                TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}\nTazminat: {compensation}";
+                ErrorMessage = "Sözleşme yüklenemedi.";
+                return;
+            }
+
+            Detail = full;
+            DetailTitle = full.Title;
+            DetailCompany = "Firma: " + full.CompanyName;
+            DetailStatus = "Durum: " + full.Status;
+            DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
+            DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
+            DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
+
+            Items = new ObservableCollection<ContractItem>(full.Items);
+            Attachments = new ObservableCollection<Attachment>(full.Attachments);
+
+            IsPendingTermination = full.PendingTermination;
+            if (full.PendingTermination)
+            {
+                var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
+                if (term is not null)
+                {
+                    var compensation = term.CompensationAmount.HasValue
+                        ? term.CompensationAmount.Value.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL — " + term.CompensationDirection
+                        : "Yok";
+                    TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}\nTazminat: {compensation}";
+                }
+            }
+            else if (full.Revisions.Count > 0)
+            {
+                var rev = full.Revisions.OrderByDescending(r => r.ChangedAt).FirstOrDefault();
+                if (rev is not null)
+                {
+                    HasRevisionHistory = true;
+                    RevisionInfo = $"Değişiklik Türü: {rev.ChangeType}\nGerekçe: {rev.Reason}\nÖnceki Bedel: {rev.PreviousTotalAmount:N2} TL";
+                }
             }
         }
-        else if (full.Revisions.Count > 0)
+        catch (Exception ex)
         {
-            var rev = full.Revisions.OrderByDescending(r => r.ChangedAt).FirstOrDefault();
-            if (rev is not null)
-            {
-                HasRevisionHistory = true;
-                RevisionInfo = $"Değişiklik Türü: {rev.ChangeType}\nGerekçe: {rev.Reason}\nÖnceki Bedel: {rev.PreviousTotalAmount:N2} TL";
-            }
+            ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
         }
     }
 

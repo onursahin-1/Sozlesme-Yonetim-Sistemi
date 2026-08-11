@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,8 +70,16 @@ public partial class ArchiveViewModel : ViewModelBase
 
     private async Task LoadListAsync()
     {
-        var contracts = await _contractService.GetArchivedContractsAsync(_currentUser);
-        AvailableContracts = new ObservableCollection<Contract>(contracts);
+        ErrorMessage = string.Empty;
+        try
+        {
+            var contracts = await _contractService.GetArchivedContractsAsync(_currentUser);
+            AvailableContracts = new ObservableCollection<Contract>(contracts);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Arşiv yüklenirken bir hata oluştu: " + ex.Message;
+        }
     }
 
     partial void OnSelectedContractChanged(Contract? value)
@@ -90,33 +99,40 @@ public partial class ArchiveViewModel : ViewModelBase
 
         if (summary is null) return;
 
-        var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
-        if (full is null)
+        try
         {
-            ErrorMessage = "Bu sözleşmeyi görüntüleme yetkiniz yok.";
-            return;
-        }
-
-        Detail = full;
-        DetailTitle = full.Title;
-        DetailCompany = "Firma: " + full.CompanyName;
-        DetailStatus = "Durum: " + full.Status;
-        DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
-        DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
-        DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
-
-        Items = new ObservableCollection<ContractItem>(full.Items);
-        Attachments = new ObservableCollection<Attachment>(full.Attachments);
-        ApprovalLogs = new ObservableCollection<ApprovalLog>(full.ApprovalLogs);
-
-        if (full.Status == ContractStatus.Feshedildi)
-        {
-            var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
-            if (term is not null)
+            var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
+            if (full is null)
             {
-                HasTerminationInfo = true;
-                TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}";
+                ErrorMessage = "Bu sözleşmeyi görüntüleme yetkiniz yok.";
+                return;
             }
+
+            Detail = full;
+            DetailTitle = full.Title;
+            DetailCompany = "Firma: " + full.CompanyName;
+            DetailStatus = "Durum: " + full.Status;
+            DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
+            DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
+            DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
+
+            Items = new ObservableCollection<ContractItem>(full.Items);
+            Attachments = new ObservableCollection<Attachment>(full.Attachments);
+            ApprovalLogs = new ObservableCollection<ApprovalLog>(full.ApprovalLogs);
+
+            if (full.Status == ContractStatus.Feshedildi)
+            {
+                var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
+                if (term is not null)
+                {
+                    HasTerminationInfo = true;
+                    TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
         }
     }
 }

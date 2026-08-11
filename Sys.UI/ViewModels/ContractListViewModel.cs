@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,6 +23,9 @@ public partial class ContractListViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; } = true;
+    
+    [ObservableProperty]
+    public partial string ErrorMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial ContractCardViewModel? SelectedContract { get; set; }
@@ -35,13 +39,25 @@ public partial class ContractListViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var contracts = await _contractService.GetContractsAsync(_currentUser);
-        _allContracts = contracts
-            .Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi)
-            .Select(c => new ContractCardViewModel(c))
-            .ToList();
-        ApplyFilter();
-        IsLoading = false;
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var contracts = await _contractService.GetContractsAsync(_currentUser);
+            _allContracts = contracts
+                .Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi)
+                .Select(c => new ContractCardViewModel(c))
+                .ToList();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]

@@ -79,8 +79,16 @@ public partial class ContractTerminationViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var list = await _contractService.GetTerminableContractsAsync(_currentUser);
-        AvailableContracts = new ObservableCollection<Contract>(list);
+        ErrorMessage = string.Empty;
+        try
+        {
+            var list = await _contractService.GetTerminableContractsAsync(_currentUser);
+            AvailableContracts = new ObservableCollection<Contract>(list);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+        }
     }
 
     public void SetSelectedFile(string path)
