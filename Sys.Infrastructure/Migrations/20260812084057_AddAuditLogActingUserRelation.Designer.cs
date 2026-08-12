@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sys.Infrastructure;
 
@@ -11,9 +12,11 @@ using Sys.Infrastructure;
 namespace Sys.Infrastructure.Migrations
 {
     [DbContext(typeof(SysDbContext))]
-    partial class SysDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812084057_AddAuditLogActingUserRelation")]
+    partial class AddAuditLogActingUserRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -169,14 +172,8 @@ namespace Sys.Infrastructure.Migrations
                     b.Property<string>("PaymentPeriod")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("PendingEdit")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("PendingTermination")
                         .HasColumnType("bit");
-
-                    b.Property<int?>("PreviousStatusBeforeEdit")
-                        .HasColumnType("int");
 
                     b.Property<string>("RequestRefNo")
                         .IsRequired()

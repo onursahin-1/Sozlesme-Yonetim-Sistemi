@@ -36,7 +36,7 @@
                         <StackPanel Spacing="4">
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14"/>
+									<TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14" Foreground="Black"/>
                                     <TextBlock FontSize="11" Foreground="#888">
 										<Run Text="{Binding RefNoText}"/>
                                         <Run Text=" · "/>
@@ -54,6 +54,18 @@
 							</StackPanel>
 							<TextBlock Text="{Binding RejectionNoteText}" FontSize="11" Foreground="#A32D2D" FontStyle="Italic"
                                        TextWrapping="Wrap" Margin="0,4,0,0" IsVisible="{Binding IsRejected}"/>
+							<Button Content="Düzenle" FontSize="11" Margin="0,6,0,0" HorizontalAlignment="Left"
+                                    Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4"
+                                    IsVisible="{Binding IsEditable}"
+                                    Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}"
+                                    CommandParameter="{Binding}">
+								<Button.Styles>
+									<Style Selector="Button:pointerover /template/ ContentPresenter">
+										<Setter Property="Background" Value="#1F5686"/>
+										<Setter Property="TextBlock.Foreground" Value="White"/>
+									</Style>
+								</Button.Styles>
+							</Button>
                         </StackPanel>
                     </Border>
                 </DataTemplate>

@@ -13,6 +13,7 @@ public class FakeContractRepository : IContractRepository
     public Task<List<Contract>> GetByStageAsync(int stage) => Task.FromResult(new List<Contract>());
     public Task<Contract?> GetByIdWithDetailsAsync(int id) => Task.FromResult<Contract?>(null);
     public Task AddAsync(Contract contract) => Task.CompletedTask;
+    public Task UpdateRequestAsync(Contract contract) => Task.CompletedTask;
 
     public Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog)
         => Task.CompletedTask;
@@ -28,4 +29,6 @@ public class FakeContractRepository : IContractRepository
     public Task ApplyViolationAsync(Contract contract, Violation violation) => Task.CompletedTask;
     public Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination) => Task.CompletedTask;
     public Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold) => Task.FromResult(0);
+    public Task AddAuditLogAsync(AuditLog log) => Task.CompletedTask;
+    public Task<List<AuditLog>> GetAuditLogsAsync() => Task.FromResult(new List<AuditLog>());
 }

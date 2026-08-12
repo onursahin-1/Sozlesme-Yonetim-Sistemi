@@ -67,7 +67,7 @@ public partial class ShellViewModel : ViewModelBase
         {
             "dashboard" => new DashboardViewModel(_contractService, CurrentUser),
             "sozlesmeList" => new ContractListViewModel(_contractService, CurrentUser),
-            "talepList" => new ContractListViewModel(_contractService, CurrentUser),
+            "talepList" => CreateTalepListViewModel(),
             "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeYarat" => new ContractWizardViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeGoruntule" => new ContractDetailViewModel(_contractService, CurrentUser),
@@ -77,8 +77,29 @@ public partial class ShellViewModel : ViewModelBase
             "fesih" => new ContractTerminationViewModel(_contractService, CurrentUser, _attachmentsPath),
             "arsiv" => new ArchiveViewModel(_contractService, CurrentUser),
             "onayBekleyen" => new ApprovalQueueViewModel(_contractService, CurrentUser),
+            "auditLog" => new AuditLogViewModel(_contractService, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
+    }
+
+    private ContractListViewModel CreateTalepListViewModel()
+    {
+        var vm = new ContractListViewModel(_contractService!, CurrentUser);
+        vm.EditRequested += OnEditRequested;
+        return vm;
+    }
+
+    private void OnEditRequested(Contract contract)
+    {
+        var editVm = new NewRequestViewModel(_contractService!, CurrentUser, _attachmentsPath, contract);
+        editVm.CancelRequested += () =>
+        {
+            CurrentPageTitle = "Taleplerim";
+            CurrentPageContent = CreateTalepListViewModel();
+        };
+
+        CurrentPageTitle = "Talebi Düzenle";
+        CurrentPageContent = editVm;
     }
 
     private static NavItem[] BuildNavItems(UserRole role) => role switch
@@ -111,6 +132,7 @@ public partial class ShellViewModel : ViewModelBase
             new("onayBekleyen", "Onay Bekleyenler"),
             new("sozlesmeGoruntule", "Sözleşmeleri Görüntüle"),
             new("arsiv", "Arşiv"),
+            new("auditLog", "İşlem Geçmişi"),
         ],
         _ => []
     };

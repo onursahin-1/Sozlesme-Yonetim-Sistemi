@@ -36,11 +36,19 @@ public partial class ContractListViewModel : ViewModelBase
     [ObservableProperty]
     public partial ContractCardViewModel? SelectedContract { get; set; }
 
+    public event Action<Contract>? EditRequested;
+
     public ContractListViewModel(ContractService contractService, User currentUser)
     {
         _contractService = contractService;
         _currentUser = currentUser;
         _ = LoadAsync();
+    }
+
+    [RelayCommand]
+    private void EditRequest(ContractCardViewModel card)
+    {
+        EditRequested?.Invoke(card.RawContract);
     }
 
     private async Task LoadAsync()
@@ -50,9 +58,10 @@ public partial class ContractListViewModel : ViewModelBase
         try
         {
             var contracts = await _contractService.GetContractsAsync(_currentUser);
+            var editableUserId = _currentUser.Role == UserRole.Personel ? _currentUser.Id : 0;
             _allContracts = contracts
                 .Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi)
-                .Select(c => new ContractCardViewModel(c))
+                .Select(c => new ContractCardViewModel(c, editableUserId))
                 .ToList();
             ApplyFilter();
         }

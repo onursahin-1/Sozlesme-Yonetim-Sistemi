@@ -47,6 +47,27 @@ public class ContractRepository : IContractRepository
         await db.SaveChangesAsync();
     }
 
+    public async Task UpdateRequestAsync(Contract contract)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        tracked.RequestRefNo = contract.RequestRefNo;
+        tracked.Title = contract.Title;
+        tracked.Type = contract.Type;
+        tracked.Description = contract.Description;
+        tracked.CompanyName = contract.CompanyName;
+        tracked.TaxNo = contract.TaxNo;
+        tracked.SapCariKodu = contract.SapCariKodu;
+        tracked.CompanyType = contract.CompanyType;
+        tracked.TotalAmount = contract.TotalAmount;
+        tracked.WasRejected = false;
+        tracked.LastRejectionNote = null;
+        tracked.LastRejectedAt = null;
+
+        await db.SaveChangesAsync();
+    }
+
     public async Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -105,6 +126,8 @@ public class ContractRepository : IContractRepository
         tracked.WasRejected = contract.WasRejected;
         tracked.LastRejectionNote = contract.LastRejectionNote;
         tracked.LastRejectedAt = contract.LastRejectedAt;
+        tracked.PendingEdit = contract.PendingEdit;
+        tracked.PreviousStatusBeforeEdit = contract.PreviousStatusBeforeEdit;
 
         log.ContractId = contract.Id;
         db.ApprovalLogs.Add(log);
@@ -156,6 +179,8 @@ public class ContractRepository : IContractRepository
         tracked.EndDate = contract.EndDate;
         tracked.Stage = contract.Stage;
         tracked.Status = contract.Status;
+        tracked.PendingEdit = contract.PendingEdit;
+        tracked.PreviousStatusBeforeEdit = contract.PreviousStatusBeforeEdit;
 
         revision.ContractId = contract.Id;
         db.ContractRevisions.Add(revision);
@@ -188,4 +213,21 @@ public class ContractRepository : IContractRepository
 
         await db.SaveChangesAsync();
     }
+    public async Task AddAuditLogAsync(AuditLog log)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        db.AuditLogs.Add(log);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<List<AuditLog>> GetAuditLogsAsync()
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.AuditLogs
+            .AsNoTracking()
+            .Include(a => a.ActingUser)
+            .OrderByDescending(a => a.ActionDate)
+            .ToListAsync();
+    }
+
 }

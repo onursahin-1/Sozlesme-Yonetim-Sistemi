@@ -7,6 +7,7 @@ public interface IContractRepository
     Task<List<Contract>> GetAllAsync();
     Task<List<Contract>> GetByCreatedUserAsync(int userId);
     Task AddAsync(Contract contract);
+    Task UpdateRequestAsync(Contract contract);
     Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog);
     Task<Contract?> GetByIdWithDetailsAsync(int id);
     Task ApplyDecisionAsync(Contract contract, ApprovalLog log);
@@ -15,4 +16,6 @@ public interface IContractRepository
     Task ApplyViolationAsync(Contract contract, Violation violation);
     Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination);
     Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold);
+    Task AddAuditLogAsync(AuditLog log);
+    Task<List<AuditLog>> GetAuditLogsAsync();
 }

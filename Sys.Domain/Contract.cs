@@ -34,6 +34,8 @@ public class Contract
     public List<Violation> Violations { get; set; } = new();
     public List<ContractRevision> Revisions { get; set; } = new();
     public List<ContractTermination> Terminations { get; set; } = new();
+    public bool PendingEdit { get; set; }
+    public ContractStatus? PreviousStatusBeforeEdit { get; set; }
 }
 
 public enum ContractStatus

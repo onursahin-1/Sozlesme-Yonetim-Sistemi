@@ -25,6 +25,20 @@ public class ContractService
         _attachments = attachments;
     }
 
+    private async Task LogAuditAsync(int contractId, string action, int actingUserId, string? detail)
+    {
+        var log = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contractId,
+            Action = action,
+            ActingUserId = actingUserId,
+            Detail = detail,
+            ActionDate = DateTime.Now,
+        };
+        await _contracts.AddAuditLogAsync(log);
+    }
+
     public async Task<DashboardStats> GetDashboardStatsAsync(User currentUser)
     {
         var contracts = currentUser.Role == UserRole.Personel
@@ -53,7 +67,21 @@ public class ContractService
         contract.Stage = 0;
         contract.CreatedAt = DateTime.Now;
         await _contracts.AddAsync(contract);
+        await LogAuditAsync(contract.Id, "TalepOluşturuldu", contract.CreatedByUserId, $"{contract.Title} için yeni talep oluşturuldu.");
         return contract;
+    }
+
+    public async Task UpdateRequestAsync(Contract contract, User actingUser)
+    {
+        var existing = await GetContractDetailAsync(contract.Id, actingUser);
+        if (existing is null)
+            throw new InvalidOperationException("Bu talebi düzenleme yetkiniz yok.");
+
+        if (existing.Status != ContractStatus.Talep)
+            throw new InvalidOperationException("Bu talep artık düzenlenemez, işlem görmüş.");
+
+        await _contracts.UpdateRequestAsync(contract);
+        await LogAuditAsync(contract.Id, "TalepGüncellendi", actingUser.Id, $"{contract.Title} talebi düzenlenip yeniden gönderildi.");
     }
 
     public async Task AddAttachmentAsync(Attachment attachment)
@@ -109,7 +137,7 @@ public class ContractService
         var log = new ApprovalLog
         {
             StepNumber = contract.Stage,
-            StepName = contract.PendingTermination ? stepName + " (Fesih)" : stepName,
+            StepName = contract.PendingTermination ? stepName + " (Fesih)" : contract.PendingEdit ? stepName + " (Düzenleme)" : stepName,
             ActingUserId = actingUser.Id,
             Decision = decision,
             Note = note,
@@ -137,6 +165,31 @@ public class ContractService
                 contract.Stage = 3;
                 contract.Status = ContractStatus.Aktif;
                 contract.PendingTermination = false;
+            }
+        }
+        else if (contract.PendingEdit)
+        {
+            if (decision == ApprovalDecision.Onay)
+            {
+                if (contract.Stage == 1)
+                {
+                    contract.Stage = 2;
+                }
+                else
+                {
+                    contract.Stage = 3;
+                    contract.Status = ContractStatus.Aktif;
+                    contract.PendingEdit = false;
+                    contract.PreviousStatusBeforeEdit = null;
+                }
+            }
+            else
+            {
+                // Düzenleme talebi reddedildi — sözleşme düzenleme öncesi durumuna döner, Talep'e düşmez
+                contract.Stage = 3;
+                contract.Status = contract.PreviousStatusBeforeEdit ?? ContractStatus.Aktif;
+                contract.PendingEdit = false;
+                contract.PreviousStatusBeforeEdit = null;
             }
         }
         else
@@ -171,7 +224,10 @@ public class ContractService
         }
 
         await _contracts.ApplyDecisionAsync(contract, log);
+        await LogAuditAsync(contract.Id, decision == ApprovalDecision.Onay ? "Onaylandı" : "Reddedildi", actingUser.Id,
+            $"{stepName} - {contract.Title}" + (string.IsNullOrWhiteSpace(note) ? "" : $" - Not: {note}"));
     }
+   
 
     public async Task<List<Contract>> GetPendingApprovalsAsync(User currentUser)
     {
@@ -189,7 +245,7 @@ public class ContractService
     public async Task<List<Contract>> GetEditableContractsAsync(User currentUser)
     {
         var all = await GetContractsAsync(currentUser);
-        return all.Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi).ToList();
+        return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari || c.Status == ContractStatus.Ihlal).ToList();
     }
 
     public async Task EditContractAsync(Contract contract, User actingUser, string changeType, string reason, decimal? newTotalAmount, DateTime? newEndDate)
@@ -211,10 +267,13 @@ public class ContractService
         if (newTotalAmount.HasValue) contract.TotalAmount = newTotalAmount.Value;
         if (newEndDate.HasValue) contract.EndDate = newEndDate.Value;
 
+        contract.PreviousStatusBeforeEdit = contract.Status;
+        contract.PendingEdit = true;
         contract.Stage = 1;
         contract.Status = ContractStatus.OnayBekliyor;
 
         await _contracts.ApplyEditAsync(contract, revision);
+        await LogAuditAsync(contract.Id, "SözleşmeDüzenlendi", actingUser.Id, $"{contract.Title} - {changeType} - {reason}");
     }
     public async Task<List<Contract>> GetViolationReportableContractsAsync(User currentUser)
     {
@@ -240,6 +299,7 @@ public class ContractService
         contract.Status = ContractStatus.Ihlal;
 
         await _contracts.ApplyViolationAsync(contract, violation);
+        await LogAuditAsync(contract.Id, "İhlalBildirildi", reporter.Id, $"{contract.Title} - {violationType}: {description}");
     }
     public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
     {
@@ -282,6 +342,15 @@ public class ContractService
         contract.Status = ContractStatus.OnayBekliyor;
 
         await _contracts.ApplyTerminationRequestAsync(contract, termination);
+        await LogAuditAsync(contract.Id, "FesihTalebiOluşturuldu", actingUser.Id, $"{contract.Title} - Tür: {terminationType} - Gerekçe: {reason}");
+    }
+
+    public async Task<List<AuditLog>> GetAuditLogsAsync(User currentUser)
+    {
+        if (currentUser.Role != UserRole.Mudur)
+            throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
+
+        return await _contracts.GetAuditLogsAsync();
     }
 
 }

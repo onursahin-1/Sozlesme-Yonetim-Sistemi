@@ -12,9 +12,11 @@
     </Design.DataContext>
 
     <ScrollViewer>
-        <StackPanel Margin="0,0,20,20" Spacing="10" MaxWidth="600">
+		<StackPanel Margin="0,0,20,20" Spacing="10" MaxWidth="600">
 
-            <TextBlock Text="SAS / YK Referans No"/>
+			<TextBlock Text="Talebi Düzenle" FontSize="16" FontWeight="Bold" Foreground="#A32D2D" IsVisible="{Binding IsEditMode}"/>
+
+			<TextBlock Text="SAS / YK Referans No"/>
             <TextBox Text="{Binding RequestRefNo}"/>
 
             <TextBlock Text="Konu / Başlık *"/>
@@ -52,7 +54,10 @@
             <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
             <TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>
 
-            <Button Content="Onaya Gönder" Command="{Binding SubmitCommand}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+			<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+				<Button Content="{Binding SubmitButtonText}" Command="{Binding SubmitCommand}"/>
+				<Button Content="İptal" Command="{Binding CancelCommand}" IsVisible="{Binding IsEditMode}"/>
+			</StackPanel>
 
         </StackPanel>
     </ScrollViewer>

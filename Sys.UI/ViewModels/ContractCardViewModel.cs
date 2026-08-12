@@ -7,10 +7,14 @@ public class ContractCardViewModel
 {
     private readonly Contract _contract;
 
-    public ContractCardViewModel(Contract contract)
+    public ContractCardViewModel(Contract contract, int currentUserId = 0)
     {
         _contract = contract;
+        IsEditable = currentUserId != 0 && contract.CreatedByUserId == currentUserId && contract.Status == ContractStatus.Talep;
     }
+
+    public Contract RawContract => _contract;
+    public bool IsEditable { get; }
 
     public int Id => _contract.Id;
     public string Title => _contract.Title;

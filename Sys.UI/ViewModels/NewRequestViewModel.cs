@@ -15,6 +15,20 @@ public partial class NewRequestViewModel : ViewModelBase
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;
+    private readonly int? _editingContractId;
+
+    [ObservableProperty]
+    public partial bool IsEditMode { get; set; }
+
+    public string SubmitButtonText => IsEditMode ? "Kaydet ve Yeniden Gönder" : "Onaya Gönder";
+
+    public event Action? CancelRequested;
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        CancelRequested?.Invoke();
+    }
 
     public string[] TypeOptions { get; } = { "Hizmet", "Tedarik", "Eser", "Danışmanlık", "Kira", "Diğer" };
 
@@ -67,6 +81,24 @@ public partial class NewRequestViewModel : ViewModelBase
         _attachmentsBasePath = attachmentsBasePath;
     }
 
+    public NewRequestViewModel(ContractService contractService, User currentUser, string attachmentsBasePath, Contract editingContract)
+        : this(contractService, currentUser, attachmentsBasePath)
+    {
+        _editingContractId = editingContract.Id;
+        IsEditMode = true;
+        RequestRefNo = editingContract.RequestRefNo;
+        Title = editingContract.Title;
+        Type = editingContract.Type;
+        EstimatedAmountText = editingContract.TotalAmount == 0
+            ? string.Empty
+            : editingContract.TotalAmount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"));
+        Description = editingContract.Description;
+        CompanyName = editingContract.CompanyName;
+        TaxNo = editingContract.TaxNo;
+        SapCariKodu = editingContract.SapCariKodu ?? string.Empty;
+        SelectedCompanyType = editingContract.CompanyType ?? string.Empty;
+    }
+
     public void SetSelectedFile(string path)
     {
         SelectedFilePath = path;
@@ -79,7 +111,7 @@ public partial class NewRequestViewModel : ViewModelBase
         SelectedFilePath = null;
         SelectedFileName = string.Empty;
     }
-    
+
 
     [RelayCommand]
     private async Task SubmitAsync()
@@ -112,22 +144,62 @@ public partial class NewRequestViewModel : ViewModelBase
             return;
         }
 
-        var contract = new Contract
-        {
-            RequestRefNo = RequestRefNo,
-            Title = Title,
-            Type = Type,
-            Description = Description,
-            CompanyName = CompanyName,
-            TaxNo = TaxNo,
-            SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
-            CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
-            TotalAmount = amount,
-            CreatedByUserId = _currentUser.Id,
-        };
-
         try
         {
+            if (IsEditMode && _editingContractId.HasValue)
+            {
+                var editedContract = new Contract
+                {
+                    Id = _editingContractId.Value,
+                    CreatedByUserId = _currentUser.Id,
+                    Status = ContractStatus.Talep,
+                    RequestRefNo = RequestRefNo,
+                    Title = Title,
+                    Type = Type,
+                    Description = Description,
+                    CompanyName = CompanyName,
+                    TaxNo = TaxNo,
+                    SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
+                    CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
+                    TotalAmount = amount,
+                };
+
+                await _contractService.UpdateRequestAsync(editedContract, _currentUser);
+
+                if (!string.IsNullOrEmpty(SelectedFilePath))
+                {
+                    var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, editedContract.Id);
+                    await _contractService.AddAttachmentAsync(new Attachment
+                    {
+                        ContractId = editedContract.Id,
+                        Category = AttachmentCategory.Talep,
+                        FileName = SelectedFileName,
+                        FilePath = savedPath,
+                        UploadedAt = DateTime.Now,
+                        UploadedByUserId = _currentUser.Id,
+                    });
+                }
+
+                SuccessMessage = "Talep güncellendi ve yeniden gönderildi.";
+                SelectedFilePath = null;
+                SelectedFileName = string.Empty;
+                return;
+            }
+
+            var contract = new Contract
+            {
+                RequestRefNo = RequestRefNo,
+                Title = Title,
+                Type = Type,
+                Description = Description,
+                CompanyName = CompanyName,
+                TaxNo = TaxNo,
+                SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
+                CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
+                TotalAmount = amount,
+                CreatedByUserId = _currentUser.Id,
+            };
+
             var saved = await _contractService.CreateRequestAsync(contract);
 
             if (!string.IsNullOrEmpty(SelectedFilePath))

@@ -9,4 +9,5 @@ public class AuditLog
     public int ActingUserId { get; set; }
     public string? Detail { get; set; }
     public DateTime ActionDate { get; set; }
+    public User? ActingUser { get; set; }
 }
