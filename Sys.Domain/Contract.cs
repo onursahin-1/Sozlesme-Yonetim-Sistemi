@@ -6,11 +6,18 @@ public class Contract
 {
     public int Id { get; set; }
     public string RequestRefNo { get; set; } = string.Empty;
+    public string? ContractNo { get; set; }
+    public string? PaymentPeriod { get; set; }
+    public string? SapCariKodu { get; set; }
+    public string? CompanyType { get; set; }
     public string Title { get; set; } = string.Empty;
     public string CompanyName { get; set; } = string.Empty;
     public string TaxNo { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public bool WasRejected { get; set; }
+    public string? LastRejectionNote { get; set; }
+    public DateTime? LastRejectedAt { get; set; }
     public ContractStatus Status { get; set; }
     public int Stage { get; set; }
     public bool PendingTermination { get; set; }
@@ -18,6 +25,7 @@ public class Contract
     public DateTime? EndDate { get; set; }
     public decimal TotalAmount { get; set; }
     public int CreatedByUserId { get; set; }
+    public User? CreatedByUser { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public List<ContractItem> Items { get; set; } = new();

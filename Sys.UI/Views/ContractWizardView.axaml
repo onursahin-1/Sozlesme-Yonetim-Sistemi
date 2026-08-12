@@ -40,7 +40,20 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <TextBlock Text="Bekleyen talep yok." IsVisible="{Binding !PendingRequests.Count}" Foreground="Gray"/>
-        </StackPanel>
+			<TextBlock Text="Başlangıç Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
+			<DatePicker SelectedDate="{Binding StartDate}"/>
+
+			<TextBlock Text="Bitiş Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
+			<DatePicker SelectedDate="{Binding EndDate}"/>
+			<TextBlock Text="Ödeme Periyodu *" FontWeight="Bold" Margin="0,10,0,0"/>
+			<ComboBox ItemsSource="{Binding PaymentPeriodOptions}" SelectedItem="{Binding SelectedPaymentPeriod}" HorizontalAlignment="Stretch"/>
+
+			<TextBlock Text="SAP Cari Kodu *" FontWeight="Bold" Margin="0,10,0,0"/>
+			<TextBox Text="{Binding SapCariKodu}" Watermark="C-XXXXX"/>
+
+			<TextBlock Text="Firma Türü" FontWeight="Bold" Margin="0,10,0,0"/>
+			<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>
+		</StackPanel>
 
         <!-- ADIM 2 -->
         <StackPanel IsVisible="{Binding IsStep2}" Spacing="10">

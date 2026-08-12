@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using System.Collections.Generic;
 
 namespace Sys.UI.ViewModels;
 
@@ -20,6 +21,11 @@ public partial class ContractListViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string SelectedFilter { get; set; } = "tumu";
+
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; } = true;
@@ -69,9 +75,18 @@ public partial class ContractListViewModel : ViewModelBase
 
     private void ApplyFilter()
     {
-        var items = SelectedFilter == "tumu"
+        IEnumerable<ContractCardViewModel> items = SelectedFilter == "tumu"
             ? _allContracts
-            : _allContracts.Where(c => MatchesFilter(c.Status, SelectedFilter)).ToList();
+            : _allContracts.Where(c => MatchesFilter(c.Status, SelectedFilter));
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            var term = SearchText.Trim();
+            items = items.Where(c =>
+                c.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                c.CompanyName.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
         FilteredContracts = new ObservableCollection<ContractCardViewModel>(items);
     }
 

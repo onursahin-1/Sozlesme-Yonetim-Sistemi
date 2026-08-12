@@ -38,6 +38,13 @@ public partial class NewRequestViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string TaxNo { get; set; } = string.Empty;
+    public string[] CompanyTypeOptions { get; } = { "Yerli Firma", "Yabancı Firma", "Kamu Kurumu" };
+
+    [ObservableProperty]
+    public partial string SapCariKodu { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string SelectedCompanyType { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string? SelectedFilePath { get; set; }
@@ -113,6 +120,8 @@ public partial class NewRequestViewModel : ViewModelBase
             Description = Description,
             CompanyName = CompanyName,
             TaxNo = TaxNo,
+            SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
+            CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
             TotalAmount = amount,
             CreatedByUserId = _currentUser.Id,
         };
@@ -140,6 +149,8 @@ public partial class NewRequestViewModel : ViewModelBase
             Type = string.Empty;
             CompanyName = string.Empty;
             TaxNo = string.Empty;
+            SapCariKodu = string.Empty;
+            SelectedCompanyType = string.Empty;
             Description = string.Empty;
             RequestRefNo = string.Empty;
             EstimatedAmountText = string.Empty;

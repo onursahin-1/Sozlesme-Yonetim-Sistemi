@@ -31,6 +31,7 @@ public class ContractRepository : IContractRepository
         return await db.Contracts
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(c => c.CreatedByUser)
             .Include(c => c.Items)
             .Include(c => c.Attachments)
             .Include(c => c.ApprovalLogs)
@@ -54,6 +55,27 @@ public class ContractRepository : IContractRepository
         tracked.TotalAmount = contract.TotalAmount;
         tracked.Status = contract.Status;
         tracked.Stage = contract.Stage;
+        tracked.StartDate = contract.StartDate;
+        tracked.EndDate = contract.EndDate;
+        tracked.PaymentPeriod = contract.PaymentPeriod;
+        tracked.SapCariKodu = contract.SapCariKodu;
+        tracked.CompanyType = contract.CompanyType;
+
+        if (string.IsNullOrEmpty(tracked.ContractNo))
+        {
+            var prefix = $"SYBSA{DateTime.Now:MMyyyy}";
+            var lastNo = await db.Contracts
+                .Where(c => c.ContractNo != null && c.ContractNo.StartsWith(prefix))
+                .OrderByDescending(c => c.ContractNo)
+                .Select(c => c.ContractNo)
+                .FirstOrDefaultAsync();
+
+            var next = 1;
+            if (lastNo is not null && int.TryParse(lastNo.Substring(prefix.Length), out var parsed))
+                next = parsed + 1;
+
+            tracked.ContractNo = prefix + next.ToString("D4");
+        }
 
         foreach (var item in items)
         {
@@ -80,6 +102,9 @@ public class ContractRepository : IContractRepository
         tracked.Stage = contract.Stage;
         tracked.Status = contract.Status;
         tracked.PendingTermination = contract.PendingTermination;
+        tracked.WasRejected = contract.WasRejected;
+        tracked.LastRejectionNote = contract.LastRejectionNote;
+        tracked.LastRejectedAt = contract.LastRejectedAt;
 
         log.ContractId = contract.Id;
         db.ApprovalLogs.Add(log);

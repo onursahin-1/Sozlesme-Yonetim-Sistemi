@@ -16,22 +16,31 @@ public class ContractCardViewModel
     public string Title => _contract.Title;
     public string CompanyName => _contract.CompanyName;
     public string RequestRefNo => _contract.RequestRefNo;
+    public string RefNoText => string.IsNullOrEmpty(_contract.ContractNo) ? _contract.RequestRefNo : _contract.ContractNo!;
     public string Type => _contract.Type;
     public ContractStatus Status => _contract.Status;
 
     public int Stage => _contract.Stage;
 
-    public string StatusLabel => Status switch
-    {
-        ContractStatus.Talep => "Talep",
-        ContractStatus.OnayBekliyor => "Onay Bekliyor" + StageDetail,
-        ContractStatus.Aktif => "Aktif",
-        ContractStatus.Uyari => "Bitiş Yaklaşıyor",
-        ContractStatus.Ihlal => "İhlal Mevcut",
-        ContractStatus.Tamamlandi => "Tamamlandı",
-        ContractStatus.Feshedildi => "Feshedildi",
-        _ => Status.ToString()
-    };
+    public string StatusLabel => Status == ContractStatus.Talep && _contract.WasRejected
+        ? "Reddedildi"
+        : Status switch
+        {
+            ContractStatus.Talep => "Talep",
+            ContractStatus.OnayBekliyor => "Onay Bekliyor" + StageDetail,
+            ContractStatus.Aktif => "Aktif",
+            ContractStatus.Uyari => "Bitiş Yaklaşıyor",
+            ContractStatus.Ihlal => "İhlal Mevcut",
+            ContractStatus.Tamamlandi => "Tamamlandı",
+            ContractStatus.Feshedildi => "Feshedildi",
+            _ => Status.ToString()
+        };
+
+    public bool IsRejected => Status == ContractStatus.Talep && _contract.WasRejected;
+
+    public string RejectionNoteText => string.IsNullOrEmpty(_contract.LastRejectionNote)
+        ? "Red gerekçesi belirtilmemiş."
+        : "Red gerekçesi: " + _contract.LastRejectionNote;
 
     private string StageDetail
     {
@@ -50,7 +59,7 @@ public class ContractCardViewModel
         }
     }
 
-    public string StatusColorHex => Status switch
+    public string StatusColorHex => IsRejected ? "#A32D2D" : Status switch
     {
         ContractStatus.Aktif => "#1A6B2A",
         ContractStatus.OnayBekliyor => "#2D6EA8",
@@ -61,7 +70,7 @@ public class ContractCardViewModel
         _ => "#555555"
     };
 
-    public string StatusBgHex => Status switch
+    public string StatusBgHex => IsRejected ? "#FDECEA" : Status switch
     {
         ContractStatus.Aktif => "#E6F4E7",
         ContractStatus.OnayBekliyor => "#D6E9F8",
@@ -72,7 +81,7 @@ public class ContractCardViewModel
         _ => "#EAECF0"
     };
 
-    public string BedelText => _contract.TotalAmount.ToString("N0") + " TL";
+    public string BedelText => _contract.TotalAmount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) + " TL";
 
     public string GunKalanText
     {

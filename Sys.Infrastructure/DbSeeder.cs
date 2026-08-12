@@ -14,21 +14,24 @@ public static class DbSeeder
             Username = "personel",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Personel123!"),
             FullName = "Onur Akkaya",
-            Role = UserRole.Personel
+            Role = UserRole.Personel,
+            Department = "Satın Alma"
         };
         var syb = new User
         {
             Username = "syb",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Syb123!"),
             FullName = "Emin Ramazanoğlu",
-            Role = UserRole.SYB
+            Role = UserRole.SYB,
+            Department = "SYB"
         };
         var mudur = new User
         {
             Username = "mudur",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Mudur123!"),
             FullName = "Murat Yılmaz",
-            Role = UserRole.Mudur
+            Role = UserRole.Mudur,
+            Department = "Yönetim"
         };
 
         db.Users.AddRange(personel, syb, mudur);

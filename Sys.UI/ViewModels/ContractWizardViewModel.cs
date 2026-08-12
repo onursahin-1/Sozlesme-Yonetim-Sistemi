@@ -40,6 +40,25 @@ public partial class ContractWizardViewModel : ViewModelBase
     public partial Contract? SelectedRequest { get; set; }
 
     [ObservableProperty]
+    public partial DateTimeOffset? StartDate { get; set; }
+
+    [ObservableProperty]
+    public partial DateTimeOffset? EndDate { get; set; }
+
+    public string[] PaymentPeriodOptions { get; } = { "Aylık", "Tek Seferlik", "Üç Aylık", "Yıllık", "İş Tamamlandığında" };
+
+    [ObservableProperty]
+    public partial string SelectedPaymentPeriod { get; set; } = string.Empty;
+
+    public string[] CompanyTypeOptions { get; } = { "Yerli Firma", "Yabancı Firma", "Kamu Kurumu" };
+
+    [ObservableProperty]
+    public partial string SapCariKodu { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string SelectedCompanyType { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial bool IsLoading { get; set; } = true;
 
     [ObservableProperty]
@@ -150,15 +169,52 @@ public partial class ContractWizardViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveTeminatFile(WizardFileItem item) => TeminatFileNames.Remove(item);
 
+    partial void OnSelectedRequestChanged(Contract? value)
+    {
+        SapCariKodu = value?.SapCariKodu ?? string.Empty;
+        SelectedCompanyType = value?.CompanyType ?? string.Empty;
+    }
+
     [RelayCommand]
     private void NextStep()
     {
         ErrorMessage = string.Empty;
 
-        if (CurrentStep == 1 && SelectedRequest is null)
+        if (CurrentStep == 1)
         {
-            ErrorMessage = "Lütfen bir talep seçin.";
-            return;
+            if (SelectedRequest is null)
+            {
+                ErrorMessage = "Lütfen bir talep seçin.";
+                return;
+            }
+
+            if (StartDate is null)
+            {
+                ErrorMessage = "Başlangıç tarihi zorunludur.";
+                return;
+            }
+
+            if (EndDate is null)
+            {
+                ErrorMessage = "Bitiş tarihi zorunludur.";
+                return;
+            }
+
+            if (EndDate.Value.Date <= StartDate.Value.Date)
+            {
+                ErrorMessage = "Bitiş tarihi, başlangıç tarihinden sonra olmalı.";
+                return;
+            }
+            if (string.IsNullOrEmpty(SelectedPaymentPeriod))
+            {
+                ErrorMessage = "Ödeme periyodu seçilmelidir.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(SapCariKodu))
+            {
+                ErrorMessage = "SAP Cari Kodu zorunludur.";
+                return;
+            }
         }
 
         if (CurrentStep == 2)
@@ -212,6 +268,11 @@ public partial class ContractWizardViewModel : ViewModelBase
         IsSubmitting = true;
         try
         {
+            SelectedRequest.StartDate = StartDate!.Value.DateTime;
+            SelectedRequest.EndDate = EndDate!.Value.DateTime;
+            SelectedRequest.PaymentPeriod = SelectedPaymentPeriod;
+            SelectedRequest.SapCariKodu = SapCariKodu;
+            SelectedRequest.CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType;
             var items = Items.Select(r => new ContractItem
             {
                 Description = r.Description,

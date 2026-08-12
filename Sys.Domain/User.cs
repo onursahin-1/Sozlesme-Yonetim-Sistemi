@@ -7,6 +7,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public UserRole Role { get; set; }
+    public string? Department { get; set; }
 
     // Güvenlik: hesap kilitleme
     public int FailedLoginCount { get; set; }

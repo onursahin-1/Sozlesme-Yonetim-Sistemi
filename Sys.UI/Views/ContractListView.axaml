@@ -13,6 +13,8 @@
 
     <DockPanel>
         <!-- Filtre butonları -->
+		<TextBox DockPanel.Dock="Top" Text="{Binding SearchText}" Watermark="Başlık veya firma adına göre ara..."
+                 Width="320" HorizontalAlignment="Left" Margin="0,0,0,10"/>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
             <Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"/>
             <Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"/>
@@ -36,7 +38,7 @@
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14"/>
                                     <TextBlock FontSize="11" Foreground="#888">
-                                        <Run Text="{Binding RequestRefNo}"/>
+										<Run Text="{Binding RefNoText}"/>
                                         <Run Text=" · "/>
                                         <Run Text="{Binding CompanyName}"/>
                                     </TextBlock>
@@ -45,11 +47,13 @@
                                     <TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}" FontSize="11" FontWeight="Bold"/>
                                 </Border>
                             </Grid>
-                            <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,0,0">
-                                <TextBlock Text="{Binding Type}" FontSize="11" Foreground="#555"/>
-                                <TextBlock Text="{Binding BedelText}" FontSize="11" Foreground="#555"/>
-                                <TextBlock Text="{Binding GunKalanText}" FontSize="11" Foreground="#555"/>
-                            </StackPanel>
+							<StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,0,0">
+								<TextBlock Text="{Binding Type}" FontSize="11" Foreground="#555"/>
+								<TextBlock Text="{Binding BedelText}" FontSize="11" Foreground="#555"/>
+								<TextBlock Text="{Binding GunKalanText}" FontSize="11" Foreground="#555"/>
+							</StackPanel>
+							<TextBlock Text="{Binding RejectionNoteText}" FontSize="11" Foreground="#A32D2D" FontStyle="Italic"
+                                       TextWrapping="Wrap" Margin="0,4,0,0" IsVisible="{Binding IsRejected}"/>
                         </StackPanel>
                     </Border>
                 </DataTemplate>

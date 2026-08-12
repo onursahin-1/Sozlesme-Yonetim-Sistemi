@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
 
@@ -25,6 +26,14 @@ public partial class ArchiveViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string DetailTitle { get; set; } = string.Empty;
+    [ObservableProperty]
+    public partial string DetailNo { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailPeriod { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailRequester { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string DetailCompany { get; set; } = string.Empty;
@@ -110,8 +119,13 @@ public partial class ArchiveViewModel : ViewModelBase
 
             Detail = full;
             DetailTitle = full.Title;
+            DetailNo = "Sözleşme No: " + (string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!);
+            DetailPeriod = string.IsNullOrEmpty(full.PaymentPeriod) ? string.Empty : "Ödeme Periyodu: " + full.PaymentPeriod;
+            DetailRequester = full.CreatedByUser is null
+                ? string.Empty
+                : "Talep Eden: " + full.CreatedByUser.FullName + (string.IsNullOrEmpty(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
             DetailCompany = "Firma: " + full.CompanyName;
-            DetailStatus = "Durum: " + full.Status;
+            DetailStatus = "Durum: " + ContractStatusHelper.ToLabel(full.Status);
             DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
             DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
             DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
@@ -135,4 +149,18 @@ public partial class ArchiveViewModel : ViewModelBase
             ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
         }
     }
+    [RelayCommand]
+    private void OpenAttachment(Attachment attachment)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo(attachment.FilePath) { UseShellExecute = true };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Dosya açılamadı: " + ex.Message;
+        }
+    }
+
 }

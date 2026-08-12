@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sys.Infrastructure;
 
@@ -11,9 +12,11 @@ using Sys.Infrastructure;
 namespace Sys.Infrastructure.Migrations
 {
     [DbContext(typeof(SysDbContext))]
-    partial class SysDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811130136_AddDepartmentAndCreatedByUserRelation")]
+    partial class AddDepartmentAndCreatedByUserRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,12 +161,6 @@ namespace Sys.Infrastructure.Migrations
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("LastRejectedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastRejectionNote")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PaymentPeriod")
                         .HasColumnType("nvarchar(max)");
 
@@ -200,9 +197,6 @@ namespace Sys.Infrastructure.Migrations
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("WasRejected")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 

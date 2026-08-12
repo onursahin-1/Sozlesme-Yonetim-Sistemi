@@ -10,6 +10,18 @@ using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
+public partial class ChecklistItemViewModel : ObservableObject
+{
+    public string Label { get; }
+
+    [ObservableProperty]
+    public partial bool IsChecked { get; set; }
+
+    public ChecklistItemViewModel(string label)
+    {
+        Label = label;
+    }
+}
 public partial class ApprovalQueueViewModel : ViewModelBase
 {
     private readonly ContractService _contractService;
@@ -21,6 +33,12 @@ public partial class ApprovalQueueViewModel : ViewModelBase
     [ObservableProperty]
     public partial ObservableCollection<Contract> PendingContracts { get; set; } = new();
 
+    public ObservableCollection<ChecklistItemViewModel> ChecklistItems { get; } = new();
+
+    public bool IsSybFinalCheck => Detail?.Stage == 1;
+
+    public bool AllChecked => !IsSybFinalCheck || ChecklistItems.All(i => i.IsChecked);
+
     [ObservableProperty]
     public partial Contract? SelectedContract { get; set; }
 
@@ -29,6 +47,15 @@ public partial class ApprovalQueueViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string DetailTitle { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailNo { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailPeriod { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailRequester { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string DetailCompany { get; set; } = string.Empty;
@@ -118,6 +145,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         Attachments = new ObservableCollection<Attachment>();
         Detail = null;
         IsPendingTermination = false;
+        ChecklistItems.Clear();
         TerminationInfo = string.Empty;
         HasRevisionHistory = false;
         RevisionInfo = string.Empty;
@@ -134,9 +162,34 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             }
 
             Detail = full;
+            if (full.Stage == 1)
+            {
+                var labels = new[]
+                {
+                    "Sözleşme dosyası eksiksiz yüklendi",
+                    "Bedel kalemleri ve toplam tutar doğru",
+                    "SAP Cari Kodu ve Vergi No doğrulandı",
+                    "Başlangıç/Bitiş tarihleri ve ödeme periyodu doğru",
+                    "Ek belgeler (teminat, ek dosya) kontrol edildi",
+                    "Fesih/Revizyon bağlamı gözden geçirildi (varsa yukarıdaki kutuda)",
+                };
+                foreach (var label in labels)
+                {
+                    var item = new ChecklistItemViewModel(label);
+                    item.PropertyChanged += (_, __) => OnPropertyChanged(nameof(AllChecked));
+                    ChecklistItems.Add(item);
+                }
+            }
+            OnPropertyChanged(nameof(IsSybFinalCheck));
+            OnPropertyChanged(nameof(AllChecked));
             DetailTitle = full.Title;
+            DetailNo = "Sözleşme No: " + (string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!);
+            DetailPeriod = string.IsNullOrEmpty(full.PaymentPeriod) ? string.Empty : "Ödeme Periyodu: " + full.PaymentPeriod;
+            DetailRequester = full.CreatedByUser is null
+                ? string.Empty
+                : "Talep Eden: " + full.CreatedByUser.FullName + (string.IsNullOrEmpty(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
             DetailCompany = "Firma: " + full.CompanyName;
-            DetailStatus = "Durum: " + full.Status;
+            DetailStatus = "Durum: " + ContractStatusHelper.ToLabel(full.Status);
             DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
             DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
             DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
@@ -198,6 +251,20 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         {
             ErrorMessage = ex.Message;
             SuccessMessage = string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenAttachment(Attachment attachment)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo(attachment.FilePath) { UseShellExecute = true };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Dosya açılamadı: " + ex.Message;
         }
     }
 }

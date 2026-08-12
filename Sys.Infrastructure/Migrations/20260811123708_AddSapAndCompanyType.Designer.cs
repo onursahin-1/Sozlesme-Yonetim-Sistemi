@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sys.Infrastructure;
 
@@ -11,9 +12,11 @@ using Sys.Infrastructure;
 namespace Sys.Infrastructure.Migrations
 {
     [DbContext(typeof(SysDbContext))]
-    partial class SysDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811123708_AddSapAndCompanyType")]
+    partial class AddSapAndCompanyType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,12 +161,6 @@ namespace Sys.Infrastructure.Migrations
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("LastRejectedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastRejectionNote")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PaymentPeriod")
                         .HasColumnType("nvarchar(max)");
 
@@ -201,12 +198,7 @@ namespace Sys.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("WasRejected")
-                        .HasColumnType("bit");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
 
                     b.ToTable("Contracts");
                 });
@@ -335,9 +327,6 @@ namespace Sys.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("int");
 
@@ -418,17 +407,6 @@ namespace Sys.Infrastructure.Migrations
                         .HasForeignKey("ContractId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Sys.Domain.Contract", b =>
-                {
-                    b.HasOne("Sys.Domain.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("Sys.Domain.ContractItem", b =>

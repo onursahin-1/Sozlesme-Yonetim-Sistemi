@@ -40,6 +40,9 @@
                         Background="#F5F5F5" CornerRadius="8" Padding="16">
                     <StackPanel Spacing="8">
                         <TextBlock Text="{Binding DetailTitle}" FontSize="18" FontWeight="Bold" Foreground="Black"/>
+						<TextBlock Text="{Binding DetailNo}" FontSize="12" Foreground="#555555"/>
+						<TextBlock Text="{Binding DetailPeriod}" Foreground="Black" IsVisible="{Binding DetailPeriod, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+						<TextBlock Text="{Binding DetailRequester}" Foreground="Black" IsVisible="{Binding DetailRequester, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         <TextBlock Text="{Binding DetailCompany}" Foreground="Black"/>
                         <TextBlock Text="{Binding DetailStatus}" Foreground="Black"/>
                         <TextBlock Text="{Binding DetailTotal}" Foreground="Black"/>
@@ -73,8 +76,8 @@
                                     <Grid ColumnDefinitions="2*,*,*,*">
                                         <TextBlock Grid.Column="0" Text="{Binding Description}"/>
                                         <TextBlock Grid.Column="1" Text="{Binding Quantity}"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding UnitPrice}"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding LineTotal}"/>
+										<TextBlock Grid.Column="2" Text="{Binding UnitPrice, StringFormat={}{0:N2}}"/>
+										<TextBlock Grid.Column="3" Text="{Binding LineTotal, StringFormat={}{0:N2}}"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -82,29 +85,45 @@
                     </ItemsControl>
                 </StackPanel>
 
-                <StackPanel IsVisible="{Binding Attachments.Count}">
-                    <TextBlock Text="Dosyalar" FontWeight="Bold" Margin="0,0,0,8"/>
-                    <ItemsControl ItemsSource="{Binding Attachments}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
-                                    <TextBlock Text="{Binding FileName}"/>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+				<StackPanel IsVisible="{Binding Attachments.Count}">
+					<TextBlock Text="Dosyalar" FontWeight="Bold" Margin="0,0,0,8"/>
+					<ItemsControl ItemsSource="{Binding Attachments}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
+									<Grid ColumnDefinitions="*,Auto">
+										<TextBlock Grid.Column="0" Text="{Binding FileName}" VerticalAlignment="Center"/>
+										<Button Grid.Column="1" Content="Aç"
+												Command="{Binding $parent[UserControl].((vm:ApprovalQueueViewModel)DataContext).OpenAttachmentCommand}"
+												CommandParameter="{Binding}"/>
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
 
-                <StackPanel IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="8">
-                    <TextBlock Text="Not (opsiyonel, özellikle reddederken açıklama girin):" FontWeight="Bold"/>
-                    <TextBox Text="{Binding Note}" AcceptsReturn="True" Height="70" TextWrapping="Wrap"/>
-                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+				<StackPanel IsVisible="{Binding IsSybFinalCheck}" Spacing="6">
+					<TextBlock Text="SYB Son Kontrol Listesi" FontWeight="Bold"/>
+					<ItemsControl ItemsSource="{Binding ChecklistItems}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" Margin="0,2"/>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<StackPanel IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="8">
+					<TextBlock Text="Not (opsiyonel, özellikle reddederken açıklama girin):" FontWeight="Bold"/>
+					<TextBox Text="{Binding Note}" AcceptsReturn="True" Height="70" TextWrapping="Wrap"/>
+					<StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
 						<Button Content="Onayla" Background="#16A34A" Foreground="White" Padding="16,8"
-                  Click="OnApproveClick"/>
+                                Click="OnApproveClick" IsEnabled="{Binding AllChecked}"/>
 						<Button Content="Reddet" Background="#DC2626" Foreground="White" Padding="16,8"
-								Click="OnRejectClick"/>
-                    </StackPanel>
-                </StackPanel>
+                                Click="OnRejectClick"/>
+					</StackPanel>
+				</StackPanel>
 
             </StackPanel>
         </ScrollViewer>

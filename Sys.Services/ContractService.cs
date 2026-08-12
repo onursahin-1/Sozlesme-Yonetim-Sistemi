@@ -159,6 +159,9 @@ public class ContractService
                 {
                     contract.Stage = 0;
                     contract.Status = ContractStatus.Talep;
+                    contract.WasRejected = true;
+                    contract.LastRejectionNote = note;
+                    contract.LastRejectedAt = DateTime.Now;
                 }
                 else
                 {

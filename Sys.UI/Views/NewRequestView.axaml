@@ -35,6 +35,12 @@
             <TextBlock Text="Vergi No *"/>
             <TextBox Text="{Binding TaxNo}"/>
 
+			<TextBlock Text="SAP Cari Kodu"/>
+			<TextBox Text="{Binding SapCariKodu}" Watermark="C-XXXXX (yoksa boş bırakın)"/>
+
+			<TextBlock Text="Firma Türü"/>
+			<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>
+
 			<TextBlock Text="Sözleşme Dosyası"/>
 			<StackPanel Orientation="Horizontal" Spacing="10">
 				<Button Content="Dosya Seç" Click="OnPickFileClick"/>
