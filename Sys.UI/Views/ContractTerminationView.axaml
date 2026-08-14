@@ -40,12 +40,12 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Fesih Gerekçesi *" FontWeight="Bold"/>
                 <TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
-                         Watermark="Feshin gerekçesini detaylı açıklayın. Bu bilgi hukuki kayıt niteliği taşır."/>
+                         PlaceholderText="Feshin gerekçesini detaylı açıklayın. Bu bilgi hukuki kayıt niteliği taşır."/>
             </StackPanel>
 
             <StackPanel Spacing="4">
                 <TextBlock Text="Fesih Tazminatı (TL)" FontWeight="Bold"/>
-				<TextBox Text="{Binding CompensationAmountText}" Watermark="0 — ödeme yoksa boş bırakın" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+				<TextBox Text="{Binding CompensationAmountText}" PlaceholderText="0 — ödeme yoksa boş bırakın" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
             </StackPanel>
 
             <StackPanel Spacing="4">

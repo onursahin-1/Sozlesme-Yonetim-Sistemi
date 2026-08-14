@@ -13,7 +13,7 @@
 
     <DockPanel>
         <!-- Filtre butonları -->
-		<TextBox DockPanel.Dock="Top" Text="{Binding SearchText}" Watermark="Başlık veya firma adına göre ara..."
+		<TextBox DockPanel.Dock="Top" Text="{Binding SearchText}" PlaceholderText="Başlık veya firma adına göre ara..."
                  Width="320" HorizontalAlignment="Left" Margin="0,0,0,10"/>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
             <Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"/>

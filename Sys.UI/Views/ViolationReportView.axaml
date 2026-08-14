@@ -40,7 +40,7 @@
             <StackPanel Spacing="4">
                 <TextBlock Text="Açıklama *" FontWeight="Bold"/>
                 <TextBox Text="{Binding Description}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
-                         Watermark="İhlalin ayrıntılı açıklaması, belge referansları, kanıtlar..."/>
+                         PlaceholderText="İhlalin ayrıntılı açıklaması, belge referansları, kanıtlar..."/>
             </StackPanel>
 
 			<StackPanel Spacing="4">
