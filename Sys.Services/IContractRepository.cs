@@ -17,5 +17,8 @@ public interface IContractRepository
     Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination);
     Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold);
     Task AddAuditLogAsync(AuditLog log);
-    Task<List<AuditLog>> GetAuditLogsAsync();
+    Task<List<string>> GetAuditLogUserOptionsAsync();
+    Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate);
+    Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses);
+    Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId);
 }

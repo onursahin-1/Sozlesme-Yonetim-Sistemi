@@ -30,5 +30,14 @@ public class FakeContractRepository : IContractRepository
     public Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination) => Task.CompletedTask;
     public Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold) => Task.FromResult(0);
     public Task AddAuditLogAsync(AuditLog log) => Task.CompletedTask;
-    public Task<List<AuditLog>> GetAuditLogsAsync() => Task.FromResult(new List<AuditLog>());
+    public Task<List<string>> GetAuditLogUserOptionsAsync() => Task.FromResult(new List<string>());
+
+    public Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate)
+        => Task.FromResult((new List<AuditLog>(), 0));
+
+    public Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
+        => Task.FromResult(new List<Contract>());
+
+    public Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)
+        => Task.FromResult(new Dictionary<ContractStatus, int>());
 }

@@ -7,22 +7,22 @@
              x:Class="Sys.UI.Views.AuditLogView"
              x:DataType="vm:AuditLogViewModel">
 
-    <Design.DataContext>
-        <vm:AuditLogViewModel />
-    </Design.DataContext>
+	<Design.DataContext>
+		<vm:AuditLogViewModel />
+	</Design.DataContext>
 
-    <DockPanel Margin="24">
-        <TextBlock DockPanel.Dock="Top" Text="İşlem Geçmişi" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
+	<DockPanel Margin="24">
+		<TextBlock DockPanel.Dock="Top" Text="İşlem Geçmişi" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="Kullanıcı" FontSize="11" Foreground="Gray"/>
-                <ComboBox Width="200" ItemsSource="{Binding UserOptions}" SelectedItem="{Binding SelectedUser}"/>
-            </StackPanel>
-            <StackPanel>
-                <TextBlock Text="Başlangıç Tarihi" FontSize="11" Foreground="Gray"/>
-                <DatePicker SelectedDate="{Binding StartDate}"/>
-            </StackPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+			<StackPanel>
+				<TextBlock Text="Kullanıcı" FontSize="11" Foreground="Gray"/>
+				<ComboBox Width="200" ItemsSource="{Binding UserOptions}" SelectedItem="{Binding SelectedUser}"/>
+			</StackPanel>
+			<StackPanel>
+				<TextBlock Text="Başlangıç Tarihi" FontSize="11" Foreground="Gray"/>
+				<DatePicker SelectedDate="{Binding StartDate}"/>
+			</StackPanel>
 			<StackPanel>
 				<TextBlock Text="Bitiş Tarihi" FontSize="11" Foreground="Gray"/>
 				<DatePicker SelectedDate="{Binding EndDate}"/>
@@ -40,26 +40,56 @@
 			</StackPanel>
 		</StackPanel>
 
-        <TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
-        <TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red"
+		<StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="12" Margin="0,12,0,0" HorizontalAlignment="Right">
+			<Button Content="◀ Önceki" Command="{Binding PreviousPageCommand}"
+                    Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4">
+				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Setter Property="Background" Value="#1F5686"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+					<Style Selector="Button:disabled /template/ ContentPresenter">
+						<Setter Property="Background" Value="#AAAAAA"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+				</Button.Styles>
+			</Button>
+			<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center" FontSize="12"/>
+			<Button Content="Sonraki ▶" Command="{Binding NextPageCommand}"
+                    Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4">
+				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Setter Property="Background" Value="#1F5686"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+					<Style Selector="Button:disabled /template/ ContentPresenter">
+						<Setter Property="Background" Value="#AAAAAA"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+				</Button.Styles>
+			</Button>
+		</StackPanel>
+
+		<TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-        <ScrollViewer>
-            <ItemsControl ItemsSource="{Binding FilteredLogs}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:AuditLogRowViewModel">
-                        <Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="8">
-                            <Grid ColumnDefinitions="140,160,180,*">
-                                <TextBlock Grid.Column="0" Text="{Binding DateText}" FontSize="12"/>
-                                <TextBlock Grid.Column="1" Text="{Binding UserText}" FontSize="12" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="2" Text="{Binding ActionText}" FontSize="12"/>
-                                <TextBlock Grid.Column="3" Text="{Binding DetailText}" FontSize="12" Foreground="#555" TextWrapping="Wrap"/>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-    </DockPanel>
+		<ScrollViewer>
+			<ItemsControl ItemsSource="{Binding FilteredLogs}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="vm:AuditLogRowViewModel">
+						<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="8">
+							<Grid ColumnDefinitions="140,160,180,*">
+								<TextBlock Grid.Column="0" Text="{Binding DateText}" FontSize="12"/>
+								<TextBlock Grid.Column="1" Text="{Binding UserText}" FontSize="12" FontWeight="Bold"/>
+								<TextBlock Grid.Column="2" Text="{Binding ActionText}" FontSize="12"/>
+								<TextBlock Grid.Column="3" Text="{Binding DetailText}" FontSize="12" Foreground="#555" TextWrapping="Wrap"/>
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</DockPanel>
 
 </UserControl>

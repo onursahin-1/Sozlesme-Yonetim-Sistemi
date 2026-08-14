@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -22,26 +23,33 @@ public partial class ContractWizardView : UserControl
     {
         if (DataContext is not ContractWizardViewModel vm) return;
 
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel is null) return;
-
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        try
         {
-            Title = "Dosya Seç",
-            AllowMultiple = true,
-            FileTypeFilter = new List<FilePickerFileType>
-            {
-                new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
-            }
-        });
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null) return;
 
-        foreach (var file in files)
-        {
-            var path = file.TryGetLocalPath();
-            if (path is not null)
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                vm.AddFile(path, category);
+                Title = "Dosya Seç",
+                AllowMultiple = true,
+                FileTypeFilter = new List<FilePickerFileType>
+                {
+                    new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
+                }
+            });
+
+            foreach (var file in files)
+            {
+                var path = file.TryGetLocalPath();
+                if (path is not null)
+                {
+                    vm.AddFile(path, category);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            vm.ErrorMessage = "Dosya seçilirken bir hata oluştu: " + ex.Message;
         }
     }
     private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);

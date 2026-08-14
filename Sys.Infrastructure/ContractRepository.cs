@@ -13,6 +13,22 @@ public class ContractRepository : IContractRepository
         _connectionString = connectionString;
     }
 
+    // Contract üzerindeki "durum makinesi" alanlarını tek yerden kopyalar.
+    // Yeni bir durum alanı (örn. ileride eklenecek bir PendingX bayrağı) eklenirse
+    // sadece burası güncellenir; ApplyDecisionAsync/ApplyEditAsync/ApplyViolationAsync/
+    // ApplyTerminationRequestAsync/FinalizeCreationAsync'in hepsi otomatik senkron kalır.
+    private static void CopyWorkflowState(Contract source, Contract tracked)
+    {
+        tracked.Status = source.Status;
+        tracked.Stage = source.Stage;
+        tracked.PendingTermination = source.PendingTermination;
+        tracked.PendingEdit = source.PendingEdit;
+        tracked.PreviousStatusBeforeEdit = source.PreviousStatusBeforeEdit;
+        tracked.WasRejected = source.WasRejected;
+        tracked.LastRejectionNote = source.LastRejectionNote;
+        tracked.LastRejectedAt = source.LastRejectedAt;
+    }
+
     public async Task<List<Contract>> GetAllAsync()
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -37,6 +53,7 @@ public class ContractRepository : IContractRepository
             .Include(c => c.ApprovalLogs)
             .Include(c => c.Terminations)
             .Include(c => c.Revisions)
+            .Include(c => c.Violations)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -61,6 +78,8 @@ public class ContractRepository : IContractRepository
         tracked.SapCariKodu = contract.SapCariKodu;
         tracked.CompanyType = contract.CompanyType;
         tracked.TotalAmount = contract.TotalAmount;
+        // Yeniden gönderilen bir talepte red bilgisi kasıtlı olarak sıfırlanır
+        // (kaynaktan kopyalanmıyor) — bu yüzden CopyWorkflowState burada kullanılmıyor.
         tracked.WasRejected = false;
         tracked.LastRejectionNote = null;
         tracked.LastRejectedAt = null;
@@ -74,13 +93,12 @@ public class ContractRepository : IContractRepository
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
         tracked.TotalAmount = contract.TotalAmount;
-        tracked.Status = contract.Status;
-        tracked.Stage = contract.Stage;
         tracked.StartDate = contract.StartDate;
         tracked.EndDate = contract.EndDate;
         tracked.PaymentPeriod = contract.PaymentPeriod;
         tracked.SapCariKodu = contract.SapCariKodu;
         tracked.CompanyType = contract.CompanyType;
+        CopyWorkflowState(contract, tracked);
 
         if (string.IsNullOrEmpty(tracked.ContractNo))
         {
@@ -120,14 +138,7 @@ public class ContractRepository : IContractRepository
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
-        tracked.Stage = contract.Stage;
-        tracked.Status = contract.Status;
-        tracked.PendingTermination = contract.PendingTermination;
-        tracked.WasRejected = contract.WasRejected;
-        tracked.LastRejectionNote = contract.LastRejectionNote;
-        tracked.LastRejectedAt = contract.LastRejectedAt;
-        tracked.PendingEdit = contract.PendingEdit;
-        tracked.PreviousStatusBeforeEdit = contract.PreviousStatusBeforeEdit;
+        CopyWorkflowState(contract, tracked);
 
         log.ContractId = contract.Id;
         db.ApprovalLogs.Add(log);
@@ -139,6 +150,28 @@ public class ContractRepository : IContractRepository
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
         return await db.Contracts.AsNoTracking().Where(c => c.Stage == stage).ToListAsync();
+    }
+
+    public async Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var query = db.Contracts.AsNoTracking().Where(c => statuses.Contains(c.Status));
+        if (createdByUserId.HasValue)
+            query = query.Where(c => c.CreatedByUserId == createdByUserId.Value);
+        return await query.ToListAsync();
+    }
+
+    public async Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var query = db.Contracts.AsNoTracking().AsQueryable();
+        if (createdByUserId.HasValue)
+            query = query.Where(c => c.CreatedByUserId == createdByUserId.Value);
+
+        return await query
+            .GroupBy(c => c.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Status, x => x.Count);
     }
 
     public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
@@ -177,10 +210,7 @@ public class ContractRepository : IContractRepository
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
         tracked.TotalAmount = contract.TotalAmount;
         tracked.EndDate = contract.EndDate;
-        tracked.Stage = contract.Stage;
-        tracked.Status = contract.Status;
-        tracked.PendingEdit = contract.PendingEdit;
-        tracked.PreviousStatusBeforeEdit = contract.PreviousStatusBeforeEdit;
+        CopyWorkflowState(contract, tracked);
 
         revision.ContractId = contract.Id;
         db.ContractRevisions.Add(revision);
@@ -193,7 +223,7 @@ public class ContractRepository : IContractRepository
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
-        tracked.Status = contract.Status;
+        CopyWorkflowState(contract, tracked);
 
         db.Violations.Add(violation);
 
@@ -205,14 +235,13 @@ public class ContractRepository : IContractRepository
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
-        tracked.PendingTermination = contract.PendingTermination;
-        tracked.Stage = contract.Stage;
-        tracked.Status = contract.Status;
+        CopyWorkflowState(contract, tracked);
 
         db.ContractTerminations.Add(termination);
 
         await db.SaveChangesAsync();
     }
+
     public async Task AddAuditLogAsync(AuditLog log)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -220,14 +249,39 @@ public class ContractRepository : IContractRepository
         await db.SaveChangesAsync();
     }
 
-    public async Task<List<AuditLog>> GetAuditLogsAsync()
+    public async Task<List<string>> GetAuditLogUserOptionsAsync()
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
         return await db.AuditLogs
             .AsNoTracking()
-            .Include(a => a.ActingUser)
-            .OrderByDescending(a => a.ActionDate)
+            .Select(a => a.ActingUser != null ? a.ActingUser.FullName : ("Kullanıcı #" + a.ActingUserId))
+            .Distinct()
+            .OrderBy(x => x)
             .ToListAsync();
     }
 
+    public async Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var query = db.AuditLogs.AsNoTracking().Include(a => a.ActingUser).AsQueryable();
+
+        if (!string.IsNullOrEmpty(userText))
+            query = query.Where(a => (a.ActingUser != null ? a.ActingUser.FullName : ("Kullanıcı #" + a.ActingUserId)) == userText);
+
+        if (startDate.HasValue)
+            query = query.Where(a => a.ActionDate.Date >= startDate.Value.Date);
+
+        if (endDate.HasValue)
+            query = query.Where(a => a.ActionDate.Date <= endDate.Value.Date);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(a => a.ActionDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
 }

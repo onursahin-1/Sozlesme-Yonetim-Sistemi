@@ -13,7 +13,7 @@ public static class DbSeeder
         {
             Username = "personel",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Personel123!"),
-            FullName = "Onur Akkaya",
+            FullName = "Serhat Esen",
             Role = UserRole.Personel,
             Department = "Satın Alma"
         };
@@ -21,7 +21,7 @@ public static class DbSeeder
         {
             Username = "syb",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Syb123!"),
-            FullName = "Emin Ramazanoğlu",
+            FullName = "Onur Şahin",
             Role = UserRole.SYB,
             Department = "SYB"
         };
@@ -29,7 +29,7 @@ public static class DbSeeder
         {
             Username = "mudur",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Mudur123!"),
-            FullName = "Murat Yılmaz",
+            FullName = "Murat Can",
             Role = UserRole.Mudur,
             Department = "Yönetim"
         };

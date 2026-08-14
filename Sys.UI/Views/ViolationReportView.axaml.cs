@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -17,26 +18,33 @@ public partial class ViolationReportView : UserControl
     {
         if (DataContext is not ViolationReportViewModel vm) return;
 
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel is null) return;
-
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        try
         {
-            Title = "Dosya Seç",
-            AllowMultiple = false,
-            FileTypeFilter = new List<FilePickerFileType>
-            {
-                new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
-            }
-        });
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null) return;
 
-        if (files.Count > 0)
-        {
-            var path = files[0].TryGetLocalPath();
-            if (path is not null)
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                vm.SetSelectedFile(path);
+                Title = "Dosya Seç",
+                AllowMultiple = false,
+                FileTypeFilter = new List<FilePickerFileType>
+                {
+                    new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
+                }
+            });
+
+            if (files.Count > 0)
+            {
+                var path = files[0].TryGetLocalPath();
+                if (path is not null)
+                {
+                    vm.SetSelectedFile(path);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            vm.ErrorMessage = "Dosya seçilirken bir hata oluştu: " + ex.Message;
         }
     }
 }

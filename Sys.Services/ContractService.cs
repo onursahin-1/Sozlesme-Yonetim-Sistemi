@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Sys.Domain;
-
 namespace Sys.Services;
 
 public class DashboardStats
@@ -13,18 +12,15 @@ public class DashboardStats
     public int Uyari { get; set; }
     public int Ihlal { get; set; }
 }
-
 public class ContractService
 {
     private readonly IContractRepository _contracts;
     private readonly IAttachmentRepository _attachments;
-
     public ContractService(IContractRepository contracts, IAttachmentRepository attachments)
     {
         _contracts = contracts;
         _attachments = attachments;
     }
-
     private async Task LogAuditAsync(int contractId, string action, int actingUserId, string? detail)
     {
         var log = new AuditLog
@@ -38,29 +34,24 @@ public class ContractService
         };
         await _contracts.AddAuditLogAsync(log);
     }
-
     public async Task<DashboardStats> GetDashboardStatsAsync(User currentUser)
     {
-        var contracts = currentUser.Role == UserRole.Personel
-            ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
-            : await _contracts.GetAllAsync();
-
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        var counts = await _contracts.GetStatusCountsAsync(userId);
         return new DashboardStats
         {
-            Aktif = contracts.Count(c => c.Status == ContractStatus.Aktif),
-            OnayBekliyor = contracts.Count(c => c.Status == ContractStatus.OnayBekliyor),
-            Uyari = contracts.Count(c => c.Status == ContractStatus.Uyari),
-            Ihlal = contracts.Count(c => c.Status == ContractStatus.Ihlal),
+            Aktif = counts.GetValueOrDefault(ContractStatus.Aktif),
+            OnayBekliyor = counts.GetValueOrDefault(ContractStatus.OnayBekliyor),
+            Uyari = counts.GetValueOrDefault(ContractStatus.Uyari),
+            Ihlal = counts.GetValueOrDefault(ContractStatus.Ihlal),
         };
     }
-
     public async Task<List<Contract>> GetContractsAsync(User currentUser)
     {
         return currentUser.Role == UserRole.Personel
             ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
             : await _contracts.GetAllAsync();
     }
-
     public async Task<Contract> CreateRequestAsync(Contract contract)
     {
         contract.Status = ContractStatus.Talep;
@@ -70,34 +61,27 @@ public class ContractService
         await LogAuditAsync(contract.Id, "TalepOluşturuldu", contract.CreatedByUserId, $"{contract.Title} için yeni talep oluşturuldu.");
         return contract;
     }
-
     public async Task UpdateRequestAsync(Contract contract, User actingUser)
     {
         var existing = await GetContractDetailAsync(contract.Id, actingUser);
         if (existing is null)
             throw new InvalidOperationException("Bu talebi düzenleme yetkiniz yok.");
-
         if (existing.Status != ContractStatus.Talep)
             throw new InvalidOperationException("Bu talep artık düzenlenemez, işlem görmüş.");
-
         await _contracts.UpdateRequestAsync(contract);
         await LogAuditAsync(contract.Id, "TalepGüncellendi", actingUser.Id, $"{contract.Title} talebi düzenlenip yeniden gönderildi.");
     }
-
     public async Task AddAttachmentAsync(Attachment attachment)
     {
         await _attachments.AddAsync(attachment);
     }
-
     public async Task FinalizeContractAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, User actingUser)
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
-
         contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
         contract.Status = ContractStatus.OnayBekliyor;
         contract.Stage = 1;
-
         var auditLog = new AuditLog
         {
             EntityName = "Contract",
@@ -107,21 +91,16 @@ public class ContractService
             Detail = $"{contract.Title} sözleşmesi SYB tarafından oluşturuldu.",
             ActionDate = DateTime.Now,
         };
-
         await _contracts.FinalizeCreationAsync(contract, items, attachments, auditLog);
     }
-
     public async Task<Contract?> GetContractDetailAsync(int id, User currentUser)
     {
         var contract = await _contracts.GetByIdWithDetailsAsync(id);
         if (contract is null) return null;
-
         if (currentUser.Role == UserRole.Personel && contract.CreatedByUserId != currentUser.Id)
             return null; // başkasının talebini görmesin
-
         return contract;
     }
-
     public async Task DecideApprovalAsync(Contract contract, User actingUser, ApprovalDecision decision, string? note)
     {
         var (stepName, expectedRole) = contract.Stage switch
@@ -130,10 +109,8 @@ public class ContractService
             2 => ("Müdür (YK) Onayı", UserRole.Mudur),
             _ => throw new InvalidOperationException("Bu aşamada onay/red işlemi yapılamaz.")
         };
-
         if (actingUser.Role != expectedRole)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
-
         var log = new ApprovalLog
         {
             StepNumber = contract.Stage,
@@ -143,7 +120,6 @@ public class ContractService
             Note = note,
             ActionDate = DateTime.Now
         };
-
         if (contract.PendingTermination)
         {
             if (decision == ApprovalDecision.Onay)
@@ -222,12 +198,10 @@ public class ContractService
                 }
             }
         }
-
         await _contracts.ApplyDecisionAsync(contract, log);
         await LogAuditAsync(contract.Id, decision == ApprovalDecision.Onay ? "Onaylandı" : "Reddedildi", actingUser.Id,
             $"{stepName} - {contract.Title}" + (string.IsNullOrWhiteSpace(note) ? "" : $" - Not: {note}"));
     }
-   
 
     public async Task<List<Contract>> GetPendingApprovalsAsync(User currentUser)
     {
@@ -237,22 +211,18 @@ public class ContractService
             UserRole.Mudur => 2,
             _ => -1
         };
-
         if (stage == -1) return new List<Contract>();
-
         return await _contracts.GetByStageAsync(stage);
     }
     public async Task<List<Contract>> GetEditableContractsAsync(User currentUser)
     {
-        var all = await GetContractsAsync(currentUser);
-        return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari || c.Status == ContractStatus.Ihlal).ToList();
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari, ContractStatus.Ihlal);
     }
-
     public async Task EditContractAsync(Contract contract, User actingUser, string changeType, string reason, decimal? newTotalAmount, DateTime? newEndDate)
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
-
         var revision = new ContractRevision
         {
             ChangeType = changeType,
@@ -263,29 +233,24 @@ public class ContractService
             ChangedByUserId = actingUser.Id,
             ChangedAt = DateTime.Now
         };
-
         if (newTotalAmount.HasValue) contract.TotalAmount = newTotalAmount.Value;
         if (newEndDate.HasValue) contract.EndDate = newEndDate.Value;
-
         contract.PreviousStatusBeforeEdit = contract.Status;
         contract.PendingEdit = true;
         contract.Stage = 1;
         contract.Status = ContractStatus.OnayBekliyor;
-
         await _contracts.ApplyEditAsync(contract, revision);
         await LogAuditAsync(contract.Id, "SözleşmeDüzenlendi", actingUser.Id, $"{contract.Title} - {changeType} - {reason}");
     }
     public async Task<List<Contract>> GetViolationReportableContractsAsync(User currentUser)
     {
-        var all = await GetContractsAsync(currentUser);
-        return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Ihlal).ToList();
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Ihlal);
     }
-
     public async Task ReportViolationAsync(Contract contract, User reporter, string violationType, DateTime violationDate, string description)
     {
         if (reporter.Role == UserRole.Mudur)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
-
         var violation = new Violation
         {
             ContractId = contract.Id,
@@ -295,36 +260,30 @@ public class ContractService
             ReportedByUserId = reporter.Id,
             ReportedAt = DateTime.Now
         };
-
         contract.Status = ContractStatus.Ihlal;
-
         await _contracts.ApplyViolationAsync(contract, violation);
         await LogAuditAsync(contract.Id, "İhlalBildirildi", reporter.Id, $"{contract.Title} - {violationType}: {description}");
     }
     public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
     {
-        var all = await GetContractsAsync(currentUser);
-        return all.Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari).ToList();
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari);
     }
-
     public async Task<List<Contract>> GetArchivedContractsAsync(User currentUser)
     {
-        var all = await GetContractsAsync(currentUser);
-        return all.Where(c => c.Status == ContractStatus.Tamamlandi || c.Status == ContractStatus.Feshedildi).ToList();
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Tamamlandi, ContractStatus.Feshedildi);
     }
-
     public async Task<int> ReconcileContractStatusesAsync()
     {
         var today = DateTime.Today;
         var warningThreshold = today.AddDays(30);
         return await _contracts.ReconcileStatusesAsync(today, warningThreshold);
     }
-
     public async Task RequestTerminationAsync(Contract contract, User actingUser, string terminationType, DateTime terminationDate, string reason, decimal? compensationAmount, string compensationDirection)
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
-
         var termination = new ContractTermination
         {
             ContractId = contract.Id,
@@ -336,21 +295,23 @@ public class ContractService
             RequestedByUserId = actingUser.Id,
             RequestedAt = DateTime.Now
         };
-
         contract.PendingTermination = true;
         contract.Stage = 1;
         contract.Status = ContractStatus.OnayBekliyor;
-
         await _contracts.ApplyTerminationRequestAsync(contract, termination);
         await LogAuditAsync(contract.Id, "FesihTalebiOluşturuldu", actingUser.Id, $"{contract.Title} - Tür: {terminationType} - Gerekçe: {reason}");
     }
-
-    public async Task<List<AuditLog>> GetAuditLogsAsync(User currentUser)
+    public async Task<List<string>> GetAuditLogUserOptionsAsync(User currentUser)
     {
         if (currentUser.Role != UserRole.Mudur)
             throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
-
-        return await _contracts.GetAuditLogsAsync();
+        return await _contracts.GetAuditLogUserOptionsAsync();
     }
 
+    public async Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsAsync(User currentUser, int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate)
+    {
+        if (currentUser.Role != UserRole.Mudur)
+            throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
+        return await _contracts.GetAuditLogsPagedAsync(page, pageSize, userText, startDate, endDate);
+    }
 }
