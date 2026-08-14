@@ -1,0 +1,4 @@
+{
+  "ConnectionString": "Server=tcp:localhost\\SQLEXPRESS;Database=SysDb;User Id=sys_app_user;Password=BURAYA_KENDI_SIFRENI_YAZ;TrustServerCertificate=True;Encrypt=True",
+  "AttachmentsPath": "C:\\SYS_Ekler"
+}
