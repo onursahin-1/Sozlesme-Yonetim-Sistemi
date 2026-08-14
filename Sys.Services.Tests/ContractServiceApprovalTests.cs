@@ -112,4 +112,122 @@ public class ContractServiceApprovalTests
         Assert.Equal(ContractStatus.Aktif, contract.Status);
         Assert.False(contract.PendingTermination);
     }
+
+    // --- Aşağıdaki testler, bu sezon bulunup düzeltilen gerçek bir hatayı
+    // (reddedilen "Sözleşme Değiştir" talebinin sözleşmeyi yanlışlıkla Talep
+    // durumuna değil, düzenleme öncesi duruma döndürmesi gerektiğini) kalıcı
+    // olarak test kapsamına alır — regresyon önleyici testlerdir.
+
+    [Fact]
+    public async Task Edit_Approves_Stage1_MovesToStage2()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Stage = 1,
+            Status = ContractStatus.OnayBekliyor,
+            PendingEdit = true,
+            PreviousStatusBeforeEdit = ContractStatus.Aktif
+        };
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.DecideApprovalAsync(contract, syb, ApprovalDecision.Onay, null);
+
+        Assert.Equal(2, contract.Stage);
+        Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
+        Assert.True(contract.PendingEdit);
+    }
+
+    [Fact]
+    public async Task Edit_Approved_Stage2_ActivatesAndClearsPendingEdit()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Stage = 2,
+            Status = ContractStatus.OnayBekliyor,
+            PendingEdit = true,
+            PreviousStatusBeforeEdit = ContractStatus.Uyari
+        };
+        var mudur = new User { Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Onay, null);
+
+        Assert.Equal(3, contract.Stage);
+        Assert.Equal(ContractStatus.Aktif, contract.Status);
+        Assert.False(contract.PendingEdit);
+        Assert.Null(contract.PreviousStatusBeforeEdit);
+    }
+
+    [Fact]
+    public async Task Edit_Rejected_ReturnsToPreviousStatus_NotTalep()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Stage = 1,
+            Status = ContractStatus.OnayBekliyor,
+            PendingEdit = true,
+            PreviousStatusBeforeEdit = ContractStatus.Aktif
+        };
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.DecideApprovalAsync(contract, syb, ApprovalDecision.Red, "tutar hatalı");
+
+        Assert.Equal(ContractStatus.Aktif, contract.Status);
+        Assert.NotEqual(ContractStatus.Talep, contract.Status);
+        Assert.False(contract.PendingEdit);
+        Assert.Null(contract.PreviousStatusBeforeEdit);
+    }
+
+    [Fact]
+    public async Task Edit_Rejected_ReturnsToUyariWhenThatWasThePreviousStatus()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Stage = 2,
+            Status = ContractStatus.OnayBekliyor,
+            PendingEdit = true,
+            PreviousStatusBeforeEdit = ContractStatus.Uyari
+        };
+        var mudur = new User { Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Red, "gerekçe");
+
+        Assert.Equal(ContractStatus.Uyari, contract.Status);
+        Assert.False(contract.PendingEdit);
+    }
+
+    [Fact]
+    public async Task Edit_Rejected_WithoutPreviousStatus_DefaultsToAktif()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Stage = 1,
+            Status = ContractStatus.OnayBekliyor,
+            PendingEdit = true,
+            PreviousStatusBeforeEdit = null
+        };
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.DecideApprovalAsync(contract, syb, ApprovalDecision.Red, "gerekçe");
+
+        Assert.Equal(ContractStatus.Aktif, contract.Status);
+    }
+
+    [Fact]
+    public async Task Rejection_RecordsRejectionMetadata()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Stage = 1, Status = ContractStatus.OnayBekliyor };
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.DecideApprovalAsync(contract, syb, ApprovalDecision.Red, "eksik belge");
+
+        Assert.True(contract.WasRejected);
+        Assert.Equal("eksik belge", contract.LastRejectionNote);
+        Assert.NotNull(contract.LastRejectedAt);
+    }
 }
