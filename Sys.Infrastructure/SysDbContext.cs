@@ -52,6 +52,17 @@ public class SysDbContext : DbContext
             .HasIndex(u => u.Username)
             .IsUnique();
 
+        // ContractNo yalnızca sözleşme oluşturulduğunda ("SYBSA..." formatında) atanır;
+        // Talep aşamasındaki sözleşmelerde null'dır. Bu yüzden filtreli (yalnızca
+        // null olmayanlar için) bir unique index kullanılıyor — aksi halde SQL Server
+        // birden fazla null değeri unique index'te reddedebilirdi. Bu index, iki
+        // kullanıcının eşzamanlı "Sözleşme Yarat" işleminde aynı numarayı üretmesini
+        // veritabanı seviyesinde engeller.
+        modelBuilder.Entity<Contract>()
+            .HasIndex(c => c.ContractNo)
+            .IsUnique()
+            .HasFilter("[ContractNo] IS NOT NULL");
+
         modelBuilder.Entity<ContractItem>()
                     .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");
         modelBuilder.Entity<Contract>()

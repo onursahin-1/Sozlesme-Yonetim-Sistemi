@@ -154,7 +154,18 @@ public class ContractRepository : IContractRepository
 
         db.AuditLogs.Add(auditLog);
 
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            // ContractNo üzerindeki unique index, iki kullanıcının eşzamanlı
+            // "Sözleşme Yarat" işleminde aynı numarayı üretmesini burada yakalar.
+            throw new InvalidOperationException(
+                "Sözleşme numarası oluşturulurken bir çakışma oldu (aynı anda başka bir sözleşme " +
+                "oluşturulmuş olabilir). Lütfen tekrar deneyin.", ex);
+        }
     }
 
     public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog)
