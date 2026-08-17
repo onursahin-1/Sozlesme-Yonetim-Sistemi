@@ -72,6 +72,11 @@ public partial class ContractListViewModel : ViewModelBase
         SonKontrolRequested?.Invoke(card.RawContract);
     }
 
+    // Ekran açıkken başka bir kullanıcının eklediği/güncellediği sözleşmeleri
+    // görebilmek için üstteki "Yenile" butonuna bağlanır.
+    [RelayCommand]
+    private async Task Refresh() => await LoadAsync();
+
     private async Task LoadAsync()
     {
         IsLoading = true;

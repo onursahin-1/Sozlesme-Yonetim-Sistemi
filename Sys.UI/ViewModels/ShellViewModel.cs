@@ -90,12 +90,12 @@ public partial class ShellViewModel : ViewModelBase
             "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeYarat" => new ContractWizardViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeGoruntule" => new ContractDetailViewModel(_contractService, CurrentUser),
-            "sozlesmeKontrol" => new ApprovalQueueViewModel(_contractService, CurrentUser),
+            "sozlesmeKontrol" => CreateApprovalQueueViewModel(),
             "sozlesmeDegistir" => new ContractEditViewModel(_contractService, CurrentUser, _attachmentsPath),
             "ihlal" => new ViolationReportViewModel(_contractService, CurrentUser, _attachmentsPath),
             "fesih" => new ContractTerminationViewModel(_contractService, CurrentUser, _attachmentsPath),
             "arsiv" => new ArchiveViewModel(_contractService, CurrentUser),
-            "onayBekleyen" => new ApprovalQueueViewModel(_contractService, CurrentUser),
+            "onayBekleyen" => CreateApprovalQueueViewModel(),
             "auditLog" => new AuditLogViewModel(_contractService, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
@@ -129,6 +129,15 @@ public partial class ShellViewModel : ViewModelBase
         vm.ViewDetailsRequested += OnViewDetailsRequested;
         vm.ContractCreationRequested += OnContractCreationRequested;
         vm.SonKontrolRequested += OnSonKontrolRequested;
+        return vm;
+    }
+
+    // Onay/red kararı verildiğinde "Onay Bekleyenler" rozetinin ekran
+    // değiştirmeyi beklemeden anında tazelenmesi için DecisionMade olayına abone olur.
+    private ApprovalQueueViewModel CreateApprovalQueueViewModel(Contract? initialContract = null)
+    {
+        var vm = new ApprovalQueueViewModel(_contractService!, CurrentUser, initialContract);
+        vm.DecisionMade += () => _ = RefreshPendingApprovalCountAsync();
         return vm;
     }
 
@@ -173,7 +182,7 @@ public partial class ShellViewModel : ViewModelBase
 
     private void OnSonKontrolRequested(Contract contract)
     {
-        var approvalVm = new ApprovalQueueViewModel(_contractService!, CurrentUser, contract);
+        var approvalVm = CreateApprovalQueueViewModel(contract);
         approvalVm.BackRequested += () =>
         {
             CurrentPageTitle = "Sözleşmeler";

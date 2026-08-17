@@ -7,16 +7,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
-
 namespace Sys.UI.ViewModels;
 
 public partial class ChecklistItemViewModel : ObservableObject
 {
     public string Label { get; }
-
     [ObservableProperty]
     public partial bool IsChecked { get; set; }
-
     public ChecklistItemViewModel(string label)
     {
         Label = label;
@@ -26,91 +23,66 @@ public partial class ApprovalQueueViewModel : ViewModelBase
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
-
     [ObservableProperty]
     public partial string PageTitle { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial ObservableCollection<Contract> PendingContracts { get; set; } = new();
-
     public ObservableCollection<ChecklistItemViewModel> ChecklistItems { get; } = new();
-
     public bool IsSybFinalCheck => Detail?.Stage == 1;
-
     public bool AllChecked => !IsSybFinalCheck || ChecklistItems.All(i => i.IsChecked);
-
     [ObservableProperty]
     public partial Contract? SelectedContract { get; set; }
-
     [ObservableProperty]
     public partial Contract? Detail { get; set; }
-
     [ObservableProperty]
     public partial string DetailTitle { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailNo { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailPeriod { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailRequester { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailCompany { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailStatus { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailTotal { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailStart { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string DetailEnd { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial bool IsPendingTermination { get; set; }
-
     [ObservableProperty]
     public partial string TerminationInfo { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial bool HasRevisionHistory { get; set; }
-
     [ObservableProperty]
     public partial string RevisionInfo { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
-
     [ObservableProperty]
     public partial ObservableCollection<Attachment> Attachments { get; set; } = new();
-
     [ObservableProperty]
     public partial string Note { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
-
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
-
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
-
     // "Sözleşmeler" ekranından belirli bir sözleşme için buraya yönlendirildiysek true olur.
     public bool ShowBackButton { get; }
     public event Action? BackRequested;
 
+    // Bir onay/red kararı başarıyla kaydedildiğinde tetiklenir.
+    // ShellViewModel bunu dinleyerek "Onay Bekleyenler" rozetini anında tazeler.
+    public event Action? DecisionMade;
+
     [RelayCommand]
     private void Back() => BackRequested?.Invoke();
-
     public ApprovalQueueViewModel() : this(null!, new User()) { } // tasarımcı önizlemesi için
-
     public ApprovalQueueViewModel(ContractService contractService, User currentUser, Contract? initialContract = null)
     {
         _contractService = contractService;
@@ -119,11 +91,9 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         ShowBackButton = initialContract is not null;
         _ = InitializeAsync(initialContract);
     }
-
     private async Task InitializeAsync(Contract? initialContract)
     {
         await LoadQueueAsync();
-
         // "Sözleşmeler" ekranından "Son Kontrol'e Git" butonuyla buraya yönlendirildiysek,
         // ilgili sözleşmeyi kuyruktan bulup otomatik olarak seçili hale getiriyoruz.
         if (initialContract is not null)
@@ -132,7 +102,6 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             SelectedContract = match ?? initialContract;
         }
     }
-
     private async Task LoadQueueAsync()
     {
         IsLoading = true;
@@ -151,12 +120,10 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             IsLoading = false;
         }
     }
-
     partial void OnSelectedContractChanged(Contract? value)
     {
         _ = LoadDetailAsync(value);
     }
-
     private async Task LoadDetailAsync(Contract? summary)
     {
         ErrorMessage = string.Empty;
@@ -170,9 +137,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         TerminationInfo = string.Empty;
         HasRevisionHistory = false;
         RevisionInfo = string.Empty;
-
         if (summary is null) return;
-
         try
         {
             var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
@@ -181,7 +146,6 @@ public partial class ApprovalQueueViewModel : ViewModelBase
                 ErrorMessage = "Sözleşme yüklenemedi.";
                 return;
             }
-
             Detail = full;
             if (full.Stage == 1)
             {
@@ -214,10 +178,8 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
             DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
             DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
-
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<Attachment>(full.Attachments);
-
             IsPendingTermination = full.PendingTermination;
             if (full.PendingTermination)
             {
@@ -245,13 +207,10 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
         }
     }
-
     [RelayCommand]
     private async Task Approve() => await SubmitDecisionAsync(ApprovalDecision.Onay);
-
     [RelayCommand]
     private async Task Reject() => await SubmitDecisionAsync(ApprovalDecision.Red);
-
     private async Task SubmitDecisionAsync(ApprovalDecision decision)
     {
         if (Detail is null)
@@ -259,7 +218,6 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             ErrorMessage = "Önce listeden bir sözleşme seçin.";
             return;
         }
-
         try
         {
             await _contractService.DecideApprovalAsync(Detail, _currentUser, decision, string.IsNullOrWhiteSpace(Note) ? null : Note);
@@ -267,6 +225,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             ErrorMessage = string.Empty;
             SelectedContract = null;
             await LoadQueueAsync();
+            DecisionMade?.Invoke();
         }
         catch (Exception ex)
         {
@@ -274,7 +233,6 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             SuccessMessage = string.Empty;
         }
     }
-
     [RelayCommand]
     private void OpenAttachment(Attachment attachment)
     {
