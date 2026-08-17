@@ -40,7 +40,7 @@ public partial class ContractEditViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string NewTotalAmountText { get; set; } = string.Empty;
-    
+
     [ObservableProperty]
     public partial DateTimeOffset? NewEndDate { get; set; }
 
@@ -55,6 +55,11 @@ public partial class ContractEditViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
+
+    // Gönderim sırasında true olur; çift tıklamada aynı düzenleme talebinin
+    // iki kez gönderilmesini engeller.
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
 
     public ContractEditViewModel() : this(null!, new User(), string.Empty) { } // tasarımcı önizlemesi için
 
@@ -72,7 +77,7 @@ public partial class ContractEditViewModel : ViewModelBase
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
-   
+
     [RelayCommand]
     private void ClearFile()
     {
@@ -108,65 +113,74 @@ public partial class ContractEditViewModel : ViewModelBase
     [RelayCommand]
     private async Task Submit()
     {
-        ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
-
-        if (SelectedContract is null)
-        {
-            ErrorMessage = "Önce bir sözleşme seçin.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(Reason))
-        {
-            ErrorMessage = "Değişiklik gerekçesi zorunludur.";
-            return;
-        }
-
-        decimal? newAmount = null;
-        if (!string.IsNullOrWhiteSpace(NewTotalAmountText))
-        {
-            if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
-            {
-                ErrorMessage = "Yeni bedel geçerli, negatif olmayan bir sayı olmalı.";
-                return;
-            }
-            newAmount = parsed;
-        }
-
-        DateTime? newEnd = NewEndDate?.DateTime;
-
+        if (IsBusy) return;
+        IsBusy = true;
         try
         {
-            var contractId = SelectedContract.Id;
-            await _contractService.EditContractAsync(SelectedContract, _currentUser, SelectedChangeType, Reason, newAmount, newEnd);
+            ErrorMessage = string.Empty;
+            SuccessMessage = string.Empty;
 
-            if (!string.IsNullOrEmpty(SelectedFilePath))
+            if (SelectedContract is null)
             {
-                var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, contractId);
-                await _contractService.AddAttachmentAsync(new Attachment
-                {
-                    ContractId = contractId,
-                    Category = AttachmentCategory.Ek,
-                    FileName = SelectedFileName,
-                    FilePath = savedPath,
-                    UploadedAt = DateTime.Now,
-                    UploadedByUserId = _currentUser.Id,
-                });
+                ErrorMessage = "Önce bir sözleşme seçin.";
+                return;
             }
 
-            SuccessMessage = "Değişiklik talebi gönderildi. Sözleşme yeniden onay sürecine alındı.";
-            SelectedContract = null;
-            Reason = string.Empty;
-            NewTotalAmountText = string.Empty;
-            NewEndDate = null;
-            SelectedFilePath = null;
-            SelectedFileName = string.Empty;
-            await LoadAsync();
+            if (string.IsNullOrWhiteSpace(Reason))
+            {
+                ErrorMessage = "Değişiklik gerekçesi zorunludur.";
+                return;
+            }
+
+            decimal? newAmount = null;
+            if (!string.IsNullOrWhiteSpace(NewTotalAmountText))
+            {
+                if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
+                {
+                    ErrorMessage = "Yeni bedel geçerli, negatif olmayan bir sayı olmalı.";
+                    return;
+                }
+                newAmount = parsed;
+            }
+
+            DateTime? newEnd = NewEndDate?.DateTime;
+
+            try
+            {
+                var contractId = SelectedContract.Id;
+                await _contractService.EditContractAsync(SelectedContract, _currentUser, SelectedChangeType, Reason, newAmount, newEnd);
+
+                if (!string.IsNullOrEmpty(SelectedFilePath))
+                {
+                    var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, contractId);
+                    await _contractService.AddAttachmentAsync(new Attachment
+                    {
+                        ContractId = contractId,
+                        Category = AttachmentCategory.Ek,
+                        FileName = SelectedFileName,
+                        FilePath = savedPath,
+                        UploadedAt = DateTime.Now,
+                        UploadedByUserId = _currentUser.Id,
+                    });
+                }
+
+                SuccessMessage = "Değişiklik talebi gönderildi. Sözleşme yeniden onay sürecine alındı.";
+                SelectedContract = null;
+                Reason = string.Empty;
+                NewTotalAmountText = string.Empty;
+                NewEndDate = null;
+                SelectedFilePath = null;
+                SelectedFileName = string.Empty;
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            ErrorMessage = ex.Message;
+            IsBusy = false;
         }
     }
 }

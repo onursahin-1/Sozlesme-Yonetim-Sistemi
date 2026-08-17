@@ -20,7 +20,14 @@ public partial class NewRequestViewModel : ViewModelBase
     [ObservableProperty]
     public partial bool IsEditMode { get; set; }
 
-    public string SubmitButtonText => IsEditMode ? "Kaydet ve Yeniden Gönder" : "Onaya Gönder";
+    // Gönderim sırasında true olur; hem butonun tekrar tıklanmasını engellemek
+    // (çift gönderim koruması) hem de kullanıcıya "Gönderiliyor..." geri bildirimi
+    // vermek için kullanılır.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SubmitButtonText))]
+    public partial bool IsBusy { get; set; }
+
+    public string SubmitButtonText => IsBusy ? "Gönderiliyor..." : (IsEditMode ? "Kaydet ve Yeniden Gönder" : "Onaya Gönder");
 
     public event Action? CancelRequested;
 
@@ -104,7 +111,7 @@ public partial class NewRequestViewModel : ViewModelBase
         SelectedFilePath = path;
         SelectedFileName = System.IO.Path.GetFileName(path);
     }
-    
+
     [RelayCommand]
     private void ClearFile()
     {
@@ -116,43 +123,83 @@ public partial class NewRequestViewModel : ViewModelBase
     [RelayCommand]
     private async Task SubmitAsync()
     {
-        ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
-
-        var errors = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(Title)) errors.Add("Konu / Başlık");
-        if (string.IsNullOrWhiteSpace(Type)) errors.Add("Sözleşme Türü");
-        if (string.IsNullOrWhiteSpace(Description)) errors.Add("İşin Tanımı");
-        if (string.IsNullOrWhiteSpace(CompanyName)) errors.Add("Firma Adı");
-
-        if (string.IsNullOrWhiteSpace(TaxNo))
-            errors.Add("Vergi No");
-        else if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
-            errors.Add("Vergi No (10 haneli rakamdan oluşmalı)");
-
-        decimal amount = 0;
-        if (!string.IsNullOrWhiteSpace(EstimatedAmountText))
-        {
-            if (!decimal.TryParse(EstimatedAmountText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out amount) || amount < 0)
-                errors.Add("Tahmini Bedel (negatif olamaz)");
-        }
-
-        if (errors.Count > 0)
-        {
-            ErrorMessage = "Lütfen şu alanları kontrol edin: " + string.Join(", ", errors);
-            return;
-        }
-
+        // Hızlı çift tıklamada aynı talebin/güncellemenin iki kez gönderilmesini engeller.
+        if (IsBusy) return;
+        IsBusy = true;
         try
         {
-            if (IsEditMode && _editingContractId.HasValue)
+            ErrorMessage = string.Empty;
+            SuccessMessage = string.Empty;
+
+            var errors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(Title)) errors.Add("Konu / Başlık");
+            if (string.IsNullOrWhiteSpace(Type)) errors.Add("Sözleşme Türü");
+            if (string.IsNullOrWhiteSpace(Description)) errors.Add("İşin Tanımı");
+            if (string.IsNullOrWhiteSpace(CompanyName)) errors.Add("Firma Adı");
+
+            if (string.IsNullOrWhiteSpace(TaxNo))
+                errors.Add("Vergi No");
+            else if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
+                errors.Add("Vergi No (10 haneli rakamdan oluşmalı)");
+
+            decimal amount = 0;
+            if (!string.IsNullOrWhiteSpace(EstimatedAmountText))
             {
-                var editedContract = new Contract
+                if (!decimal.TryParse(EstimatedAmountText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out amount) || amount < 0)
+                    errors.Add("Tahmini Bedel (negatif olamaz)");
+            }
+
+            if (errors.Count > 0)
+            {
+                ErrorMessage = "Lütfen şu alanları kontrol edin: " + string.Join(", ", errors);
+                return;
+            }
+
+            try
+            {
+                if (IsEditMode && _editingContractId.HasValue)
                 {
-                    Id = _editingContractId.Value,
-                    CreatedByUserId = _currentUser.Id,
-                    Status = ContractStatus.Talep,
+                    var editedContract = new Contract
+                    {
+                        Id = _editingContractId.Value,
+                        CreatedByUserId = _currentUser.Id,
+                        Status = ContractStatus.Talep,
+                        RequestRefNo = RequestRefNo,
+                        Title = Title,
+                        Type = Type,
+                        Description = Description,
+                        CompanyName = CompanyName,
+                        TaxNo = TaxNo,
+                        SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
+                        CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
+                        TotalAmount = amount,
+                    };
+
+                    await _contractService.UpdateRequestAsync(editedContract, _currentUser);
+
+                    if (!string.IsNullOrEmpty(SelectedFilePath))
+                    {
+                        var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, editedContract.Id);
+                        await _contractService.AddAttachmentAsync(new Attachment
+                        {
+                            ContractId = editedContract.Id,
+                            Category = AttachmentCategory.Talep,
+                            FileName = SelectedFileName,
+                            FilePath = savedPath,
+                            UploadedAt = DateTime.Now,
+                            UploadedByUserId = _currentUser.Id,
+                        });
+                    }
+
+                    SuccessMessage = "Talep güncellendi ve yeniden gönderildi.";
+                    SelectedFilePath = null;
+                    SelectedFileName = string.Empty;
+                    return;
+                }
+
+                var contract = new Contract
+                {
                     RequestRefNo = RequestRefNo,
                     Title = Title,
                     Type = Type,
@@ -162,16 +209,17 @@ public partial class NewRequestViewModel : ViewModelBase
                     SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
                     CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
                     TotalAmount = amount,
+                    CreatedByUserId = _currentUser.Id,
                 };
 
-                await _contractService.UpdateRequestAsync(editedContract, _currentUser);
+                var saved = await _contractService.CreateRequestAsync(contract);
 
                 if (!string.IsNullOrEmpty(SelectedFilePath))
                 {
-                    var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, editedContract.Id);
+                    var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, saved.Id);
                     await _contractService.AddAttachmentAsync(new Attachment
                     {
-                        ContractId = editedContract.Id,
+                        ContractId = saved.Id,
                         Category = AttachmentCategory.Talep,
                         FileName = SelectedFileName,
                         FilePath = savedPath,
@@ -180,58 +228,27 @@ public partial class NewRequestViewModel : ViewModelBase
                     });
                 }
 
-                SuccessMessage = "Talep güncellendi ve yeniden gönderildi.";
+                SuccessMessage = "Talep başarıyla oluşturuldu.";
+                Title = string.Empty;
+                Type = string.Empty;
+                CompanyName = string.Empty;
+                TaxNo = string.Empty;
+                SapCariKodu = string.Empty;
+                SelectedCompanyType = string.Empty;
+                Description = string.Empty;
+                RequestRefNo = string.Empty;
+                EstimatedAmountText = string.Empty;
                 SelectedFilePath = null;
                 SelectedFileName = string.Empty;
-                return;
             }
-
-            var contract = new Contract
+            catch (Exception ex)
             {
-                RequestRefNo = RequestRefNo,
-                Title = Title,
-                Type = Type,
-                Description = Description,
-                CompanyName = CompanyName,
-                TaxNo = TaxNo,
-                SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
-                CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
-                TotalAmount = amount,
-                CreatedByUserId = _currentUser.Id,
-            };
-
-            var saved = await _contractService.CreateRequestAsync(contract);
-
-            if (!string.IsNullOrEmpty(SelectedFilePath))
-            {
-                var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, saved.Id);
-                await _contractService.AddAttachmentAsync(new Attachment
-                {
-                    ContractId = saved.Id,
-                    Category = AttachmentCategory.Talep,
-                    FileName = SelectedFileName,
-                    FilePath = savedPath,
-                    UploadedAt = DateTime.Now,
-                    UploadedByUserId = _currentUser.Id,
-                });
+                ErrorMessage = "Hata: " + ex.Message;
             }
-
-            SuccessMessage = "Talep başarıyla oluşturuldu.";
-            Title = string.Empty;
-            Type = string.Empty;
-            CompanyName = string.Empty;
-            TaxNo = string.Empty;
-            SapCariKodu = string.Empty;
-            SelectedCompanyType = string.Empty;
-            Description = string.Empty;
-            RequestRefNo = string.Empty;
-            EstimatedAmountText = string.Empty;
-            SelectedFilePath = null;
-            SelectedFileName = string.Empty;
         }
-        catch (Exception ex)
+        finally
         {
-            ErrorMessage = "Hata: " + ex.Message;
+            IsBusy = false;
         }
     }
 }

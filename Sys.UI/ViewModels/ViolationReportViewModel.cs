@@ -51,6 +51,11 @@ public partial class ViolationReportViewModel : ViewModelBase
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
 
+    // Gönderim sırasında true olur; çift tıklamada aynı ihlal bildiriminin
+    // iki kez gönderilmesini engeller.
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
     public ViolationReportViewModel() : this(null!, new User(), string.Empty) { } // tasarımcı önizlemesi için
 
     public ViolationReportViewModel(ContractService contractService, User currentUser, string attachmentsBasePath)
@@ -93,57 +98,66 @@ public partial class ViolationReportViewModel : ViewModelBase
     [RelayCommand]
     private async Task Submit()
     {
-        ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
-
-        if (SelectedContract is null)
-        {
-            ErrorMessage = "Önce bir sözleşme seçin.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(Description))
-        {
-            ErrorMessage = "Açıklama zorunludur.";
-            return;
-        }
-
-        if (ViolationDate is null)
-        {
-            ErrorMessage = "İhlal tarihi zorunludur.";
-            return;
-        }
-
+        if (IsBusy) return;
+        IsBusy = true;
         try
         {
-            var contractId = SelectedContract.Id;
-            await _contractService.ReportViolationAsync(SelectedContract, _currentUser, SelectedViolationType, ViolationDate.Value.DateTime, Description);
+            ErrorMessage = string.Empty;
+            SuccessMessage = string.Empty;
 
-            if (!string.IsNullOrEmpty(SelectedFilePath))
+            if (SelectedContract is null)
             {
-                var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, contractId);
-                await _contractService.AddAttachmentAsync(new Attachment
-                {
-                    ContractId = contractId,
-                    Category = AttachmentCategory.Ihlal,
-                    FileName = SelectedFileName,
-                    FilePath = savedPath,
-                    UploadedAt = DateTime.Now,
-                    UploadedByUserId = _currentUser.Id,
-                });
+                ErrorMessage = "Önce bir sözleşme seçin.";
+                return;
             }
 
-            SuccessMessage = "İhlal formu SYB'ye iletildi.";
-            SelectedContract = null;
-            Description = string.Empty;
-            SelectedFilePath = null;
-            SelectedFileName = string.Empty;
-            ViolationDate = DateTimeOffset.Now;
-            await LoadAsync();
+            if (string.IsNullOrWhiteSpace(Description))
+            {
+                ErrorMessage = "Açıklama zorunludur.";
+                return;
+            }
+
+            if (ViolationDate is null)
+            {
+                ErrorMessage = "İhlal tarihi zorunludur.";
+                return;
+            }
+
+            try
+            {
+                var contractId = SelectedContract.Id;
+                await _contractService.ReportViolationAsync(SelectedContract, _currentUser, SelectedViolationType, ViolationDate.Value.DateTime, Description);
+
+                if (!string.IsNullOrEmpty(SelectedFilePath))
+                {
+                    var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath, _attachmentsBasePath, contractId);
+                    await _contractService.AddAttachmentAsync(new Attachment
+                    {
+                        ContractId = contractId,
+                        Category = AttachmentCategory.Ihlal,
+                        FileName = SelectedFileName,
+                        FilePath = savedPath,
+                        UploadedAt = DateTime.Now,
+                        UploadedByUserId = _currentUser.Id,
+                    });
+                }
+
+                SuccessMessage = "İhlal formu SYB'ye iletildi.";
+                SelectedContract = null;
+                Description = string.Empty;
+                SelectedFilePath = null;
+                SelectedFileName = string.Empty;
+                ViolationDate = DateTimeOffset.Now;
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            ErrorMessage = ex.Message;
+            IsBusy = false;
         }
     }
 }

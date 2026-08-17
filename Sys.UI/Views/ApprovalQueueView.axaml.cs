@@ -15,6 +15,7 @@ public partial class ApprovalQueueView : UserControl
     private async void OnApproveClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not ApprovalQueueViewModel vm) return;
+        if (vm.IsBusy) return; // bir karar zaten işleniyorsa ikinci onay penceresini açma
 
         try
         {
@@ -34,6 +35,7 @@ public partial class ApprovalQueueView : UserControl
     private async void OnRejectClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not ApprovalQueueViewModel vm) return;
+        if (vm.IsBusy) return; // bir karar zaten işleniyorsa ikinci onay penceresini açma
 
         try
         {

@@ -59,7 +59,13 @@ public partial class App : Application
                     // taşır. Bu olmadan boş/eski bir veritabanında seed işlemi ve
                     // sonrasındaki tüm sorgular başarısız olabilir.
                     await seedDb.Database.MigrateAsync();
-                    await DbSeeder.SeedAsync(seedDb);
+
+                    // Bilinen (sabit) şifreli test kullanıcıları yalnızca appsettings.Local.json'da
+                    // "EnableDevSeed": true açıkça belirtilmişse oluşturulur. Bu satır olmadan
+                    // (örn. bir sunucu/paylaşımlı ortam kurulumunda) seed hiç çalışmaz.
+                    if (settings.EnableDevSeed)
+                        await DbSeeder.SeedAsync(seedDb);
+
                     await contractService.ReconcileContractStatusesAsync();
                 }).GetAwaiter().GetResult();
             }

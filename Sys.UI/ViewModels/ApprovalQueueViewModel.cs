@@ -68,6 +68,14 @@ public partial class ApprovalQueueViewModel : ViewModelBase
     public partial string Note { get; set; } = string.Empty;
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
+
+    // Onay/red kararı kaydedilirken true olur. Approve/Reject butonları koda arkası
+    // Click olayıyla tetiklendiği için (Command binding değil), platform bunları
+    // otomatik devre dışı bırakmaz — bu yüzden çift tıklamada aynı kararın iki kez
+    // gönderilmesini burada elle engelliyoruz.
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
     [ObservableProperty]
@@ -213,11 +221,13 @@ public partial class ApprovalQueueViewModel : ViewModelBase
     private async Task Reject() => await SubmitDecisionAsync(ApprovalDecision.Red);
     private async Task SubmitDecisionAsync(ApprovalDecision decision)
     {
+        if (IsBusy) return; // çift tıklamada aynı kararın iki kez gönderilmesini engeller
         if (Detail is null)
         {
             ErrorMessage = "Önce listeden bir sözleşme seçin.";
             return;
         }
+        IsBusy = true;
         try
         {
             await _contractService.DecideApprovalAsync(Detail, _currentUser, decision, string.IsNullOrWhiteSpace(Note) ? null : Note);
@@ -231,6 +241,10 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         {
             ErrorMessage = ex.Message;
             SuccessMessage = string.Empty;
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
     [RelayCommand]

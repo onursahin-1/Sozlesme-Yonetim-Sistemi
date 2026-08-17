@@ -8,6 +8,12 @@ public class AppSettings
 {
     public string ConnectionString { get; set; } = string.Empty;
     public string AttachmentsPath { get; set; } = string.Empty;
+
+    // Yalnızca yerel geliştirme ortamında true yapılmalı. true olduğunda,
+    // veritabanı boşsa bilinen (sabit şifreli) test kullanıcıları otomatik
+    // oluşturulur — bu yüzden canlı/paylaşılan bir ortamda kesinlikle false
+    // (veya bu satır hiç olmadan, varsayılan false) kalmalı.
+    public bool EnableDevSeed { get; set; }
 }
 
 public static class AppSettingsLoader

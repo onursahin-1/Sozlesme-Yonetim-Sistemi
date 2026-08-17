@@ -64,6 +64,11 @@ public partial class ContractTerminationViewModel : ViewModelBase
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
 
+    // Gönderim sırasında true olur; çift tıklamada aynı fesih talebinin
+    // iki kez gönderilmesini engeller.
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
     public ContractTerminationViewModel() : this(null!, new User(), string.Empty) { } // tasarımcı önizlemesi için
 
     public ContractTerminationViewModel(ContractService contractService, User currentUser, string attachmentsBasePath)
@@ -151,39 +156,48 @@ public partial class ContractTerminationViewModel : ViewModelBase
     [RelayCommand]
     private async Task Submit()
     {
-        SuccessMessage = string.Empty;
-
-        if (!ValidateForm(out var compensation))
-            return;
-
+        if (IsBusy) return;
+        IsBusy = true;
         try
         {
-            var contractId = SelectedContract!.Id;
-            await _contractService.RequestTerminationAsync(SelectedContract, _currentUser, SelectedTerminationType, TerminationDate!.Value.DateTime, Reason, compensation, SelectedCompensationDirection);
+            SuccessMessage = string.Empty;
 
-            var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath!, _attachmentsBasePath, contractId);
-            await _contractService.AddAttachmentAsync(new Attachment
+            if (!ValidateForm(out var compensation))
+                return;
+
+            try
             {
-                ContractId = contractId,
-                Category = AttachmentCategory.Fesih,
-                FileName = SelectedFileName,
-                FilePath = savedPath,
-                UploadedAt = DateTime.Now,
-                UploadedByUserId = _currentUser.Id,
-            });
+                var contractId = SelectedContract!.Id;
+                await _contractService.RequestTerminationAsync(SelectedContract, _currentUser, SelectedTerminationType, TerminationDate!.Value.DateTime, Reason, compensation, SelectedCompensationDirection);
 
-            SuccessMessage = "Fesih talebi gönderildi. SYB ve Müdür onayı bekleniyor.";
-            SelectedContract = null;
-            Reason = string.Empty;
-            CompensationAmountText = string.Empty;
-            SelectedFilePath = null;
-            SelectedFileName = string.Empty;
-            TerminationDate = DateTimeOffset.Now;
-            await LoadAsync();
+                var savedPath = AttachmentFileHelper.SaveFile(SelectedFilePath!, _attachmentsBasePath, contractId);
+                await _contractService.AddAttachmentAsync(new Attachment
+                {
+                    ContractId = contractId,
+                    Category = AttachmentCategory.Fesih,
+                    FileName = SelectedFileName,
+                    FilePath = savedPath,
+                    UploadedAt = DateTime.Now,
+                    UploadedByUserId = _currentUser.Id,
+                });
+
+                SuccessMessage = "Fesih talebi gönderildi. SYB ve Müdür onayı bekleniyor.";
+                SelectedContract = null;
+                Reason = string.Empty;
+                CompensationAmountText = string.Empty;
+                SelectedFilePath = null;
+                SelectedFileName = string.Empty;
+                TerminationDate = DateTimeOffset.Now;
+                await LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            ErrorMessage = ex.Message;
+            IsBusy = false;
         }
     }
 }
