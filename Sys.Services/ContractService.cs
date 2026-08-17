@@ -210,9 +210,18 @@ public class ContractService
                 }
             }
         }
-        await _contracts.ApplyDecisionAsync(contract, log);
-        await LogAuditAsync(contract.Id, decision == ApprovalDecision.Onay ? "Onaylandı" : "Reddedildi", actingUser.Id,
-            $"{stepName} - {contract.Title}" + (string.IsNullOrWhiteSpace(note) ? "" : $" - Not: {note}"));
+        // Audit log, ApplyDecisionAsync içinde sözleşme/onay kaydıyla aynı transaction'da
+        // yazılsın diye burada oluşturulup repository'ye birlikte gönderiliyor.
+        var auditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = decision == ApprovalDecision.Onay ? "Onaylandı" : "Reddedildi",
+            ActingUserId = actingUser.Id,
+            Detail = $"{stepName} - {contract.Title}" + (string.IsNullOrWhiteSpace(note) ? "" : $" - Not: {note}"),
+            ActionDate = DateTime.Now,
+        };
+        await _contracts.ApplyDecisionAsync(contract, log, auditLog);
     }
 
     public async Task<List<Contract>> GetPendingApprovalsAsync(User currentUser)
@@ -251,8 +260,16 @@ public class ContractService
         contract.PendingEdit = true;
         contract.Stage = 1;
         contract.Status = ContractStatus.OnayBekliyor;
-        await _contracts.ApplyEditAsync(contract, revision);
-        await LogAuditAsync(contract.Id, "SözleşmeDüzenlendi", actingUser.Id, $"{contract.Title} - {changeType} - {reason}");
+        var editAuditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = "SözleşmeDüzenlendi",
+            ActingUserId = actingUser.Id,
+            Detail = $"{contract.Title} - {changeType} - {reason}",
+            ActionDate = DateTime.Now,
+        };
+        await _contracts.ApplyEditAsync(contract, revision, editAuditLog);
     }
     public async Task<List<Contract>> GetViolationReportableContractsAsync(User currentUser)
     {
@@ -273,8 +290,16 @@ public class ContractService
             ReportedAt = DateTime.Now
         };
         contract.Status = ContractStatus.Ihlal;
-        await _contracts.ApplyViolationAsync(contract, violation);
-        await LogAuditAsync(contract.Id, "İhlalBildirildi", reporter.Id, $"{contract.Title} - {violationType}: {description}");
+        var violationAuditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = "İhlalBildirildi",
+            ActingUserId = reporter.Id,
+            Detail = $"{contract.Title} - {violationType}: {description}",
+            ActionDate = DateTime.Now,
+        };
+        await _contracts.ApplyViolationAsync(contract, violation, violationAuditLog);
     }
     public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
     {
@@ -313,8 +338,16 @@ public class ContractService
         contract.PendingTermination = true;
         contract.Stage = 1;
         contract.Status = ContractStatus.OnayBekliyor;
-        await _contracts.ApplyTerminationRequestAsync(contract, termination);
-        await LogAuditAsync(contract.Id, "FesihTalebiOluşturuldu", actingUser.Id, $"{contract.Title} - Tür: {terminationType} - Gerekçe: {reason}");
+        var terminationAuditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = "FesihTalebiOluşturuldu",
+            ActingUserId = actingUser.Id,
+            Detail = $"{contract.Title} - Tür: {terminationType} - Gerekçe: {reason}",
+            ActionDate = DateTime.Now,
+        };
+        await _contracts.ApplyTerminationRequestAsync(contract, termination, terminationAuditLog);
     }
     public async Task<List<string>> GetAuditLogUserOptionsAsync(User currentUser)
     {

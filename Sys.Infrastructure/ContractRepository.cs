@@ -139,7 +139,7 @@ public class ContractRepository : IContractRepository
         await db.SaveChangesAsync();
     }
 
-    public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log)
+    public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
@@ -148,6 +148,11 @@ public class ContractRepository : IContractRepository
 
         log.ContractId = contract.Id;
         db.ApprovalLogs.Add(log);
+
+        // Audit log, sözleşme durumu ve onay kaydıyla aynı SaveChangesAsync çağrısında
+        // (dolayısıyla aynı transaction'da) yazılır — biri başarısız olursa ikisi de
+        // geri alınır, yarım kalmış/kayıtsız bir işlem oluşmaz.
+        db.AuditLogs.Add(auditLog);
 
         await db.SaveChangesAsync();
     }
@@ -209,7 +214,7 @@ public class ContractRepository : IContractRepository
         return updated;
     }
 
-    public async Task ApplyEditAsync(Contract contract, ContractRevision revision)
+    public async Task ApplyEditAsync(Contract contract, ContractRevision revision, AuditLog auditLog)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
@@ -220,11 +225,12 @@ public class ContractRepository : IContractRepository
 
         revision.ContractId = contract.Id;
         db.ContractRevisions.Add(revision);
+        db.AuditLogs.Add(auditLog);
 
         await db.SaveChangesAsync();
     }
 
-    public async Task ApplyViolationAsync(Contract contract, Violation violation)
+    public async Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
@@ -232,11 +238,12 @@ public class ContractRepository : IContractRepository
         CopyWorkflowState(contract, tracked);
 
         db.Violations.Add(violation);
+        db.AuditLogs.Add(auditLog);
 
         await db.SaveChangesAsync();
     }
 
-    public async Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination)
+    public async Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
@@ -244,6 +251,7 @@ public class ContractRepository : IContractRepository
         CopyWorkflowState(contract, tracked);
 
         db.ContractTerminations.Add(termination);
+        db.AuditLogs.Add(auditLog);
 
         await db.SaveChangesAsync();
     }

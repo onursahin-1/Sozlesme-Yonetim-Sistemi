@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.EntityFrameworkCore;
 using Sys.Infrastructure;
 using Sys.Services;
 using Sys.UI.ViewModels;
@@ -25,7 +26,22 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var settings = AppSettingsLoader.Load();
+            AppSettings settings;
+            try
+            {
+                settings = AppSettingsLoader.Load();
+            }
+            catch (Exception ex)
+            {
+                // appsettings.Local.json eksik/bozuksa uygulama ham bir çökme yerine
+                // anlaşılır bir hata bırakıp düzgünce kapanır.
+                var logPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                    "sys-startup-error.txt");
+                File.WriteAllText(logPath, "SYS başlatılamadı: ayarlar yüklenemedi.\n\n" + ex);
+                desktop.Shutdown();
+                return;
+            }
 
             var userRepository = new UserRepository(settings.ConnectionString);
             var authService = new AuthService(userRepository);
@@ -39,6 +55,10 @@ public partial class App : Application
                 Task.Run(async () =>
                 {
                     using var seedDb = DbConnectionFactory.CreateContext(settings.ConnectionString);
+                    // Uygulama her açıldığında veritabanı şemasını en güncel migration'a
+                    // taşır. Bu olmadan boş/eski bir veritabanında seed işlemi ve
+                    // sonrasındaki tüm sorgular başarısız olabilir.
+                    await seedDb.Database.MigrateAsync();
                     await DbSeeder.SeedAsync(seedDb);
                     await contractService.ReconcileContractStatusesAsync();
                 }).GetAwaiter().GetResult();

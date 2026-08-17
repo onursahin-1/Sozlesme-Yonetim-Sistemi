@@ -27,7 +27,23 @@ public static class AttachmentFileHelper
 
         var fileName = Path.GetFileName(sourceFilePath);
         var targetPath = Path.Combine(targetDir, fileName);
-        File.Copy(sourceFilePath, targetPath, overwrite: true);
+
+        // Aynı sözleşmeye aynı isimde ikinci bir dosya yüklenirse öncekini
+        // sessizce ezmek yerine, Windows'un "dosya (1).pdf" mantığına benzer
+        // şekilde benzersiz bir isim üretilir.
+        if (File.Exists(targetPath))
+        {
+            var nameOnly = Path.GetFileNameWithoutExtension(fileName);
+            var fileExt = Path.GetExtension(fileName);
+            var counter = 1;
+            do
+            {
+                targetPath = Path.Combine(targetDir, $"{nameOnly} ({counter}){fileExt}");
+                counter++;
+            } while (File.Exists(targetPath));
+        }
+
+        File.Copy(sourceFilePath, targetPath, overwrite: false);
         return targetPath;
     }
 

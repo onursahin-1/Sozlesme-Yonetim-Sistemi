@@ -10,11 +10,11 @@ public interface IContractRepository
     Task UpdateRequestAsync(Contract contract);
     Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog);
     Task<Contract?> GetByIdWithDetailsAsync(int id);
-    Task ApplyDecisionAsync(Contract contract, ApprovalLog log);
+    Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog);
     Task<List<Contract>> GetByStageAsync(int stage);
-    Task ApplyEditAsync(Contract contract, ContractRevision revision);
-    Task ApplyViolationAsync(Contract contract, Violation violation);
-    Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination);
+    Task ApplyEditAsync(Contract contract, ContractRevision revision, AuditLog auditLog);
+    Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog);
+    Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog);
     Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold);
     Task AddAuditLogAsync(AuditLog log);
     Task<List<string>> GetAuditLogUserOptionsAsync();
