@@ -7,46 +7,46 @@
              x:Class="Sys.UI.Views.ContractListView"
              x:DataType="vm:ContractListViewModel">
 
-    <Design.DataContext>
-        <vm:ContractListViewModel />
-    </Design.DataContext>
+	<Design.DataContext>
+		<vm:ContractListViewModel />
+	</Design.DataContext>
 
-    <DockPanel>
-        <!-- Filtre butonları -->
+	<DockPanel>
+		<!-- Filtre butonları -->
 		<TextBox DockPanel.Dock="Top" Text="{Binding SearchText}" PlaceholderText="Başlık veya firma adına göre ara..."
                  Width="320" HorizontalAlignment="Left" Margin="0,0,0,10"/>
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
-            <Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"/>
-            <Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"/>
-            <Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"/>
-            <Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"/>
-            <Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"/>
-        </StackPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
+			<Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"/>
+			<Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"/>
+			<Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"/>
+			<Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"/>
+			<Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"/>
+		</StackPanel>
 
-        <TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+		<TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
 		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-        <ListBox ItemsSource="{Binding FilteredContracts}"
+		<ListBox ItemsSource="{Binding FilteredContracts}"
                  SelectedItem="{Binding SelectedContract}"
                  IsVisible="{Binding !IsLoading}">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:ContractCardViewModel">
-                    <Border Background="White" BorderBrush="#D0D8E4" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8">
-                        <StackPanel Spacing="4">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel Grid.Column="0">
+			<ListBox.ItemTemplate>
+				<DataTemplate x:DataType="vm:ContractCardViewModel">
+					<Border Background="White" BorderBrush="#D0D8E4" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8">
+						<StackPanel Spacing="4">
+							<Grid ColumnDefinitions="*,Auto">
+								<StackPanel Grid.Column="0">
 									<TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14" Foreground="Black"/>
-                                    <TextBlock FontSize="11" Foreground="#888">
+									<TextBlock FontSize="11" Foreground="#888">
 										<Run Text="{Binding RefNoText}"/>
-                                        <Run Text=" · "/>
-                                        <Run Text="{Binding CompanyName}"/>
-                                    </TextBlock>
-                                </StackPanel>
-                                <Border Grid.Column="1" Background="{Binding StatusBgHex}" CornerRadius="10" Padding="8,3">
-                                    <TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}" FontSize="11" FontWeight="Bold"/>
-                                </Border>
-                            </Grid>
+										<Run Text=" · "/>
+										<Run Text="{Binding CompanyName}"/>
+									</TextBlock>
+								</StackPanel>
+								<Border Grid.Column="1" Background="{Binding StatusBgHex}" CornerRadius="10" Padding="8,3">
+									<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}" FontSize="11" FontWeight="Bold"/>
+								</Border>
+							</Grid>
 							<StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,0,0">
 								<TextBlock Text="{Binding Type}" FontSize="11" Foreground="#555"/>
 								<TextBlock Text="{Binding BedelText}" FontSize="11" Foreground="#555"/>
@@ -54,23 +54,60 @@
 							</StackPanel>
 							<TextBlock Text="{Binding RejectionNoteText}" FontSize="11" Foreground="#A32D2D" FontStyle="Italic"
                                        TextWrapping="Wrap" Margin="0,4,0,0" IsVisible="{Binding IsRejected}"/>
-							<Button Content="Düzenle" FontSize="11" Margin="0,6,0,0" HorizontalAlignment="Left"
-                                    Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4"
-                                    IsVisible="{Binding IsEditable}"
-                                    Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}"
-                                    CommandParameter="{Binding}">
-								<Button.Styles>
-									<Style Selector="Button:pointerover /template/ ContentPresenter">
-										<Setter Property="Background" Value="#1F5686"/>
-										<Setter Property="TextBlock.Foreground" Value="White"/>
-									</Style>
-								</Button.Styles>
-							</Button>
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-    </DockPanel>
+							<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+								<Button Content="Detay" FontSize="11" HorizontalAlignment="Left"
+                                        Background="#4B5563" Foreground="White" Padding="10,4" CornerRadius="4"
+                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).ViewDetailsCommand}"
+                                        CommandParameter="{Binding}">
+									<Button.Styles>
+										<Style Selector="Button:pointerover /template/ ContentPresenter">
+											<Setter Property="Background" Value="#374151"/>
+											<Setter Property="TextBlock.Foreground" Value="White"/>
+										</Style>
+									</Button.Styles>
+								</Button>
+								<Button Content="Düzenle" FontSize="11" HorizontalAlignment="Left"
+                                        Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4"
+                                        IsVisible="{Binding IsEditable}"
+                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}"
+                                        CommandParameter="{Binding}">
+									<Button.Styles>
+										<Style Selector="Button:pointerover /template/ ContentPresenter">
+											<Setter Property="Background" Value="#1F5686"/>
+											<Setter Property="TextBlock.Foreground" Value="White"/>
+										</Style>
+									</Button.Styles>
+								</Button>
+								<Button Content="Sözleşme Yarat" FontSize="11" HorizontalAlignment="Left"
+                                        Background="#7C3AED" Foreground="White" Padding="10,4" CornerRadius="4"
+                                        IsVisible="{Binding NeedsContractCreation}"
+                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestContractCreationCommand}"
+                                        CommandParameter="{Binding}">
+									<Button.Styles>
+										<Style Selector="Button:pointerover /template/ ContentPresenter">
+											<Setter Property="Background" Value="#5B21B6"/>
+											<Setter Property="TextBlock.Foreground" Value="White"/>
+										</Style>
+									</Button.Styles>
+								</Button>
+								<Button Content="Son Kontrol'e Git" FontSize="11" HorizontalAlignment="Left"
+                                        Background="#B06A00" Foreground="White" Padding="10,4" CornerRadius="4"
+                                        IsVisible="{Binding NeedsSybSonKontrol}"
+                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestSonKontrolCommand}"
+                                        CommandParameter="{Binding}">
+									<Button.Styles>
+										<Style Selector="Button:pointerover /template/ ContentPresenter">
+											<Setter Property="Background" Value="#8A5200"/>
+											<Setter Property="TextBlock.Foreground" Value="White"/>
+										</Style>
+									</Button.Styles>
+								</Button>
+							</StackPanel>
+						</StackPanel>
+					</Border>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</DockPanel>
 
 </UserControl>

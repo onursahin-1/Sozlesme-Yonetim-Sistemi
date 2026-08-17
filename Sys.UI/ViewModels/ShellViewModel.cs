@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
@@ -7,7 +9,23 @@ using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
-public record NavItem(string Key, string Label);
+public partial class NavItem : ObservableObject
+{
+    public string Key { get; }
+    public string Label { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowBadge))]
+    public partial int Count { get; set; }
+
+    public bool ShowBadge => Count > 0;
+
+    public NavItem(string key, string label)
+    {
+        Key = key;
+        Label = label;
+    }
+}
 
 public partial class ShellViewModel : ViewModelBase
 {
@@ -56,6 +74,7 @@ public partial class ShellViewModel : ViewModelBase
     private void UpdateCurrentPage(NavItem? value)
     {
         CurrentPageTitle = value?.Label ?? string.Empty;
+        _ = RefreshPendingApprovalCountAsync();
 
         if (_contractService is null)
         {
@@ -66,8 +85,8 @@ public partial class ShellViewModel : ViewModelBase
         CurrentPageContent = value?.Key switch
         {
             "dashboard" => new DashboardViewModel(_contractService, CurrentUser),
-            "sozlesmeList" => new ContractListViewModel(_contractService, CurrentUser),
-            "talepList" => CreateTalepListViewModel(),
+            "sozlesmeList" => CreateContractListViewModel(),
+            "talepList" => CreateContractListViewModel(),
             "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeYarat" => new ContractWizardViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeGoruntule" => new ContractDetailViewModel(_contractService, CurrentUser),
@@ -82,10 +101,34 @@ public partial class ShellViewModel : ViewModelBase
         };
     }
 
-    private ContractListViewModel CreateTalepListViewModel()
+    // Sol menüdeki "Onay Bekleyenler" (Müdür) yanında kaç sözleşmenin
+    // onayını beklediğini gösteren rozeti günceller. Her ekran geçişinde
+    // tazelenir, böylece kullanıcı menüde gezindikçe sayı güncel kalır.
+    private async Task RefreshPendingApprovalCountAsync()
+    {
+        if (_contractService is null || CurrentUser.Role != UserRole.Mudur) return;
+
+        var navItem = NavItems.FirstOrDefault(n => n.Key == "onayBekleyen");
+        if (navItem is null) return;
+
+        try
+        {
+            var pending = await _contractService.GetPendingApprovalsAsync(CurrentUser);
+            navItem.Count = pending.Count;
+        }
+        catch
+        {
+            // Rozet güncellenemezse sessizce yut — kritik bir işlev değil.
+        }
+    }
+
+    private ContractListViewModel CreateContractListViewModel()
     {
         var vm = new ContractListViewModel(_contractService!, CurrentUser);
         vm.EditRequested += OnEditRequested;
+        vm.ViewDetailsRequested += OnViewDetailsRequested;
+        vm.ContractCreationRequested += OnContractCreationRequested;
+        vm.SonKontrolRequested += OnSonKontrolRequested;
         return vm;
     }
 
@@ -95,11 +138,50 @@ public partial class ShellViewModel : ViewModelBase
         editVm.CancelRequested += () =>
         {
             CurrentPageTitle = "Taleplerim";
-            CurrentPageContent = CreateTalepListViewModel();
+            CurrentPageContent = CreateContractListViewModel();
         };
 
         CurrentPageTitle = "Talebi Düzenle";
         CurrentPageContent = editVm;
+    }
+
+    private void OnViewDetailsRequested(Contract contract)
+    {
+        var detailVm = new ContractDetailViewModel(_contractService!, CurrentUser, contract);
+        detailVm.BackRequested += () =>
+        {
+            CurrentPageTitle = "Sözleşmeler";
+            CurrentPageContent = CreateContractListViewModel();
+        };
+
+        CurrentPageTitle = "Sözleşmeleri Görüntüle";
+        CurrentPageContent = detailVm;
+    }
+
+    private void OnContractCreationRequested(Contract contract)
+    {
+        var wizardVm = new ContractWizardViewModel(_contractService!, CurrentUser, _attachmentsPath, contract);
+        wizardVm.BackRequested += () =>
+        {
+            CurrentPageTitle = "Sözleşmeler";
+            CurrentPageContent = CreateContractListViewModel();
+        };
+
+        CurrentPageTitle = "Sözleşme Yarat";
+        CurrentPageContent = wizardVm;
+    }
+
+    private void OnSonKontrolRequested(Contract contract)
+    {
+        var approvalVm = new ApprovalQueueViewModel(_contractService!, CurrentUser, contract);
+        approvalVm.BackRequested += () =>
+        {
+            CurrentPageTitle = "Sözleşmeler";
+            CurrentPageContent = CreateContractListViewModel();
+        };
+
+        CurrentPageTitle = "Son Kontrol (SYB)";
+        CurrentPageContent = approvalVm;
     }
 
     private static NavItem[] BuildNavItems(UserRole role) => role switch

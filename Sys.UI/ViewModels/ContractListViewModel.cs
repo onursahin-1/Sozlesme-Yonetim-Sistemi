@@ -29,7 +29,7 @@ public partial class ContractListViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; } = true;
-    
+
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
@@ -37,6 +37,9 @@ public partial class ContractListViewModel : ViewModelBase
     public partial ContractCardViewModel? SelectedContract { get; set; }
 
     public event Action<Contract>? EditRequested;
+    public event Action<Contract>? ViewDetailsRequested;
+    public event Action<Contract>? ContractCreationRequested;
+    public event Action<Contract>? SonKontrolRequested;
 
     public ContractListViewModel(ContractService contractService, User currentUser)
     {
@@ -51,6 +54,24 @@ public partial class ContractListViewModel : ViewModelBase
         EditRequested?.Invoke(card.RawContract);
     }
 
+    [RelayCommand]
+    private void ViewDetails(ContractCardViewModel card)
+    {
+        ViewDetailsRequested?.Invoke(card.RawContract);
+    }
+
+    [RelayCommand]
+    private void RequestContractCreation(ContractCardViewModel card)
+    {
+        ContractCreationRequested?.Invoke(card.RawContract);
+    }
+
+    [RelayCommand]
+    private void RequestSonKontrol(ContractCardViewModel card)
+    {
+        SonKontrolRequested?.Invoke(card.RawContract);
+    }
+
     private async Task LoadAsync()
     {
         IsLoading = true;
@@ -59,9 +80,10 @@ public partial class ContractListViewModel : ViewModelBase
         {
             var contracts = await _contractService.GetContractsAsync(_currentUser);
             var editableUserId = _currentUser.Role == UserRole.Personel ? _currentUser.Id : 0;
+            var isSyb = _currentUser.Role == UserRole.SYB;
             _allContracts = contracts
                 .Where(c => c.Status != ContractStatus.Tamamlandi && c.Status != ContractStatus.Feshedildi)
-                .Select(c => new ContractCardViewModel(c, editableUserId))
+                .Select(c => new ContractCardViewModel(c, editableUserId, isSyb))
                 .ToList();
             ApplyFilter();
         }

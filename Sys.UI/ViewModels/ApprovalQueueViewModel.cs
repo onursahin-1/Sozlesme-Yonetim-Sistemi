@@ -102,14 +102,35 @@ public partial class ApprovalQueueViewModel : ViewModelBase
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
 
+    // "Sözleşmeler" ekranından belirli bir sözleşme için buraya yönlendirildiysek true olur.
+    public bool ShowBackButton { get; }
+    public event Action? BackRequested;
+
+    [RelayCommand]
+    private void Back() => BackRequested?.Invoke();
+
     public ApprovalQueueViewModel() : this(null!, new User()) { } // tasarımcı önizlemesi için
 
-    public ApprovalQueueViewModel(ContractService contractService, User currentUser)
+    public ApprovalQueueViewModel(ContractService contractService, User currentUser, Contract? initialContract = null)
     {
         _contractService = contractService;
         _currentUser = currentUser;
         PageTitle = currentUser.Role == UserRole.Mudur ? "Onay Bekleyenler" : "Son Kontrol (SYB)";
-        _ = LoadQueueAsync();
+        ShowBackButton = initialContract is not null;
+        _ = InitializeAsync(initialContract);
+    }
+
+    private async Task InitializeAsync(Contract? initialContract)
+    {
+        await LoadQueueAsync();
+
+        // "Sözleşmeler" ekranından "Son Kontrol'e Git" butonuyla buraya yönlendirildiysek,
+        // ilgili sözleşmeyi kuyruktan bulup otomatik olarak seçili hale getiriyoruz.
+        if (initialContract is not null)
+        {
+            var match = PendingContracts.FirstOrDefault(c => c.Id == initialContract.Id);
+            SelectedContract = match ?? initialContract;
+        }
     }
 
     private async Task LoadQueueAsync()

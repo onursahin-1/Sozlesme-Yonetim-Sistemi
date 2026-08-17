@@ -82,15 +82,36 @@ public partial class ContractWizardViewModel : ViewModelBase
     public bool IsStep2 => CurrentStep == 2;
     public bool IsStep3 => CurrentStep == 3;
 
+    // "Sözleşmeler" ekranından belirli bir talep için buraya yönlendirildiysek true olur.
+    public bool ShowBackButton { get; }
+    public event Action? BackRequested;
+
+    [RelayCommand]
+    private void Back() => BackRequested?.Invoke();
+
     public ContractWizardViewModel() : this(null!, new User(), string.Empty) { } // yalnızca tasarımcı önizlemesi için
 
-    public ContractWizardViewModel(ContractService contractService, User currentUser, string attachmentsBasePath)
+    public ContractWizardViewModel(ContractService contractService, User currentUser, string attachmentsBasePath, Contract? initialRequest = null)
     {
         _contractService = contractService;
         _currentUser = currentUser;
         _attachmentsBasePath = attachmentsBasePath;
-        _ = LoadAsync();
+        ShowBackButton = initialRequest is not null;
+        _ = InitializeAsync(initialRequest);
         AddItem();
+    }
+
+    private async Task InitializeAsync(Contract? initialRequest)
+    {
+        await LoadAsync();
+
+        // "Sözleşmeler" ekranından "Sözleşme Yarat" butonuyla buraya yönlendirildiysek,
+        // ilgili talebi listeden bulup otomatik olarak seçili hale getiriyoruz.
+        if (initialRequest is not null)
+        {
+            var match = PendingRequests.FirstOrDefault(c => c.Id == initialRequest.Id);
+            SelectedRequest = match ?? initialRequest;
+        }
     }
 
     partial void OnCurrentStepChanged(int value)

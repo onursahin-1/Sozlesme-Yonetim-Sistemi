@@ -8,38 +8,50 @@
              x:Class="Sys.UI.Views.ContractWizardView"
              x:DataType="vm:ContractWizardViewModel">
 
-    <Design.DataContext>
-        <vm:ContractWizardViewModel />
-    </Design.DataContext>
+	<Design.DataContext>
+		<vm:ContractWizardViewModel />
+	</Design.DataContext>
 
-    <StackPanel Margin="0,0,20,20" Spacing="14" MaxWidth="700">
+	<StackPanel Margin="0,0,20,20" Spacing="14" MaxWidth="700">
 
-        <!-- Adım göstergesi -->
-        <StackPanel Orientation="Horizontal" Spacing="4">
-            <TextBlock Text="1. Temel Bilgiler" FontWeight="Bold" Foreground="{Binding IsStep1, Converter={x:Null}}" Padding="8,4"/>
-            <TextBlock Text=" → " VerticalAlignment="Center"/>
-            <TextBlock Text="2. Bedel Kalemleri" FontWeight="Bold" Padding="8,4"/>
-            <TextBlock Text=" → " VerticalAlignment="Center"/>
-            <TextBlock Text="3. Belgeler ve Gönder" FontWeight="Bold" Padding="8,4"/>
-        </StackPanel>
+		<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
+                Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
+                IsVisible="{Binding ShowBackButton}"
+                Command="{Binding BackCommand}">
+			<Button.Styles>
+				<Style Selector="Button:pointerover /template/ ContentPresenter">
+					<Setter Property="Background" Value="#4B5563"/>
+					<Setter Property="TextBlock.Foreground" Value="White"/>
+				</Style>
+			</Button.Styles>
+		</Button>
 
-        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"/>
+		<!-- Adım göstergesi -->
+		<StackPanel Orientation="Horizontal" Spacing="4">
+			<TextBlock Text="1. Temel Bilgiler" FontWeight="Bold" Foreground="{Binding IsStep1, Converter={x:Null}}" Padding="8,4"/>
+			<TextBlock Text=" → " VerticalAlignment="Center"/>
+			<TextBlock Text="2. Bedel Kalemleri" FontWeight="Bold" Padding="8,4"/>
+			<TextBlock Text=" → " VerticalAlignment="Center"/>
+			<TextBlock Text="3. Belgeler ve Gönder" FontWeight="Bold" Padding="8,4"/>
+		</StackPanel>
 
-        <!-- ADIM 1 -->
-        <StackPanel IsVisible="{Binding IsStep1}" Spacing="10">
-            <TextBlock Text="Sözleşmesi oluşturulacak onaylı talebi seçin:"/>
-            <ComboBox ItemsSource="{Binding PendingRequests}" SelectedItem="{Binding SelectedRequest}" HorizontalAlignment="Stretch">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="domain:Contract">
-                        <TextBlock>
-                            <Run Text="{Binding Title}"/>
-                            <Run Text=" — "/>
-                            <Run Text="{Binding CompanyName}"/>
-                        </TextBlock>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-            <TextBlock Text="Bekleyen talep yok." IsVisible="{Binding !PendingRequests.Count}" Foreground="Gray"/>
+		<TextBlock Text="{Binding ErrorMessage}" Foreground="Red"/>
+
+		<!-- ADIM 1 -->
+		<StackPanel IsVisible="{Binding IsStep1}" Spacing="10">
+			<TextBlock Text="Sözleşmesi oluşturulacak onaylı talebi seçin:"/>
+			<ComboBox ItemsSource="{Binding PendingRequests}" SelectedItem="{Binding SelectedRequest}" HorizontalAlignment="Stretch">
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="domain:Contract">
+						<TextBlock>
+							<Run Text="{Binding Title}"/>
+							<Run Text=" — "/>
+							<Run Text="{Binding CompanyName}"/>
+						</TextBlock>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+			<TextBlock Text="Bekleyen talep yok." IsVisible="{Binding !PendingRequests.Count}" Foreground="Gray"/>
 			<TextBlock Text="Başlangıç Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
 			<DatePicker SelectedDate="{Binding StartDate}"/>
 
@@ -55,13 +67,13 @@
 			<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>
 		</StackPanel>
 
-        <!-- ADIM 2 -->
-        <StackPanel IsVisible="{Binding IsStep2}" Spacing="10">
-            <TextBlock Text="Bedel kalemlerini girin:"/>
+		<!-- ADIM 2 -->
+		<StackPanel IsVisible="{Binding IsStep2}" Spacing="10">
+			<TextBlock Text="Bedel kalemlerini girin:"/>
 
-            <ItemsControl ItemsSource="{Binding Items}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ContractItemRowViewModel">
+			<ItemsControl ItemsSource="{Binding Items}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="vm:ContractItemRowViewModel">
 						<Grid ColumnDefinitions="3*,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
 							<TextBox Grid.Column="0" PlaceholderText="Tanım" Text="{Binding Description}" Margin="0,0,4,0"/>
 							<TextBox Grid.Column="1" Width="60" Text="{Binding QuantityText}" Margin="0,0,4,0"/>
@@ -70,17 +82,17 @@
 									 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 							<Button Grid.Column="4" Content="Sil" Command="{Binding RemoveCommand}"/>
 						</Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
 
-            <Button Content="+ Kalem Ekle" Command="{Binding AddItemCommand}"/>
+			<Button Content="+ Kalem Ekle" Command="{Binding AddItemCommand}"/>
 
 			<TextBlock FontWeight="Bold" FontSize="16">
 				<Run Text="Toplam: "/>
 				<Run Text="{Binding ToplamText}"/>
 			</TextBlock>
-        </StackPanel>
+		</StackPanel>
 
 		<!-- ADIM 3 -->
 		<StackPanel IsVisible="{Binding IsStep3}" Spacing="14">
@@ -140,12 +152,12 @@
 			<Button Content="Sözleşmeyi Kaydet" Command="{Binding SubmitCommand}" IsEnabled="{Binding !IsSubmitting}"/>
 		</StackPanel>
 
-        <!-- Gezinme butonları -->
-        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-            <Button Content="Geri" Command="{Binding PreviousStepCommand}" IsEnabled="{Binding !IsStep1}"/>
-            <Button Content="İleri" Command="{Binding NextStepCommand}" IsVisible="{Binding !IsStep3}"/>
-        </StackPanel>
+		<!-- Gezinme butonları -->
+		<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+			<Button Content="Geri" Command="{Binding PreviousStepCommand}" IsEnabled="{Binding !IsStep1}"/>
+			<Button Content="İleri" Command="{Binding NextStepCommand}" IsVisible="{Binding !IsStep3}"/>
+		</StackPanel>
 
-    </StackPanel>
+	</StackPanel>
 
 </UserControl>

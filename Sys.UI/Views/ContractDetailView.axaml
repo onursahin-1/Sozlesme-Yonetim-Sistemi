@@ -6,7 +6,20 @@
 
 	<Grid RowDefinitions="Auto,Auto,*" Margin="24">
 
-		<TextBlock Grid.Row="0" Text="Sözleşme Görüntüle" FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/>
+		<StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
+			<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
+                    Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
+                    IsVisible="{Binding ShowBackButton}"
+                    Command="{Binding BackCommand}">
+				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Setter Property="Background" Value="#4B5563"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+				</Button.Styles>
+			</Button>
+			<TextBlock Text="Sözleşme Görüntüle" FontSize="22" FontWeight="Bold"/>
+		</StackPanel>
 
 		<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
 			<TextBlock Text="Sözleşme Seç:" VerticalAlignment="Center"/>

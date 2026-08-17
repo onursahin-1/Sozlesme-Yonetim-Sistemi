@@ -7,36 +7,42 @@
              x:Class="Sys.UI.Views.ShellView"
              x:DataType="vm:ShellViewModel">
 
-    <Design.DataContext>
-        <vm:ShellViewModel />
-    </Design.DataContext>
+	<Design.DataContext>
+		<vm:ShellViewModel />
+	</Design.DataContext>
 
-    <DockPanel>
-        <Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="16,10">
-            <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0" Text="SYS — Sözleşme Yönetim Sistemi" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
-                    <TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White" VerticalAlignment="Center"/>
-                    <Button Content="Çıkış" Command="{Binding LogoutCommand}"/>
-                </StackPanel>
-            </Grid>
-        </Border>
+	<DockPanel>
+		<Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="16,10">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0" Text="SYS — Sözleşme Yönetim Sistemi" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+					<TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
+					<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White" VerticalAlignment="Center"/>
+					<Button Content="Çıkış" Command="{Binding LogoutCommand}"/>
+				</StackPanel>
+			</Grid>
+		</Border>
 
-        <ListBox DockPanel.Dock="Left" Width="220"
+		<ListBox DockPanel.Dock="Left" Width="220"
                  ItemsSource="{Binding NavItems}"
                  SelectedItem="{Binding SelectedNavItem}">
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="vm:NavItem">
-                    <TextBlock Text="{Binding Label}" Padding="8,4"/>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+			<ListBox.ItemTemplate>
+				<DataTemplate x:DataType="vm:NavItem">
+					<Grid ColumnDefinitions="*,Auto" Margin="8,4">
+						<TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center"/>
+						<Border Grid.Column="1" Background="#DC2626" CornerRadius="10" Padding="7,2" MinWidth="20"
+                                IsVisible="{Binding ShowBadge}" HorizontalAlignment="Right">
+							<TextBlock Text="{Binding Count}" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+						</Border>
+					</Grid>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
 
 		<DockPanel>
 			<TextBlock DockPanel.Dock="Top" Text="{Binding CurrentPageTitle}" FontSize="20" FontWeight="Bold" Margin="20,20,20,10"/>
 			<ContentControl Content="{Binding CurrentPageContent}" Margin="20,0,20,20"/>
 		</DockPanel>
-    </DockPanel>
+	</DockPanel>
 
 </UserControl>

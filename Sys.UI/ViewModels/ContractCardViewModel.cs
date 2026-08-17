@@ -6,15 +6,23 @@ namespace Sys.UI.ViewModels;
 public class ContractCardViewModel
 {
     private readonly Contract _contract;
+    private readonly bool _isSyb;
 
-    public ContractCardViewModel(Contract contract, int currentUserId = 0)
+    public ContractCardViewModel(Contract contract, int currentUserId = 0, bool isSyb = false)
     {
         _contract = contract;
+        _isSyb = isSyb;
         IsEditable = currentUserId != 0 && contract.CreatedByUserId == currentUserId && contract.Status == ContractStatus.Talep;
     }
 
     public Contract RawContract => _contract;
     public bool IsEditable { get; }
+
+    // SYB rolündeki kullanıcı için: bu kart "Sözleşme Yarat" işlemini mi bekliyor?
+    public bool NeedsContractCreation => _isSyb && Status == ContractStatus.Talep;
+
+    // SYB rolündeki kullanıcı için: bu kart "Son Kontrol" (aşama 1 onayı) işlemini mi bekliyor?
+    public bool NeedsSybSonKontrol => _isSyb && Status == ContractStatus.OnayBekliyor && Stage == 1;
 
     public int Id => _contract.Id;
     public string Title => _contract.Title;

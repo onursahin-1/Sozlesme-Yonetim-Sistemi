@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -65,13 +66,34 @@ public partial class ContractDetailViewModel : ViewModelBase
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
+    // "Sözleşmeler" ekranından belirli bir sözleşme için buraya yönlendirildiysek true olur.
+    public bool ShowBackButton { get; }
+    public event Action? BackRequested;
+
+    [RelayCommand]
+    private void Back() => BackRequested?.Invoke();
+
     public ContractDetailViewModel() : this(null!, new User()) { } // yalnızca tasarımcı önizlemesi için
 
-    public ContractDetailViewModel(ContractService contractService, User currentUser)
+    public ContractDetailViewModel(ContractService contractService, User currentUser, Contract? initialContract = null)
     {
         _contractService = contractService;
         _currentUser = currentUser;
-        _ = LoadListAsync();
+        ShowBackButton = initialContract is not null;
+        _ = InitializeAsync(initialContract);
+    }
+
+    private async Task InitializeAsync(Contract? initialContract)
+    {
+        await LoadListAsync();
+
+        // "Sözleşmeler" ekranından "Detay" butonuyla buraya yönlendirildiysek,
+        // ilgili sözleşmeyi listeden bulup otomatik olarak seçili hale getiriyoruz.
+        if (initialContract is not null)
+        {
+            var match = AvailableContracts.FirstOrDefault(c => c.Id == initialContract.Id);
+            SelectedContract = match ?? initialContract;
+        }
     }
 
     private async Task LoadListAsync()

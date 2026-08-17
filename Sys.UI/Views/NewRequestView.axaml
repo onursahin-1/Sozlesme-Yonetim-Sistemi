@@ -7,35 +7,47 @@
              x:Class="Sys.UI.Views.NewRequestView"
              x:DataType="vm:NewRequestViewModel">
 
-    <Design.DataContext>
-        <vm:NewRequestViewModel />
-    </Design.DataContext>
+	<Design.DataContext>
+		<vm:NewRequestViewModel />
+	</Design.DataContext>
 
-    <ScrollViewer>
+	<ScrollViewer>
 		<StackPanel Margin="0,0,20,20" Spacing="10" MaxWidth="600">
+
+			<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
+                    Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
+                    IsVisible="{Binding IsEditMode}"
+                    Command="{Binding CancelCommand}">
+				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Setter Property="Background" Value="#4B5563"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+				</Button.Styles>
+			</Button>
 
 			<TextBlock Text="Talebi Düzenle" FontSize="16" FontWeight="Bold" Foreground="#A32D2D" IsVisible="{Binding IsEditMode}"/>
 
 			<TextBlock Text="SAS / YK Referans No"/>
-            <TextBox Text="{Binding RequestRefNo}"/>
+			<TextBox Text="{Binding RequestRefNo}"/>
 
-            <TextBlock Text="Konu / Başlık *"/>
-            <TextBox Text="{Binding Title}"/>
+			<TextBlock Text="Konu / Başlık *"/>
+			<TextBox Text="{Binding Title}"/>
 
-            <TextBlock Text="Sözleşme Türü"/>
-            <ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch"/>
+			<TextBlock Text="Sözleşme Türü"/>
+			<ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch"/>
 
-            <TextBlock Text="Tahmini Bedel (TL)"/>
+			<TextBlock Text="Tahmini Bedel (TL)"/>
 			<TextBox Text="{Binding EstimatedAmountText}" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 
-            <TextBlock Text="İşin Tanımı *"/>
-            <TextBox Text="{Binding Description}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"/>
+			<TextBlock Text="İşin Tanımı *"/>
+			<TextBox Text="{Binding Description}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"/>
 
-            <TextBlock Text="Firma Adı *"/>
-            <TextBox Text="{Binding CompanyName}"/>
+			<TextBlock Text="Firma Adı *"/>
+			<TextBox Text="{Binding CompanyName}"/>
 
-            <TextBlock Text="Vergi No *"/>
-            <TextBox Text="{Binding TaxNo}"/>
+			<TextBlock Text="Vergi No *"/>
+			<TextBox Text="{Binding TaxNo}"/>
 
 			<TextBlock Text="SAP Cari Kodu"/>
 			<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX (yoksa boş bırakın)"/>
@@ -51,15 +63,14 @@
                         IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 			</StackPanel>
 
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
-            <TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>
+			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
+			<TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>
 
 			<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
 				<Button Content="{Binding SubmitButtonText}" Command="{Binding SubmitCommand}"/>
-				<Button Content="İptal" Command="{Binding CancelCommand}" IsVisible="{Binding IsEditMode}"/>
 			</StackPanel>
 
-        </StackPanel>
-    </ScrollViewer>
+		</StackPanel>
+	</ScrollViewer>
 
 </UserControl>
