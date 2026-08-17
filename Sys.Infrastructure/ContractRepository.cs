@@ -24,9 +24,15 @@ public class ContractRepository : IContractRepository
         tracked.PendingTermination = source.PendingTermination;
         tracked.PendingEdit = source.PendingEdit;
         tracked.PreviousStatusBeforeEdit = source.PreviousStatusBeforeEdit;
+        tracked.PreviousStatusBeforeTermination = source.PreviousStatusBeforeTermination;
         tracked.WasRejected = source.WasRejected;
         tracked.LastRejectionNote = source.LastRejectionNote;
         tracked.LastRejectedAt = source.LastRejectedAt;
+        // Düzenleme (edit) reddedildiğinde ContractService bedeli/bitiş tarihini eski
+        // revizyon değerlerine geri alıyor; bu geri alma işleminin kalıcı olması için
+        // bu iki alan da durum makinesiyle birlikte senkron kopyalanır.
+        tracked.TotalAmount = source.TotalAmount;
+        tracked.EndDate = source.EndDate;
     }
 
     public async Task<List<Contract>> GetAllAsync()

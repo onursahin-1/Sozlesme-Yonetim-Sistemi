@@ -133,14 +133,16 @@ public class ContractService
                     contract.Stage = 3;
                     contract.Status = ContractStatus.Feshedildi;
                     contract.PendingTermination = false;
+                    contract.PreviousStatusBeforeTermination = null;
                 }
             }
             else
             {
-                // Fesih talebi reddedildi — sözleşme Aktif olarak devam eder
+                // Fesih talebi reddedildi — sözleşme fesih öncesi durumuna (Aktif veya Uyarı) döner
                 contract.Stage = 3;
-                contract.Status = ContractStatus.Aktif;
+                contract.Status = contract.PreviousStatusBeforeTermination ?? ContractStatus.Aktif;
                 contract.PendingTermination = false;
+                contract.PreviousStatusBeforeTermination = null;
             }
         }
         else if (contract.PendingEdit)
@@ -161,7 +163,17 @@ public class ContractService
             }
             else
             {
-                // Düzenleme talebi reddedildi — sözleşme düzenleme öncesi durumuna döner, Talep'e düşmez
+                // Düzenleme talebi reddedildi — sözleşme düzenleme öncesi durumuna döner, Talep'e düşmez.
+                // Bedel ve bitiş tarihi de son revizyondaki eski değerlere geri alınır; aksi halde
+                // onaylanmamış değişiklik sözleşmede kalıcı olarak kalırdı.
+                var lastRevision = contract.Revisions
+                    .OrderByDescending(r => r.ChangedAt)
+                    .FirstOrDefault();
+                if (lastRevision is not null)
+                {
+                    contract.TotalAmount = lastRevision.PreviousTotalAmount;
+                    contract.EndDate = lastRevision.PreviousEndDate;
+                }
                 contract.Stage = 3;
                 contract.Status = contract.PreviousStatusBeforeEdit ?? ContractStatus.Aktif;
                 contract.PendingEdit = false;
@@ -295,6 +307,9 @@ public class ContractService
             RequestedByUserId = actingUser.Id,
             RequestedAt = DateTime.Now
         };
+        // Fesih reddedilirse sözleşmenin talep anındaki durumuna (Aktif veya Uyarı)
+        // geri dönebilmesi için mevcut durum burada saklanır.
+        contract.PreviousStatusBeforeTermination = contract.Status;
         contract.PendingTermination = true;
         contract.Stage = 1;
         contract.Status = ContractStatus.OnayBekliyor;

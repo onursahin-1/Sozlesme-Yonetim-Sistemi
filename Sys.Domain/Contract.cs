@@ -36,6 +36,10 @@ public class Contract
     public List<ContractTermination> Terminations { get; set; } = new();
     public bool PendingEdit { get; set; }
     public ContractStatus? PreviousStatusBeforeEdit { get; set; }
+
+    // Fesih talebi reddedildiğinde sözleşmenin fesih öncesi durumuna (Aktif veya Uyarı)
+    // geri dönebilmesi için, talep anındaki durum burada saklanır.
+    public ContractStatus? PreviousStatusBeforeTermination { get; set; }
 }
 
 public enum ContractStatus
