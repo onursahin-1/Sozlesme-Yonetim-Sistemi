@@ -1,4 +1,5 @@
-﻿using System.Net.Mail;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net.Mail;
 
 namespace Sys.Domain;
 
@@ -40,6 +41,13 @@ public class Contract
     // Fesih talebi reddedildiğinde sözleşmenin fesih öncesi durumuna (Aktif veya Uyarı)
     // geri dönebilmesi için, talep anındaki durum burada saklanır.
     public ContractStatus? PreviousStatusBeforeTermination { get; set; }
+
+    // SQL Server tarafından her güncellemede otomatik artırılan concurrency token.
+    // İki kullanıcı aynı sözleşmeyi aynı anda işleme alırsa (örn. iki Müdür aynı
+    // sözleşmeyi onaylarsa), ikinci kaydetme işlemi bu alan sayesinde reddedilir —
+    // aksi halde birinin işlemi fark edilmeden diğerinin üzerine yazılabilirdi.
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = null!;
 }
 
 public enum ContractStatus

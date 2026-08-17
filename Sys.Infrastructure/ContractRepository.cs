@@ -35,6 +35,24 @@ public class ContractRepository : IContractRepository
         tracked.EndDate = source.EndDate;
     }
 
+    // Concurrency token uyuşmazlığında (iki kullanıcı aynı sözleşmeyi aynı anda
+    // işleme aldığında) ham DbUpdateConcurrencyException yerine, üst katmanların
+    // (ContractService/ViewModel) zaten bildiği InvalidOperationException/ErrorMessage
+    // deseniyle uyumlu, anlaşılır bir hata fırlatır.
+    private static async Task SaveWithConcurrencyCheckAsync(DbContext db)
+    {
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new InvalidOperationException(
+                "Bu sözleşme sizden önce başka bir kullanıcı tarafından güncellendi. " +
+                "Lütfen sayfayı yenileyip tekrar deneyin.", ex);
+        }
+    }
+
     public async Task<List<Contract>> GetAllAsync()
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -145,6 +163,11 @@ public class ContractRepository : IContractRepository
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
         CopyWorkflowState(contract, tracked);
+        // Kullanıcının ekranda gördüğü RowVersion ile veritabanındaki güncel değer
+        // eşleşmiyorsa (araya başka bir güncelleme girmişse) SaveChangesAsync bir
+        // DbUpdateConcurrencyException fırlatır — böylece iki kişi aynı sözleşmeyi
+        // aynı anda onaylayıp birbirinin işlemini fark etmeden ezemez.
+        db.Entry(tracked).Property(c => c.RowVersion).OriginalValue = contract.RowVersion;
 
         log.ContractId = contract.Id;
         db.ApprovalLogs.Add(log);
@@ -154,7 +177,7 @@ public class ContractRepository : IContractRepository
         // geri alınır, yarım kalmış/kayıtsız bir işlem oluşmaz.
         db.AuditLogs.Add(auditLog);
 
-        await db.SaveChangesAsync();
+        await SaveWithConcurrencyCheckAsync(db);
     }
 
     public async Task<List<Contract>> GetByStageAsync(int stage)
@@ -222,12 +245,13 @@ public class ContractRepository : IContractRepository
         tracked.TotalAmount = contract.TotalAmount;
         tracked.EndDate = contract.EndDate;
         CopyWorkflowState(contract, tracked);
+        db.Entry(tracked).Property(c => c.RowVersion).OriginalValue = contract.RowVersion;
 
         revision.ContractId = contract.Id;
         db.ContractRevisions.Add(revision);
         db.AuditLogs.Add(auditLog);
 
-        await db.SaveChangesAsync();
+        await SaveWithConcurrencyCheckAsync(db);
     }
 
     public async Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog)
@@ -236,11 +260,12 @@ public class ContractRepository : IContractRepository
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
         CopyWorkflowState(contract, tracked);
+        db.Entry(tracked).Property(c => c.RowVersion).OriginalValue = contract.RowVersion;
 
         db.Violations.Add(violation);
         db.AuditLogs.Add(auditLog);
 
-        await db.SaveChangesAsync();
+        await SaveWithConcurrencyCheckAsync(db);
     }
 
     public async Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog)
@@ -249,11 +274,12 @@ public class ContractRepository : IContractRepository
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
         CopyWorkflowState(contract, tracked);
+        db.Entry(tracked).Property(c => c.RowVersion).OriginalValue = contract.RowVersion;
 
         db.ContractTerminations.Add(termination);
         db.AuditLogs.Add(auditLog);
 
-        await db.SaveChangesAsync();
+        await SaveWithConcurrencyCheckAsync(db);
     }
 
     public async Task AddAuditLogAsync(AuditLog log)
