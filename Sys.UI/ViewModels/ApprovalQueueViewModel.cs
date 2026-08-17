@@ -128,11 +128,13 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             IsLoading = false;
         }
     }
+    // Kullanıcı listede hızlıca birden fazla sözleşmeye art arda tıklarsa, eski bir
+    // seçimin sorgusu yeni seçimden SONRA tamamlanabilir. Bu sayaç her seçimde
+    // artırılıp yakalanıyor; sonuç geldiğinde hâlâ "en son" istek mi diye kontrol
+    // edilip değilse göz ardı ediliyor.
+    private int _loadRequestId;
+
     partial void OnSelectedContractChanged(Contract? value)
-    {
-        _ = LoadDetailAsync(value);
-    }
-    private async Task LoadDetailAsync(Contract? summary)
     {
         ErrorMessage = string.Empty;
         SuccessMessage = string.Empty;
@@ -145,10 +147,18 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         TerminationInfo = string.Empty;
         HasRevisionHistory = false;
         RevisionInfo = string.Empty;
+
+        var requestId = ++_loadRequestId;
+        _ = LoadDetailAsync(value, requestId);
+    }
+    private async Task LoadDetailAsync(Contract? summary, int requestId)
+    {
         if (summary is null) return;
         try
         {
             var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
+            if (requestId != _loadRequestId) return; // daha yeni bir seçim yapılmış, bu sonuç artık geçersiz
+
             if (full is null)
             {
                 ErrorMessage = "Sözleşme yüklenemedi.";
@@ -212,7 +222,8 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
+            if (requestId == _loadRequestId)
+                ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
         }
     }
     [RelayCommand]
@@ -225,6 +236,11 @@ public partial class ApprovalQueueViewModel : ViewModelBase
         if (Detail is null)
         {
             ErrorMessage = "Önce listeden bir sözleşme seçin.";
+            return;
+        }
+        if (decision == ApprovalDecision.Red && string.IsNullOrWhiteSpace(Note))
+        {
+            ErrorMessage = "Reddetme işlemi için bir gerekçe girmelisiniz.";
             return;
         }
         IsBusy = true;

@@ -107,10 +107,12 @@ public class ContractService
         {
             1 => ("SYB Son Kontrol", UserRole.SYB),
             2 => ("Müdür (YK) Onayı", UserRole.Mudur),
-            _ => throw new InvalidOperationException("Bu sözleşme sizden önce başka bir kullanıcı tarafından güncellendi, lütfen sayfayı yenileyip tekrar deneyin.")
+            _ => throw new InvalidOperationException("Bu aşamada onay/red işlemi yapılamaz.")
         };
         if (actingUser.Role != expectedRole)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+        if (decision == ApprovalDecision.Red && string.IsNullOrWhiteSpace(note))
+            throw new InvalidOperationException("Reddetme işlemi için bir gerekçe girilmelidir.");
         var log = new ApprovalLog
         {
             StepNumber = contract.Stage,

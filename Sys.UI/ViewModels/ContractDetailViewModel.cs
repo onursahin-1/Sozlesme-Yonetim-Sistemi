@@ -110,12 +110,14 @@ public partial class ContractDetailViewModel : ViewModelBase
         }
     }
 
-    partial void OnSelectedContractChanged(Contract? value)
-    {
-        _ = LoadDetailAsync(value);
-    }
+    // Kullanıcı listede hızlıca birden fazla sözleşmeye art arda tıklarsa, eski bir
+    // seçimin sorgusu yeni seçimden SONRA tamamlanabilir. Bu sayaç, her seçimde
+    // artırılıp yakalanıyor; sonuç geldiğinde hâlâ "en son" istek mi diye kontrol
+    // edilip değilse göz ardı ediliyor — böylece ekranda yanlış sözleşmenin
+    // detayı görünmüyor.
+    private int _loadRequestId;
 
-    private async Task LoadDetailAsync(Contract? summary)
+    partial void OnSelectedContractChanged(Contract? value)
     {
         ErrorMessage = string.Empty;
         Items = new ObservableCollection<ContractItem>();
@@ -123,12 +125,19 @@ public partial class ContractDetailViewModel : ViewModelBase
         ApprovalLogs = new ObservableCollection<ApprovalLog>();
         Detail = null;
 
+        var requestId = ++_loadRequestId;
+        _ = LoadDetailAsync(value, requestId);
+    }
+
+    private async Task LoadDetailAsync(Contract? summary, int requestId)
+    {
         if (summary is null) return;
 
         IsLoading = true;
         try
         {
             var full = await _contractService.GetContractDetailAsync(summary.Id, _currentUser);
+            if (requestId != _loadRequestId) return; // daha yeni bir seçim yapılmış, bu sonuç artık geçersiz
 
             if (full is null)
             {
@@ -155,11 +164,13 @@ public partial class ContractDetailViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
+            if (requestId == _loadRequestId)
+                ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
         }
         finally
         {
-            IsLoading = false;
+            if (requestId == _loadRequestId)
+                IsLoading = false;
         }
     }
 
