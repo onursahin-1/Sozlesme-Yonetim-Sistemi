@@ -63,6 +63,25 @@ public class SysDbContext : DbContext
             .IsUnique()
             .HasFilter("[ContractNo] IS NOT NULL");
 
+        // GetByStageAsync, ReconcileStatusesAsync ve dashboard/liste sorguları sık sık
+        // Status/Stage/EndDate üzerinden filtreliyor; şu ana kadar yalnızca foreign-key'ler
+        // (örn. CreatedByUserId) ve Username için index vardı. Composite index, Personel
+        // rolünün "kendi sözleşmelerim + belirli durumlar" sorgusunu (GetByStatusesAsync)
+        // doğrudan karşılıyor.
+        modelBuilder.Entity<Contract>()
+            .HasIndex(c => c.Status);
+        modelBuilder.Entity<Contract>()
+            .HasIndex(c => c.Stage);
+        modelBuilder.Entity<Contract>()
+            .HasIndex(c => c.EndDate);
+        modelBuilder.Entity<Contract>()
+            .HasIndex(c => new { c.CreatedByUserId, c.Status });
+
+        // Audit log sayfalama (GetAuditLogsPagedAsync) tarih aralığına göre filtreleyip
+        // ActionDate'e göre sıralıyor.
+        modelBuilder.Entity<AuditLog>()
+            .HasIndex(a => a.ActionDate);
+
         modelBuilder.Entity<ContractItem>()
                     .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");
         modelBuilder.Entity<Contract>()
