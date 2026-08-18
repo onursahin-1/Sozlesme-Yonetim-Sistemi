@@ -175,6 +175,10 @@ public class ContractService
                 {
                     contract.TotalAmount = lastRevision.PreviousTotalAmount;
                     contract.EndDate = lastRevision.PreviousEndDate;
+                    contract.Description = lastRevision.PreviousDescription;
+                    contract.CompanyName = lastRevision.PreviousCompanyName;
+                    contract.TaxNo = lastRevision.PreviousTaxNo;
+                    contract.PaymentPeriod = lastRevision.PreviousPaymentPeriod;
                 }
                 contract.Stage = 3;
                 contract.Status = contract.PreviousStatusBeforeEdit ?? ContractStatus.Aktif;
@@ -242,7 +246,10 @@ public class ContractService
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
         return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari, ContractStatus.Ihlal);
     }
-    public async Task EditContractAsync(Contract contract, User actingUser, string changeType, string reason, decimal? newTotalAmount, DateTime? newEndDate)
+    public async Task EditContractAsync(
+        Contract contract, User actingUser, string changeType, string reason,
+        decimal? newTotalAmount, DateTime? newEndDate,
+        string? newDescription = null, string? newCompanyName = null, string? newTaxNo = null, string? newPaymentPeriod = null)
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
@@ -253,11 +260,18 @@ public class ContractService
             PreviousTotalAmount = contract.TotalAmount,
             PreviousEndDate = contract.EndDate,
             PreviousDescription = contract.Description,
+            PreviousCompanyName = contract.CompanyName,
+            PreviousTaxNo = contract.TaxNo,
+            PreviousPaymentPeriod = contract.PaymentPeriod,
             ChangedByUserId = actingUser.Id,
             ChangedAt = DateTime.Now
         };
         if (newTotalAmount.HasValue) contract.TotalAmount = newTotalAmount.Value;
         if (newEndDate.HasValue) contract.EndDate = newEndDate.Value;
+        if (!string.IsNullOrWhiteSpace(newDescription)) contract.Description = newDescription;
+        if (!string.IsNullOrWhiteSpace(newCompanyName)) contract.CompanyName = newCompanyName;
+        if (!string.IsNullOrWhiteSpace(newTaxNo)) contract.TaxNo = newTaxNo;
+        if (!string.IsNullOrWhiteSpace(newPaymentPeriod)) contract.PaymentPeriod = newPaymentPeriod;
         contract.PreviousStatusBeforeEdit = contract.Status;
         contract.PendingEdit = true;
         contract.Stage = 1;

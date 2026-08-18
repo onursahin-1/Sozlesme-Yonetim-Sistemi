@@ -44,6 +44,21 @@ public partial class ContractEditViewModel : ViewModelBase
     [ObservableProperty]
     public partial DateTimeOffset? NewEndDate { get; set; }
 
+    // "Kapsam Değişikliği" / "Firma Bilgisi Güncelleme" / "Ödeme Koşulları Değişikliği"
+    // seçildiğinde kullanılan alanlar. Hepsi opsiyoneldir — boş bırakılırsa ilgili
+    // alan değişmez.
+    [ObservableProperty]
+    public partial string NewDescription { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string NewCompanyName { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string NewTaxNo { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string NewPaymentPeriod { get; set; } = string.Empty;
+
     [ObservableProperty]
     public partial string? SelectedFilePath { get; set; }
 
@@ -106,6 +121,10 @@ public partial class ContractEditViewModel : ViewModelBase
         Reason = string.Empty;
         NewTotalAmountText = string.Empty;
         NewEndDate = null;
+        NewDescription = string.Empty;
+        NewCompanyName = string.Empty;
+        NewTaxNo = string.Empty;
+        NewPaymentPeriod = string.Empty;
         SelectedFilePath = null;
         SelectedFileName = string.Empty;
     }
@@ -148,7 +167,9 @@ public partial class ContractEditViewModel : ViewModelBase
             try
             {
                 var contractId = SelectedContract.Id;
-                await _contractService.EditContractAsync(SelectedContract, _currentUser, SelectedChangeType, Reason, newAmount, newEnd);
+                await _contractService.EditContractAsync(
+                    SelectedContract, _currentUser, SelectedChangeType, Reason, newAmount, newEnd,
+                    NewDescription, NewCompanyName, NewTaxNo, NewPaymentPeriod);
 
                 if (!string.IsNullOrEmpty(SelectedFilePath))
                 {
@@ -169,6 +190,10 @@ public partial class ContractEditViewModel : ViewModelBase
                 Reason = string.Empty;
                 NewTotalAmountText = string.Empty;
                 NewEndDate = null;
+                NewDescription = string.Empty;
+                NewCompanyName = string.Empty;
+                NewTaxNo = string.Empty;
+                NewPaymentPeriod = string.Empty;
                 SelectedFilePath = null;
                 SelectedFileName = string.Empty;
                 await LoadAsync();

@@ -28,11 +28,17 @@ public class ContractRepository : IContractRepository
         tracked.WasRejected = source.WasRejected;
         tracked.LastRejectionNote = source.LastRejectionNote;
         tracked.LastRejectedAt = source.LastRejectedAt;
-        // Düzenleme (edit) reddedildiğinde ContractService bedeli/bitiş tarihini eski
-        // revizyon değerlerine geri alıyor; bu geri alma işleminin kalıcı olması için
-        // bu iki alan da durum makinesiyle birlikte senkron kopyalanır.
+        // Düzenleme (edit) reddedildiğinde ContractService bedeli/bitiş tarihini (ve artık
+        // kapsam/firma/ödeme koşulları alanlarını da) eski revizyon değerlerine geri alıyor;
+        // bu geri alma işleminin kalıcı olması için bu alanlar da durum makinesiyle birlikte
+        // senkron kopyalanır. Bir düzenleme onaya gönderildiğinde de (ApplyEditAsync) yeni
+        // değerlerin kalıcı hale gelmesini aynı yol sağlar.
         tracked.TotalAmount = source.TotalAmount;
         tracked.EndDate = source.EndDate;
+        tracked.Description = source.Description;
+        tracked.CompanyName = source.CompanyName;
+        tracked.TaxNo = source.TaxNo;
+        tracked.PaymentPeriod = source.PaymentPeriod;
     }
 
     // Concurrency token uyuşmazlığında (iki kullanıcı aynı sözleşmeyi aynı anda
