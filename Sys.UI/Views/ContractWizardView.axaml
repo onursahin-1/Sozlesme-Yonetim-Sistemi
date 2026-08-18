@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
+             xmlns:conv="using:Sys.UI.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="600"
@@ -12,152 +13,157 @@
 		<vm:ContractWizardViewModel />
 	</Design.DataContext>
 
-	<StackPanel Margin="0,0,20,20" Spacing="14" MaxWidth="700">
+	<ScrollViewer Margin="0,0,20,20">
+		<StackPanel Spacing="14" MaxWidth="700">
 
-		<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
-                Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
-                IsVisible="{Binding ShowBackButton}"
-                Command="{Binding BackCommand}">
-			<Button.Styles>
-				<Style Selector="Button:pointerover /template/ ContentPresenter">
-					<Setter Property="Background" Value="#4B5563"/>
-					<Setter Property="TextBlock.Foreground" Value="White"/>
-				</Style>
-			</Button.Styles>
-		</Button>
+			<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
+					Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
+					IsVisible="{Binding ShowBackButton}"
+					Command="{Binding BackCommand}">
+				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter">
+						<Setter Property="Background" Value="#4B5563"/>
+						<Setter Property="TextBlock.Foreground" Value="White"/>
+					</Style>
+				</Button.Styles>
+			</Button>
 
-		<!-- Adım göstergesi -->
-		<StackPanel Orientation="Horizontal" Spacing="4">
-			<TextBlock Text="1. Temel Bilgiler" FontWeight="Bold" Foreground="{Binding IsStep1, Converter={x:Null}}" Padding="8,4"/>
-			<TextBlock Text=" → " VerticalAlignment="Center"/>
-			<TextBlock Text="2. Bedel Kalemleri" FontWeight="Bold" Padding="8,4"/>
-			<TextBlock Text=" → " VerticalAlignment="Center"/>
-			<TextBlock Text="3. Belgeler ve Gönder" FontWeight="Bold" Padding="8,4"/>
-		</StackPanel>
+			<!-- Adım göstergesi: aktif adım koyu mavi/kalın, diğerleri gri gösterilir -->
+			<StackPanel Orientation="Horizontal" Spacing="4">
+				<TextBlock Text="1. Temel Bilgiler" FontWeight="Bold" Padding="8,4"
+						   Foreground="{Binding IsStep1, Converter={x:Static conv:BoolBrushConverter.StepIndicator}}"/>
+				<TextBlock Text=" → " VerticalAlignment="Center" Foreground="#9CA3AF"/>
+				<TextBlock Text="2. Bedel Kalemleri" FontWeight="Bold" Padding="8,4"
+						   Foreground="{Binding IsStep2, Converter={x:Static conv:BoolBrushConverter.StepIndicator}}"/>
+				<TextBlock Text=" → " VerticalAlignment="Center" Foreground="#9CA3AF"/>
+				<TextBlock Text="3. Belgeler ve Gönder" FontWeight="Bold" Padding="8,4"
+						   Foreground="{Binding IsStep3, Converter={x:Static conv:BoolBrushConverter.StepIndicator}}"/>
+			</StackPanel>
 
-		<TextBlock Text="{Binding ErrorMessage}" Foreground="Red"/>
+			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red"/>
 
-		<!-- ADIM 1 -->
-		<StackPanel IsVisible="{Binding IsStep1}" Spacing="10">
-			<TextBlock Text="Sözleşmesi oluşturulacak onaylı talebi seçin:"/>
-			<ComboBox ItemsSource="{Binding PendingRequests}" SelectedItem="{Binding SelectedRequest}" HorizontalAlignment="Stretch">
-				<ComboBox.ItemTemplate>
-					<DataTemplate x:DataType="domain:Contract">
-						<TextBlock>
-							<Run Text="{Binding Title}"/>
-							<Run Text=" — "/>
-							<Run Text="{Binding CompanyName}"/>
-						</TextBlock>
-					</DataTemplate>
-				</ComboBox.ItemTemplate>
-			</ComboBox>
-			<TextBlock Text="Bekleyen talep yok." IsVisible="{Binding !PendingRequests.Count}" Foreground="Gray"/>
-			<TextBlock Text="Başlangıç Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
-			<DatePicker SelectedDate="{Binding StartDate}"/>
+			<!-- ADIM 1 -->
+			<StackPanel IsVisible="{Binding IsStep1}" Spacing="10">
+				<TextBlock Text="Sözleşmesi oluşturulacak onaylı talebi seçin:"/>
+				<ComboBox ItemsSource="{Binding PendingRequests}" SelectedItem="{Binding SelectedRequest}" HorizontalAlignment="Stretch">
+					<ComboBox.ItemTemplate>
+						<DataTemplate x:DataType="domain:Contract">
+							<TextBlock>
+								<Run Text="{Binding Title}"/>
+								<Run Text=" — "/>
+								<Run Text="{Binding CompanyName}"/>
+							</TextBlock>
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+				<TextBlock Text="Bekleyen talep yok." IsVisible="{Binding !PendingRequests.Count}" Foreground="Gray"/>
+				<TextBlock Text="Başlangıç Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
+				<DatePicker SelectedDate="{Binding StartDate}"/>
 
-			<TextBlock Text="Bitiş Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
-			<DatePicker SelectedDate="{Binding EndDate}"/>
-			<TextBlock Text="Ödeme Periyodu *" FontWeight="Bold" Margin="0,10,0,0"/>
-			<ComboBox ItemsSource="{Binding PaymentPeriodOptions}" SelectedItem="{Binding SelectedPaymentPeriod}" HorizontalAlignment="Stretch"/>
+				<TextBlock Text="Bitiş Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
+				<DatePicker SelectedDate="{Binding EndDate}"/>
+				<TextBlock Text="Ödeme Periyodu *" FontWeight="Bold" Margin="0,10,0,0"/>
+				<ComboBox ItemsSource="{Binding PaymentPeriodOptions}" SelectedItem="{Binding SelectedPaymentPeriod}" HorizontalAlignment="Stretch"/>
 
-			<TextBlock Text="SAP Cari Kodu *" FontWeight="Bold" Margin="0,10,0,0"/>
-			<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX"/>
+				<TextBlock Text="SAP Cari Kodu *" FontWeight="Bold" Margin="0,10,0,0"/>
+				<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX"/>
 
-			<TextBlock Text="Firma Türü" FontWeight="Bold" Margin="0,10,0,0"/>
-			<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>
-		</StackPanel>
+				<TextBlock Text="Firma Türü" FontWeight="Bold" Margin="0,10,0,0"/>
+				<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>
+			</StackPanel>
 
-		<!-- ADIM 2 -->
-		<StackPanel IsVisible="{Binding IsStep2}" Spacing="10">
-			<TextBlock Text="Bedel kalemlerini girin:"/>
+			<!-- ADIM 2 -->
+			<StackPanel IsVisible="{Binding IsStep2}" Spacing="10">
+				<TextBlock Text="Bedel kalemlerini girin:"/>
 
-			<ItemsControl ItemsSource="{Binding Items}">
-				<ItemsControl.ItemTemplate>
-					<DataTemplate x:DataType="vm:ContractItemRowViewModel">
-						<Grid ColumnDefinitions="3*,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
-							<TextBox Grid.Column="0" PlaceholderText="Tanım" Text="{Binding Description}" Margin="0,0,4,0"/>
-							<TextBox Grid.Column="1" Width="60" Text="{Binding QuantityText}" Margin="0,0,4,0"/>
-							<TextBox Grid.Column="2" Width="70" Text="{Binding Unit}" Margin="0,0,4,0"/>
-							<TextBox Grid.Column="3" Width="100" Margin="0,0,4,0" Text="{Binding UnitPriceText}"
-									 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
-							<Button Grid.Column="4" Content="Sil" Command="{Binding RemoveCommand}"/>
-						</Grid>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
-			</ItemsControl>
-
-			<Button Content="+ Kalem Ekle" Command="{Binding AddItemCommand}"/>
-
-			<TextBlock FontWeight="Bold" FontSize="16">
-				<Run Text="Toplam: "/>
-				<Run Text="{Binding ToplamText}"/>
-			</TextBlock>
-		</StackPanel>
-
-		<!-- ADIM 3 -->
-		<StackPanel IsVisible="{Binding IsStep3}" Spacing="14">
-			<StackPanel Spacing="6">
-				<TextBlock Text="Sözleşme Dosyası"/>
-				<Button Content="Dosya Ekle" Click="OnPickSozlesmeFileClick"/>
-				<ItemsControl ItemsSource="{Binding SozlesmeFileNames}">
+				<ItemsControl ItemsSource="{Binding Items}">
 					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<Grid ColumnDefinitions="*,Auto" Margin="0,2">
-								<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
-								<Button Grid.Column="1" Content="Kaldır" FontSize="11"
-										Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveSozlesmeFileCommand}"
-										CommandParameter="{Binding}"/>
+						<DataTemplate x:DataType="vm:ContractItemRowViewModel">
+							<Grid ColumnDefinitions="3*,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
+								<TextBox Grid.Column="0" PlaceholderText="Tanım" Text="{Binding Description}" Margin="0,0,4,0"/>
+								<TextBox Grid.Column="1" Width="60" Text="{Binding QuantityText}" Margin="0,0,4,0"/>
+								<TextBox Grid.Column="2" Width="70" Text="{Binding Unit}" Margin="0,0,4,0"/>
+								<TextBox Grid.Column="3" Width="100" Margin="0,0,4,0" Text="{Binding UnitPriceText}"
+										 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+								<Button Grid.Column="4" Content="Sil" Command="{Binding RemoveCommand}"/>
 							</Grid>
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
+
+				<Button Content="+ Kalem Ekle" Command="{Binding AddItemCommand}"/>
+
+				<TextBlock FontWeight="Bold" FontSize="16">
+					<Run Text="Toplam: "/>
+					<Run Text="{Binding ToplamText}"/>
+				</TextBlock>
 			</StackPanel>
 
-			<StackPanel Spacing="6">
-				<TextBlock Text="Ekler"/>
-				<Button Content="Dosya Ekle" Click="OnPickEkFileClick"/>
-				<ItemsControl ItemsSource="{Binding EkFileNames}">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<Grid ColumnDefinitions="*,Auto" Margin="0,2">
-								<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
-								<Button Grid.Column="1" Content="Kaldır" FontSize="11"
-										Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveEkFileCommand}"
-										CommandParameter="{Binding}"/>
-							</Grid>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+			<!-- ADIM 3 -->
+			<StackPanel IsVisible="{Binding IsStep3}" Spacing="14">
+				<StackPanel Spacing="6">
+					<TextBlock Text="Sözleşme Dosyası"/>
+					<Button Content="Dosya Ekle" Click="OnPickSozlesmeFileClick"/>
+					<ItemsControl ItemsSource="{Binding SozlesmeFileNames}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Grid ColumnDefinitions="*,Auto" Margin="0,2">
+									<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+									<Button Grid.Column="1" Content="Kaldır" FontSize="11"
+											Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveSozlesmeFileCommand}"
+											CommandParameter="{Binding}"/>
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<StackPanel Spacing="6">
+					<TextBlock Text="Ekler"/>
+					<Button Content="Dosya Ekle" Click="OnPickEkFileClick"/>
+					<ItemsControl ItemsSource="{Binding EkFileNames}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Grid ColumnDefinitions="*,Auto" Margin="0,2">
+									<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+									<Button Grid.Column="1" Content="Kaldır" FontSize="11"
+											Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveEkFileCommand}"
+											CommandParameter="{Binding}"/>
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<StackPanel Spacing="6">
+					<TextBlock Text="Teminat"/>
+					<Button Content="Dosya Ekle" Click="OnPickTeminatFileClick"/>
+					<ItemsControl ItemsSource="{Binding TeminatFileNames}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Grid ColumnDefinitions="*,Auto" Margin="0,2">
+									<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+									<Button Grid.Column="1" Content="Kaldır" FontSize="11"
+											Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveTeminatFileCommand}"
+											CommandParameter="{Binding}"/>
+								</Grid>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>
+
+				<Button Content="Sözleşmeyi Kaydet" Command="{Binding SubmitCommand}" IsEnabled="{Binding !IsSubmitting}"/>
 			</StackPanel>
 
-			<StackPanel Spacing="6">
-				<TextBlock Text="Teminat"/>
-				<Button Content="Dosya Ekle" Click="OnPickTeminatFileClick"/>
-				<ItemsControl ItemsSource="{Binding TeminatFileNames}">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<Grid ColumnDefinitions="*,Auto" Margin="0,2">
-								<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
-								<Button Grid.Column="1" Content="Kaldır" FontSize="11"
-										Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveTeminatFileCommand}"
-										CommandParameter="{Binding}"/>
-							</Grid>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+			<!-- Gezinme butonları -->
+			<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+				<Button Content="Geri" Command="{Binding PreviousStepCommand}" IsEnabled="{Binding !IsStep1}"/>
+				<Button Content="İleri" Command="{Binding NextStepCommand}" IsVisible="{Binding !IsStep3}"/>
 			</StackPanel>
 
-			<TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>
-
-			<Button Content="Sözleşmeyi Kaydet" Command="{Binding SubmitCommand}" IsEnabled="{Binding !IsSubmitting}"/>
 		</StackPanel>
-
-		<!-- Gezinme butonları -->
-		<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-			<Button Content="Geri" Command="{Binding PreviousStepCommand}" IsEnabled="{Binding !IsStep1}"/>
-			<Button Content="İleri" Command="{Binding NextStepCommand}" IsVisible="{Binding !IsStep3}"/>
-		</StackPanel>
-
-	</StackPanel>
+	</ScrollViewer>
 
 </UserControl>

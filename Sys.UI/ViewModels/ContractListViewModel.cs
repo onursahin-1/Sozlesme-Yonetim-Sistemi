@@ -17,18 +17,27 @@ public partial class ContractListViewModel : ViewModelBase
     private System.Collections.Generic.List<ContractCardViewModel> _allContracts = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial ObservableCollection<ContractCardViewModel> FilteredContracts { get; set; } = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
     public partial string SelectedFilter { get; set; } = "tumu";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
     public partial string SearchText { get; set; } = string.Empty;
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial bool IsLoading { get; set; } = true;
+
+    // Filtre butonlarında hangisinin seçili olduğunu görsel olarak belirtmek ve
+    // sonuç bulunamadığında "filtreleri temizle" aksiyonunu göstermek için kullanılır.
+    public bool IsEmpty => !IsLoading && FilteredContracts.Count == 0;
+    public bool HasActiveFilters => SelectedFilter != "tumu" || !string.IsNullOrWhiteSpace(SearchText);
 
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
@@ -106,6 +115,14 @@ public partial class ContractListViewModel : ViewModelBase
     private void SetFilter(string filter)
     {
         SelectedFilter = filter;
+        ApplyFilter();
+    }
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        SelectedFilter = "tumu";
+        SearchText = string.Empty;
         ApplyFilter();
     }
 

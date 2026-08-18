@@ -1,6 +1,7 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:conv="using:Sys.UI.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="500"
@@ -27,18 +28,38 @@
 			</Button>
 		</Grid>
 
-		<!-- Filtre butonları -->
+		<!-- Filtre butonları: seçili olan, koyu mavi arka planla vurgulanıyor -->
 		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
-			<Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"/>
-			<Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"/>
-			<Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"/>
-			<Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"/>
-			<Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"/>
+			<Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"
+                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=tumu}"
+                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tumu}"/>
+			<Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"
+                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=aktif}"
+                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=aktif}"/>
+			<Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"
+                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=onay_bekliyor}"
+                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=onay_bekliyor}"/>
+			<Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"
+                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=uyari}"
+                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=uyari}"/>
+			<Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"
+                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=ihlal}"
+                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=ihlal}"/>
+			<Button Content="Filtreleri Temizle" FontSize="11" Command="{Binding ClearFiltersCommand}"
+                    IsVisible="{Binding HasActiveFilters}"
+                    Background="Transparent" Foreground="#4B5563"/>
 		</StackPanel>
 
 		<TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
 		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+		<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,24,0,0" IsVisible="{Binding IsEmpty}">
+			<TextBlock Text="Bu filtrelerle eşleşen sözleşme bulunamadı." Foreground="Gray" HorizontalAlignment="Center"/>
+			<Button Content="Filtreleri Temizle" HorizontalAlignment="Center" Command="{Binding ClearFiltersCommand}"
+                    IsVisible="{Binding HasActiveFilters}"
+                    Background="#4B5563" Foreground="White" Padding="10,4" CornerRadius="4"/>
+		</StackPanel>
 
 		<ListBox ItemsSource="{Binding FilteredContracts}"
                  SelectedItem="{Binding SelectedContract}"
