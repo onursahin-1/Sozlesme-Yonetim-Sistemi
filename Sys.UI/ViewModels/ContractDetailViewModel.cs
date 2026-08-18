@@ -61,6 +61,12 @@ public partial class ContractDetailViewModel : ViewModelBase
     public partial ObservableCollection<ApprovalLog> ApprovalLogs { get; set; } = new();
 
     [ObservableProperty]
+    public partial ObservableCollection<ContractRevision> Revisions { get; set; } = new();
+
+    [ObservableProperty]
+    public partial ObservableCollection<ContractTermination> Terminations { get; set; } = new();
+
+    [ObservableProperty]
     public partial bool IsLoading { get; set; }
 
     [ObservableProperty]
@@ -123,6 +129,8 @@ public partial class ContractDetailViewModel : ViewModelBase
         Items = new ObservableCollection<ContractItem>();
         Attachments = new ObservableCollection<Attachment>();
         ApprovalLogs = new ObservableCollection<ApprovalLog>();
+        Revisions = new ObservableCollection<ContractRevision>();
+        Terminations = new ObservableCollection<ContractTermination>();
         Detail = null;
 
         var requestId = ++_loadRequestId;
@@ -161,6 +169,8 @@ public partial class ContractDetailViewModel : ViewModelBase
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<Attachment>(full.Attachments);
             ApprovalLogs = new ObservableCollection<ApprovalLog>(full.ApprovalLogs);
+            Revisions = new ObservableCollection<ContractRevision>(full.Revisions);
+            Terminations = new ObservableCollection<ContractTermination>(full.Terminations);
         }
         catch (Exception ex)
         {
