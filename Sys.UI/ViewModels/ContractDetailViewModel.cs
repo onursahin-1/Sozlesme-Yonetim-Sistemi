@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -184,17 +185,52 @@ public partial class ContractDetailViewModel : ViewModelBase
         }
     }
 
+    // Ekler listesinde "Sil" butonu yalnızca SYB için görünür — sözleşme belgelerinin
+    // yönetimi (EditContractAsync/RequestTerminationAsync gibi) zaten SYB'e ait.
+    public bool CanDeleteAttachments => _currentUser.Role == UserRole.SYB;
+
     [RelayCommand]
-    private void OpenAttachment(Attachment attachment)
+    private async Task OpenAttachment(Attachment attachment)
     {
         try
         {
             var psi = new System.Diagnostics.ProcessStartInfo(attachment.FilePath) { UseShellExecute = true };
             System.Diagnostics.Process.Start(psi);
+            await _contractService.LogAttachmentOpenedAsync(attachment, _currentUser);
         }
         catch (Exception ex)
         {
             ErrorMessage = "Dosya açılamadı: " + ex.Message;
+        }
+    }
+
+    // Dosya seçim penceresi Avalonia'da yalnızca code-behind'dan (TopLevel üzerinden)
+    // açılabildiği için, "İndir" butonunun Click handler'ı kullanıcının seçtiği hedef
+    // yolu buraya iletir; kopyalama ve erişim kaydı burada, tek yerde yapılır.
+    public async Task DownloadAttachmentAsync(Attachment attachment, string destinationPath)
+    {
+        try
+        {
+            File.Copy(attachment.FilePath, destinationPath, overwrite: true);
+            await _contractService.LogAttachmentDownloadedAsync(attachment, _currentUser);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Dosya indirilemedi: " + ex.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteAttachment(Attachment attachment)
+    {
+        try
+        {
+            await _contractService.DeleteAttachmentAsync(attachment, _currentUser);
+            Attachments.Remove(attachment);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
         }
     }
 }

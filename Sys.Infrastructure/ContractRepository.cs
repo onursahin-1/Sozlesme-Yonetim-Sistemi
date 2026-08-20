@@ -225,6 +225,60 @@ public class ContractRepository : IContractRepository
             .ToDictionaryAsync(x => x.Status, x => x.Count);
     }
 
+    // Filtre + arama + sayfalama tek bir SQL sorgusunda yapılır; sayfa dışındaki
+    // kayıtlar hiç belleğe alınmaz. Toplam kayıt sayısı ayrı bir COUNT ile alınır
+    // (AuditLog ekranındaki GetAuditLogsPagedAsync ile aynı desen).
+    public async Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
+        int? createdByUserId,
+        ContractStatus[]? includeStatuses,
+        ContractStatus[]? excludeStatuses,
+        string? searchText,
+        int page,
+        int pageSize)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var query = db.Contracts.AsNoTracking().AsQueryable();
+
+        if (createdByUserId.HasValue)
+            query = query.Where(c => c.CreatedByUserId == createdByUserId.Value);
+
+        if (includeStatuses is { Length: > 0 })
+            query = query.Where(c => includeStatuses.Contains(c.Status));
+
+        if (excludeStatuses is { Length: > 0 })
+            query = query.Where(c => !excludeStatuses.Contains(c.Status));
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var term = searchText.Trim();
+            // EF.Functions.Like ile SQL Server tarafında büyük/küçük harf duyarsız arama
+            // (varsayılan collation case-insensitive olduğu için ek bir dönüşüm gerekmez).
+            var pattern = $"%{term}%";
+            query = query.Where(c =>
+                EF.Functions.Like(c.Title, pattern) ||
+                EF.Functions.Like(c.CompanyName, pattern) ||
+                (c.ContractNo != null && EF.Functions.Like(c.ContractNo, pattern)) ||
+                EF.Functions.Like(c.RequestRefNo, pattern));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        // Sayfa numarası sınırların dışına taşarsa (örn. filtre daraldığında) son
+        // geçerli sayfaya çekilir; aksi halde kullanıcı boş bir sayfada kalırdı.
+        var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        var items = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .ThenByDescending(c => c.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
     public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);

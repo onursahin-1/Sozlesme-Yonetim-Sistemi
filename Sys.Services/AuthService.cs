@@ -19,6 +19,9 @@ public class AuthService
         if (user is null)
             return AuthResult.Fail("Kullanıcı adı veya şifre hatalı.");
 
+        if (user.IsDisabled)
+            return AuthResult.Fail("Bu hesap devre dışı bırakılmış. Yöneticinizle iletişime geçin.");
+
         if (user.LockedUntil is not null && user.LockedUntil > DateTime.UtcNow)
             return AuthResult.Fail($"Hesap kilitli. {user.LockedUntil.Value.ToLocalTime():HH:mm} sonrasında tekrar deneyin.");
 

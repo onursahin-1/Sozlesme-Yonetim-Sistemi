@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Sys.Domain;
@@ -52,6 +53,56 @@ public class ContractService
             ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
             : await _contracts.GetAllAsync();
     }
+
+    // Sözleşme listesi ekranı için sunucu taraflı filtre + arama + sayfalama.
+    // filterKey, ekrandaki filtre butonlarının CommandParameter değerleriyle aynıdır.
+    // Personel yalnızca kendi oluşturduğu sözleşmeleri görebilir (GetContractsAsync ile aynı kural).
+    public async Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
+        User currentUser, string filterKey, string? searchText, int page, int pageSize)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        var (include, exclude) = MapFilter(filterKey);
+        return await _contracts.GetContractsPagedAsync(userId, include, exclude, searchText, page, pageSize);
+    }
+
+    // "Tümü" seçildiğinde kapanmış sözleşmeler (Tamamlandı/Feshedildi) listede gösterilmez —
+    // bu ekran devam eden işleri gösterir. Eskiden bu ayıklama ViewModel'de bellekte yapılıyordu.
+    private static (ContractStatus[]? Include, ContractStatus[]? Exclude) MapFilter(string filterKey) => filterKey switch
+    {
+        "aktif" => (new[] { ContractStatus.Aktif }, null),
+        "onay_bekliyor" => (new[] { ContractStatus.OnayBekliyor }, null),
+        "uyari" => (new[] { ContractStatus.Uyari }, null),
+        "ihlal" => (new[] { ContractStatus.Ihlal }, null),
+        "tamamlandi" => (new[] { ContractStatus.Tamamlandi }, null),
+        _ => (null, new[] { ContractStatus.Tamamlandi, ContractStatus.Feshedildi })
+    };
+
+    // Gösterge panelindeki "Yaklaşan Bitişler" kutusu için: belirtilen gün içinde
+    // (varsayılan 30) bitecek Aktif/Uyarı durumundaki sözleşmeler, bitiş tarihine
+    // göre en yakından uzağa sıralı olarak döner.
+    public async Task<List<Contract>> GetUpcomingEndingsAsync(User currentUser, int days = 30, int take = 5)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        var contracts = await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari);
+        var today = DateTime.Today;
+        var threshold = today.AddDays(days);
+        return contracts
+            .Where(c => c.EndDate.HasValue && c.EndDate.Value.Date >= today && c.EndDate.Value.Date <= threshold)
+            .OrderBy(c => c.EndDate)
+            .Take(take)
+            .ToList();
+    }
+
+    // Gösterge panelindeki "Son Aktiviteler" kutusu için. Bu, kimin ne zaman ne yaptığını
+    // isim isim gösterdiği için "İşlem Geçmişi" ekranıyla aynı yetki sınırına tabidir ve
+    // yalnızca Müdür'e döndürülür; diğer roller için boş liste döner.
+    public async Task<List<AuditLog>> GetRecentActivityAsync(User currentUser, int take = 5)
+    {
+        if (currentUser.Role != UserRole.Mudur) return new List<AuditLog>();
+
+        var (allItems, _) = await _contracts.GetAuditLogsPagedAsync(1, take, null, null, null);
+        return allItems;
+    }
     public async Task<Contract> CreateRequestAsync(Contract contract)
     {
         contract.Status = ContractStatus.Talep;
@@ -74,6 +125,50 @@ public class ContractService
     public async Task AddAttachmentAsync(Attachment attachment)
     {
         await _attachments.AddAsync(attachment);
+    }
+
+    // Ek dosya erişim/indirme/silme işlemleri AuditLog'a "Attachment" varlığı olarak
+    // kaydedilir; böylece bir belgeyi kimin ne zaman görüntülediği/indirdiği/sildiği
+    // "İşlem Geçmişi" ekranından izlenebilir olur.
+    private async Task LogAttachmentAccessAsync(Attachment attachment, string action, User actingUser)
+    {
+        var log = new AuditLog
+        {
+            EntityName = "Attachment",
+            EntityId = attachment.Id,
+            Action = action,
+            ActingUserId = actingUser.Id,
+            Detail = $"{attachment.FileName} (Sözleşme #{attachment.ContractId})",
+            ActionDate = DateTime.Now,
+        };
+        await _contracts.AddAuditLogAsync(log);
+    }
+
+    public Task LogAttachmentOpenedAsync(Attachment attachment, User actingUser)
+        => LogAttachmentAccessAsync(attachment, "EkGörüntülendi", actingUser);
+
+    public Task LogAttachmentDownloadedAsync(Attachment attachment, User actingUser)
+        => LogAttachmentAccessAsync(attachment, "Ekİndirildi", actingUser);
+
+    public async Task DeleteAttachmentAsync(Attachment attachment, User actingUser)
+    {
+        if (actingUser.Role != UserRole.SYB)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        await _attachments.DeleteAsync(attachment.Id);
+
+        try
+        {
+            if (File.Exists(attachment.FilePath))
+                File.Delete(attachment.FilePath);
+        }
+        catch
+        {
+            // Fiziksel dosya silinemese bile (örn. başka bir programda açık), veritabanı
+            // kaydı silindiği için ekran listesinde artık görünmeyecek — kritik değil.
+        }
+
+        await LogAttachmentAccessAsync(attachment, "EkSilindi", actingUser);
     }
     public async Task FinalizeContractAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, User actingUser)
     {

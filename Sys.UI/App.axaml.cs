@@ -45,6 +45,7 @@ public partial class App : Application
 
             var userRepository = new UserRepository(settings.ConnectionString);
             var authService = new AuthService(userRepository);
+            var userManagementService = new UserManagementService(userRepository);
 
             var contractRepository = new ContractRepository(settings.ConnectionString);
             var attachmentRepository = new AttachmentRepository(settings.ConnectionString);
@@ -98,7 +99,7 @@ public partial class App : Application
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(authService, contractService, settings.AttachmentsPath),
+                DataContext = new MainViewModel(authService, contractService, userManagementService, settings.AttachmentsPath),
             };
         }
 

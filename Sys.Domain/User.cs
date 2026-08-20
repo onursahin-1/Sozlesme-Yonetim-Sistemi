@@ -12,11 +12,20 @@ public class User
     // Güvenlik: hesap kilitleme
     public int FailedLoginCount { get; set; }
     public DateTime? LockedUntil { get; set; }
+
+    // Devre dışı bırakılmış hesaplar giriş yapamaz. Kullanıcıyı silmek yerine devre
+    // dışı bırakmak, geçmişteki sözleşme/talep kayıtlarındaki "CreatedByUser"/
+    // "ActingUser" referanslarının bozulmasını önler.
+    public bool IsDisabled { get; set; }
 }
 
+// Admin en sona eklendi: EF Core enum değerlerini tamsayı olarak sakladığı için,
+// mevcut kullanıcıların rol değerlerinin bozulmaması adına yeni değerler her zaman
+// sona eklenmeli, araya sıkıştırılmamalı.
 public enum UserRole
 {
     Personel,
     SYB,
-    Mudur
+    Mudur,
+    Admin
 }

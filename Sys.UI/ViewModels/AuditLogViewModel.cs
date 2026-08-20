@@ -31,6 +31,9 @@ public class AuditLogRowViewModel
         "FesihTalebiOluşturuldu" => "Fesih Talebi Oluşturuldu",
         "Onaylandı" => "Onaylandı",
         "Reddedildi" => "Reddedildi",
+        "EkGörüntülendi" => "Ek Görüntülendi",
+        "Ekİndirildi" => "Ek İndirildi",
+        "EkSilindi" => "Ek Silindi",
         _ => _log.Action
     };
     public string DetailText => _log.Detail ?? string.Empty;
@@ -39,7 +42,9 @@ public class AuditLogRowViewModel
 
 public partial class AuditLogViewModel : ViewModelBase
 {
-    private const int PageSize = 50;
+    // Sayfa başına kayıt sayısı tek merkezden (PagingDefaults) gelir; böylece
+    // sözleşme listesi vb. diğer sayfalanan ekranlarla her zaman tutarlı kalır.
+    private const int PageSize = PagingDefaults.PageSize;
 
     private readonly ContractService _contractService;
     private readonly User _currentUser;
@@ -149,8 +154,8 @@ public partial class AuditLogViewModel : ViewModelBase
         try
         {
             string? userFilter = string.IsNullOrEmpty(SelectedUser) || SelectedUser == "Tümü" ? null : SelectedUser;
-            DateTime? start = StartDate?.DateTime.Date;
-            DateTime? end = EndDate?.DateTime.Date;
+            DateTime? start = StartDate?.Date;
+            DateTime? end = EndDate?.Date;
 
             var (items, totalCount) = await _contractService.GetAuditLogsAsync(_currentUser, CurrentPage, PageSize, userFilter, start, end);
 

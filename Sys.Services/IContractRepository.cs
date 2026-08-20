@@ -21,4 +21,16 @@ public interface IContractRepository
     Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate);
     Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses);
     Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId);
+
+    // Sözleşme listesi ekranı için: filtreleme, arama ve sayfalama veritabanı tarafında
+    // yapılır. Böylece kayıt sayısı arttığında tüm tablo belleğe çekilmez.
+    // includeStatuses: sadece bu durumlar (null = durum filtresi yok)
+    // excludeStatuses: bu durumlar hariç (örn. "Tümü" filtresinde Tamamlandı/Feshedildi)
+    Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
+        int? createdByUserId,
+        ContractStatus[]? includeStatuses,
+        ContractStatus[]? excludeStatuses,
+        string? searchText,
+        int page,
+        int pageSize);
 }

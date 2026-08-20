@@ -74,11 +74,23 @@
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
 								<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
-									<Grid ColumnDefinitions="*,Auto">
+									<Grid ColumnDefinitions="*,Auto,Auto,Auto">
 										<TextBlock Grid.Column="0" Text="{Binding FileName}" VerticalAlignment="Center"/>
-										<Button Grid.Column="1" Content="Aç"
+										<Button Grid.Column="1" Content="Aç" Margin="0,0,4,0"
                                                 Command="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).OpenAttachmentCommand}"
                                                 CommandParameter="{Binding}"/>
+										<Button Grid.Column="2" Content="İndir" Margin="0,0,4,0"
+                                                Click="OnDownloadAttachmentClick"/>
+										<Button Grid.Column="3" Content="Sil" Background="#A32D2D" Foreground="White"
+                                                IsVisible="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CanDeleteAttachments}"
+                                                Click="OnDeleteAttachmentClick">
+											<Button.Styles>
+												<Style Selector="Button:pointerover /template/ ContentPresenter">
+													<Setter Property="Background" Value="#821F1F"/>
+													<Setter Property="TextBlock.Foreground" Value="White"/>
+												</Style>
+											</Button.Styles>
+										</Button>
 									</Grid>
 								</Border>
 							</DataTemplate>

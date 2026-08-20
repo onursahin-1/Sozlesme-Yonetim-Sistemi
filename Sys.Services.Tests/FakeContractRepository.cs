@@ -40,4 +40,13 @@ public class FakeContractRepository : IContractRepository
 
     public Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)
         => Task.FromResult(new Dictionary<ContractStatus, int>());
+
+    public Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
+        int? createdByUserId,
+        ContractStatus[]? includeStatuses,
+        ContractStatus[]? excludeStatuses,
+        string? searchText,
+        int page,
+        int pageSize)
+        => Task.FromResult((new List<Contract>(), 0));
 }
