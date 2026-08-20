@@ -2,8 +2,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Sys.UI.App"
              xmlns:local="using:Sys.UI"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Light">
+             <!--
+               RequestedThemeVariant="Light" (eskiden "Default" idi):
+               Uygulamanın tüm özel renkleri (beyaz kartlar, #F5F5F5 paneller, siyah
+               yazılar, renkli durum rozetleri) açık tema varsayımıyla yazıldı. "Default"
+               sistem temasını takip ettiği için, kullanıcının işletim sistemi koyu moddaysa
+               tema varsayılanı olan açık renkli yazılar bizim beyaz kartlarımızın üzerine
+               düşüyor ve okunamaz hale geliyordu. Temayı sabitlemek bu sorun sınıfını
+               kökten çözer.
+             -->
 
     <Application.DataTemplates>
         <local:ViewLocator />
@@ -11,5 +19,65 @@
 
     <Application.Styles>
         <FluentTheme />
+
+        <!--
+          ORTAK BUTON STİLİ — Classes="flat"
+
+          Sorun: Fluent teması, :pointerover durumunda butonun ContentPresenter'ındaki
+          Background ve Foreground değerlerini kendi tema renkleriyle eziyor. Butona
+          doğrudan Background/Foreground vermek bu ezmeyi güvenilir şekilde engellemiyor;
+          sonuç olarak renkli butonlar fare üzerine gelince görünmez oluyordu.
+
+          Çözüm: Butonun kendi gövdesi tamamen şeffaf ve çerçevesiz. Renk ve yazı, butonun
+          İÇİNDEKİ Border ve TextBlock'a veriliyor — bunlar yerel değer olduğu için tema
+          hiçbir durumda üzerlerine yazamaz. Hover/basılı geri bildirimi renk değişimiyle
+          değil, opaklıkla veriliyor; böylece buton hiçbir durumda kaybolamaz.
+
+          Kullanımı:
+              <Button Classes="flat" Command="...">
+                  <Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
+                      <TextBlock Text="Kaydet" Foreground="White"/>
+                  </Border>
+              </Button>
+
+          Bu stil eskiden her ekranda ayrı ayrı tanımlanıyordu; tek yere alındı.
+        -->
+        <Style Selector="Button.flat">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.flat /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="Button.flat:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.flat:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.flat:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.flat:pointerover">
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+        <Style Selector="Button.flat:pressed">
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+        <Style Selector="Button.flat:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+
+        <!-- Alan bazlı form doğrulama mesajlarının ortak görünümü -->
+        <Style Selector="TextBlock.fieldError">
+            <Setter Property="Foreground" Value="#D14343"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="2,-4,0,0"/>
+        </Style>
     </Application.Styles>
 </Application>

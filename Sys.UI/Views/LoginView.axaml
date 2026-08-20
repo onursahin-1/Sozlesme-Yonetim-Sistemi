@@ -11,33 +11,6 @@
         <vm:LoginViewModel />
     </Design.DataContext>
 
-    <!-- Gövdesi şeffaf buton: renk/yazı içindeki elemandan gelir, tema hover'da ezemez -->
-    <UserControl.Styles>
-        <Style Selector="Button.link">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="Button.link /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-        </Style>
-        <Style Selector="Button.link:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.link:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.link:pointerover">
-            <Setter Property="Opacity" Value="0.8"/>
-        </Style>
-        <Style Selector="Button.link:disabled">
-            <Setter Property="Opacity" Value="0.5"/>
-        </Style>
-    </UserControl.Styles>
-
     <StackPanel Margin="30" VerticalAlignment="Center" Spacing="12">
         <TextBlock Text="SYS — Sözleşme Yönetim Sistemi" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
@@ -52,7 +25,7 @@
 
         <Button Content="Giriş Yap" Command="{Binding LoginCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
 
-        <Button Classes="link" HorizontalAlignment="Center" Margin="0,4,0,0"
+        <Button Classes="flat" HorizontalAlignment="Center" Margin="0,4,0,0"
                 Command="{Binding ToggleForgotPasswordCommand}">
             <TextBlock Text="Şifremi unuttum" FontSize="12" Foreground="#4A90D9"/>
         </Button>
@@ -68,7 +41,7 @@
                 <TextBox Text="{Binding ForgotUsername}" Background="White" Foreground="Black"
                          PlaceholderText="Kullanıcı adı"/>
 
-                <Button Classes="link" HorizontalAlignment="Left"
+                <Button Classes="flat" HorizontalAlignment="Left"
                         IsEnabled="{Binding !IsSubmittingReset}"
                         Command="{Binding SubmitPasswordResetRequestCommand}">
                     <Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">

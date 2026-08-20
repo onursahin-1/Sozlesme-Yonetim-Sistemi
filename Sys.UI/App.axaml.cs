@@ -46,11 +46,13 @@ public partial class App : Application
             var userRepository = new UserRepository(settings.ConnectionString);
             var passwordResetRequestRepository = new PasswordResetRequestRepository(settings.ConnectionString);
             var notificationRepository = new NotificationRepository(settings.ConnectionString);
+            var auditLogRepository = new AuditLogRepository(settings.ConnectionString);
 
             // AuthService bildirim deposunu da alır: şifre sıfırlama talebi geldiğinde
-            // Admin'lere zil bildirimi gönderilir.
-            var authService = new AuthService(userRepository, passwordResetRequestRepository, notificationRepository);
-            var userManagementService = new UserManagementService(userRepository, passwordResetRequestRepository);
+            // Admin'lere zil bildirimi gönderilir. Denetim kaydı deposu ise hesap
+            // kilitlenmesi ve şifre değişikliği gibi güvenlik olayları için.
+            var authService = new AuthService(userRepository, passwordResetRequestRepository, notificationRepository, auditLogRepository);
+            var userManagementService = new UserManagementService(userRepository, passwordResetRequestRepository, auditLogRepository);
 
             var contractRepository = new ContractRepository(settings.ConnectionString);
             var attachmentRepository = new AttachmentRepository(settings.ConnectionString);

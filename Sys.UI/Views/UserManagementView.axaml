@@ -24,37 +24,6 @@
 	  Bunlar yerel (local) değer olduğu için tema hiçbir durumda üzerlerine yazamaz;
 	  böylece buton hover'da da normal, basılıyken de aynı görünür.
 	-->
-	<UserControl.Styles>
-		<!-- Şeffaf gövdeli buton: tüm renk işini içindeki Border yapar. -->
-		<Style Selector="Button.flat">
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="Padding" Value="0"/>
-			<Setter Property="Cursor" Value="Hand"/>
-		</Style>
-		<!-- Hover/basılı durumda gövde yine şeffaf kalsın; geri bildirimi opaklıkla veriyoruz. -->
-		<Style Selector="Button.flat /template/ ContentPresenter">
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="Padding" Value="0"/>
-		</Style>
-		<Style Selector="Button.flat:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="Transparent"/>
-		</Style>
-		<Style Selector="Button.flat:pressed /template/ ContentPresenter">
-			<Setter Property="Background" Value="Transparent"/>
-		</Style>
-		<Style Selector="Button.flat:pointerover">
-			<Setter Property="Opacity" Value="0.85"/>
-		</Style>
-		<Style Selector="Button.flat:pressed">
-			<Setter Property="Opacity" Value="0.7"/>
-		</Style>
-		<Style Selector="Button.flat:disabled">
-			<Setter Property="Opacity" Value="0.5"/>
-		</Style>
-	</UserControl.Styles>
-
 	<ScrollViewer>
 		<StackPanel Margin="0,0,20,20" Spacing="12">
 

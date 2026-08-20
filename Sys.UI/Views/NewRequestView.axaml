@@ -15,15 +15,6 @@
 	  Alan bazlı hata mesajları: her doğrulama mesajı, ait olduğu kutunun hemen altında
 	  ve yalnızca o alanda hata varken görünür. Ortak görünüm tek bir stilde tanımlı.
 	-->
-	<UserControl.Styles>
-		<Style Selector="TextBlock.fieldError">
-			<Setter Property="Foreground" Value="#D14343"/>
-			<Setter Property="FontSize" Value="11"/>
-			<Setter Property="TextWrapping" Value="Wrap"/>
-			<Setter Property="Margin" Value="2,-4,0,0"/>
-		</Style>
-	</UserControl.Styles>
-
 	<ScrollViewer>
 		<StackPanel Margin="0,0,20,20" Spacing="10" MaxWidth="600">
 

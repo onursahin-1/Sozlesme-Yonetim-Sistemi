@@ -35,6 +35,12 @@ public class AuditLogRowViewModel
         "Ekİndirildi" => "Ek İndirildi",
         "EkSilindi" => "Ek Silindi",
         "SözleşmeYazdırıldı" => "Sözleşme Yazdırıldı",
+        "KullanıcıOluşturuldu" => "Kullanıcı Oluşturuldu",
+        "ŞifreSıfırlandı" => "Şifre Sıfırlandı (Yönetici)",
+        "ŞifreDeğiştirildi" => "Şifre Değiştirildi",
+        "HesapDevreDışıBırakıldı" => "Hesap Devre Dışı Bırakıldı",
+        "HesapEtkinleştirildi" => "Hesap Etkinleştirildi",
+        "HesapKilitlendi" => "Hesap Kilitlendi",
         _ => _log.Action
     };
     public string DetailText => _log.Detail ?? string.Empty;

@@ -9,11 +9,40 @@ public class UserManagementService
 {
     private readonly IUserRepository _users;
     private readonly IPasswordResetRequestRepository? _resetRequests;
+    private readonly IAuditLogRepository? _auditLogs;
 
-    public UserManagementService(IUserRepository users, IPasswordResetRequestRepository? resetRequests = null)
+    public UserManagementService(
+        IUserRepository users,
+        IPasswordResetRequestRepository? resetRequests = null,
+        IAuditLogRepository? auditLogs = null)
     {
         _users = users;
         _resetRequests = resetRequests;
+        _auditLogs = auditLogs;
+    }
+
+    // Hesap yönetimi işlemleri denetim kaydına yazılır: kimin hangi hesabı oluşturduğu,
+    // kimin şifresini sıfırladığı, kimi devre dışı bıraktığı sonradan izlenebilmeli.
+    // Kayıt yazılamazsa asıl işlem geçerli sayılmaya devam eder.
+    private async Task LogAsync(User actingUser, int targetUserId, string action, string detail)
+    {
+        if (_auditLogs is null) return;
+        try
+        {
+            await _auditLogs.AddAsync(new AuditLog
+            {
+                EntityName = "User",
+                EntityId = targetUserId,
+                Action = action,
+                ActingUserId = actingUser.Id,
+                Detail = detail,
+                ActionDate = DateTime.Now,
+            });
+        }
+        catch
+        {
+            // Denetim kaydı yazılamadıysa sessizce geç.
+        }
     }
 
     // Giriş ekranından gelen, henüz karşılanmamış şifre sıfırlama talepleri.
@@ -59,6 +88,11 @@ public class UserManagementService
         };
 
         await _users.AddAsync(user);
+
+        // Şifre hiçbir kayda yazılmaz — yalnızca hesabın oluşturulduğu ve rolü kaydedilir.
+        await LogAsync(actingUser, user.Id, "KullanıcıOluşturuldu",
+            $"{user.FullName} ({user.Username}) — rol: {role}");
+
         return user;
     }
 
@@ -81,6 +115,9 @@ public class UserManagementService
         // Admin'in listeden elle temizlemesi gerekmesin.
         if (_resetRequests is not null)
             await _resetRequests.MarkHandledForUserAsync(user.Id, actingUser.Id);
+
+        await LogAsync(actingUser, user.Id, "ŞifreSıfırlandı",
+            $"{user.FullName} ({user.Username}) hesabının şifresi yönetici tarafından sıfırlandı.");
     }
 
     public async Task<User> SetDisabledAsync(User actingUser, int userId, bool disabled)
@@ -96,6 +133,11 @@ public class UserManagementService
 
         user.IsDisabled = disabled;
         await _users.UpdateAsync(user);
+
+        await LogAsync(actingUser, user.Id,
+            disabled ? "HesapDevreDışıBırakıldı" : "HesapEtkinleştirildi",
+            $"{user.FullName} ({user.Username})");
+
         return user;
     }
 }

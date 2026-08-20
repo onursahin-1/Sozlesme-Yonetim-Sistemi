@@ -14,15 +14,6 @@
 	</Design.DataContext>
 
 	<!-- Alan bazlı doğrulama mesajlarının ortak görünümü -->
-	<UserControl.Styles>
-		<Style Selector="TextBlock.fieldError">
-			<Setter Property="Foreground" Value="#D14343"/>
-			<Setter Property="FontSize" Value="11"/>
-			<Setter Property="TextWrapping" Value="Wrap"/>
-			<Setter Property="Margin" Value="2,-6,0,0"/>
-		</Style>
-	</UserControl.Styles>
-
 	<ScrollViewer Margin="0,0,20,20">
 		<StackPanel Spacing="14" MaxWidth="700">
 

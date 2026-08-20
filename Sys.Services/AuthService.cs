@@ -7,6 +7,7 @@ public class AuthService
     private readonly IUserRepository _users;
     private readonly IPasswordResetRequestRepository? _resetRequests;
     private readonly INotificationRepository? _notifications;
+    private readonly IAuditLogRepository? _auditLogs;
     private const int MaxFailedAttempts = 5;
     private static readonly TimeSpan LockDuration = TimeSpan.FromMinutes(15);
 
@@ -17,11 +18,36 @@ public class AuthService
     public AuthService(
         IUserRepository users,
         IPasswordResetRequestRepository? resetRequests = null,
-        INotificationRepository? notifications = null)
+        INotificationRepository? notifications = null,
+        IAuditLogRepository? auditLogs = null)
     {
         _users = users;
         _resetRequests = resetRequests;
         _notifications = notifications;
+        _auditLogs = auditLogs;
+    }
+
+    // Kimlik doğrulamayla ilgili güvenlik olayları denetim kaydına yazılır.
+    // Kayıt yazılamazsa giriş/şifre işlemi geçerli sayılmaya devam eder.
+    private async Task LogAsync(int userId, string action, string detail)
+    {
+        if (_auditLogs is null) return;
+        try
+        {
+            await _auditLogs.AddAsync(new AuditLog
+            {
+                EntityName = "User",
+                EntityId = userId,
+                Action = action,
+                ActingUserId = userId,
+                Detail = detail,
+                ActionDate = DateTime.Now,
+            });
+        }
+        catch
+        {
+            // Sessizce geç.
+        }
     }
 
     public async Task<AuthResult> LoginAsync(string username, string password)
@@ -45,6 +71,13 @@ public class AuthService
                 user.LockedUntil = DateTime.UtcNow.Add(LockDuration);
                 user.FailedLoginCount = 0;
                 await _users.UpdateAsync(user);
+
+                // Her hatalı deneme değil, yalnızca kilitlenme kaydedilir: tek tek
+                // denemeler denetim kaydını gereksiz yere doldururdu, kilitlenme ise
+                // incelemeye değer bir güvenlik olayıdır.
+                await LogAsync(user.Id, "HesapKilitlendi",
+                    $"{user.FullName} ({user.Username}) — {MaxFailedAttempts} hatalı giriş denemesi sonrası {LockDuration.TotalMinutes:0} dakika kilitlendi.");
+
                 return AuthResult.Fail("Çok fazla hatalı deneme. Hesap 15 dakika kilitlendi.");
             }
             await _users.UpdateAsync(user);
@@ -156,6 +189,9 @@ public class AuthService
         // Oturumdaki nesne de güncellenir; aksi halde aynı oturumda ikinci kez şifre
         // değiştirmeye çalışıldığında "mevcut şifre" kontrolü eski hash'e bakardı.
         currentUser.PasswordHash = user.PasswordHash;
+
+        await LogAsync(user.Id, "ŞifreDeğiştirildi",
+            $"{user.FullName} ({user.Username}) kendi şifresini değiştirdi.");
 
         return AuthResult.Ok(user);
     }
