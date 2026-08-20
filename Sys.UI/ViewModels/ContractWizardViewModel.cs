@@ -118,8 +118,16 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     public ObservableCollection<WizardFileItem> EkFileNames { get; } = new();
     public ObservableCollection<WizardFileItem> TeminatFileNames { get; } = new();
 
+    // Para birimi seçenekleri ve seçili değer. Talep aşamasında belirlenen para birimi
+    // buraya taşınır (OnSelectedRequestChanged), SYB isterse değiştirebilir.
+    public string[] CurrencyOptions { get; } = CurrencyHelper.Options;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToplamText))]
+    public partial string SelectedCurrency { get; set; } = "TRY";
+
     public decimal Toplam => Items.Sum(i => i.LineTotal);
-    public string ToplamText => Toplam.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) + " TL";
+    public string ToplamText => CurrencyHelper.Format(Toplam, SelectedCurrency);
 
     public bool IsStep1 => CurrentStep == 1;
     public bool IsStep2 => CurrentStep == 2;
@@ -239,6 +247,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     partial void OnSelectedRequestChanged(Contract? value)
     {
         RequestError = string.Empty;
+        SelectedCurrency = string.IsNullOrWhiteSpace(value?.Currency) ? "TRY" : value!.Currency;
         SapCariKodu = value?.SapCariKodu ?? string.Empty;
         SelectedCompanyType = value?.CompanyType ?? string.Empty;
     }
@@ -335,6 +344,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
             SelectedRequest.PaymentPeriod = SelectedPaymentPeriod;
             SelectedRequest.SapCariKodu = SapCariKodu;
             SelectedRequest.CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType;
+            SelectedRequest.Currency = SelectedCurrency;
             var items = Items.Select(r => new ContractItem
             {
                 Description = r.Description,

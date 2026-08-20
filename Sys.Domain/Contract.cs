@@ -25,6 +25,10 @@ public class Contract
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public decimal TotalAmount { get; set; }
+
+    // Sözleşmenin para birimi (ISO kodu: TRY / EUR / USD). Tutarlar tek bir para
+    // biriminde tutulur; kur dönüşümü yapılmaz. Eski kayıtlar için varsayılan TRY.
+    public string Currency { get; set; } = "TRY";
     public int CreatedByUserId { get; set; }
     public User? CreatedByUser { get; set; }
     public DateTime CreatedAt { get; set; }

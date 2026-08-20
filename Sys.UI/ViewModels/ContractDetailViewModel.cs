@@ -79,6 +79,11 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
     [ObservableProperty]
     public partial string DetailStatusBgHex { get; set; } = "#EAECF0";
 
+    // Revizyon geçmişindeki tutarlar ContractRevision üzerinden geliyor; o kayıtta
+    // para birimi yok, sözleşmeninki geçerli. Ekranda ek olarak yazılabilsin diye.
+    [ObservableProperty]
+    public partial string CurrencySuffix { get; set; } = " TL";
+
     [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
 
@@ -199,7 +204,8 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
             DetailSapCariKodu = string.IsNullOrWhiteSpace(full.SapCariKodu) ? "-" : full.SapCariKodu!;
             DetailTaxNo = string.IsNullOrWhiteSpace(full.TaxNo) ? "-" : full.TaxNo;
             DetailType = string.IsNullOrWhiteSpace(full.Type) ? "-" : full.Type;
-            DetailTotal = full.TotalAmount.ToString("N2", tr) + " TL";
+            DetailTotal = CurrencyHelper.Format(full.TotalAmount, full.Currency);
+            CurrencySuffix = " " + CurrencyHelper.Symbol(full.Currency);
             DetailRemainingDays = card.GunKalanText;
             DetailStart = full.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             DetailEnd = full.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";

@@ -91,7 +91,9 @@
 							<Grid ColumnDefinitions="3*,Auto,Auto,Auto,Auto" Margin="0,0,0,6">
 								<TextBox Grid.Column="0" PlaceholderText="Tanım" Text="{Binding Description}" Margin="0,0,4,0"/>
 								<TextBox Grid.Column="1" Width="60" Text="{Binding QuantityText}" Margin="0,0,4,0"/>
-								<TextBox Grid.Column="2" Width="70" Text="{Binding Unit}" Margin="0,0,4,0"/>
+								<ComboBox Grid.Column="2" Width="96" Margin="0,0,4,0"
+										  ItemsSource="{Binding Source={x:Static vm:ContractItemRowViewModel.UnitOptions}}"
+										  SelectedItem="{Binding Unit}"/>
 								<TextBox Grid.Column="3" Width="100" Margin="0,0,4,0" Text="{Binding UnitPriceText}"
 										 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 								<Button Grid.Column="4" Content="Sil" Command="{Binding RemoveCommand}"/>
@@ -101,6 +103,12 @@
 				</ItemsControl>
 
 				<Button Content="+ Kalem Ekle" Command="{Binding AddItemCommand}"/>
+
+				<!-- Para birimi kalem bazında değil sözleşme bazında seçilir; kur dönüşümü yapılmaz. -->
+				<StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
+					<TextBlock Text="Para Birimi" FontWeight="Bold" VerticalAlignment="Center"/>
+					<ComboBox Width="130" ItemsSource="{Binding CurrencyOptions}" SelectedItem="{Binding SelectedCurrency}"/>
+				</StackPanel>
 
 				<TextBlock FontWeight="Bold" FontSize="16">
 					<Run Text="Toplam: "/>

@@ -128,6 +128,14 @@ public class SysDbContext : DbContext
             .HasMaxLength(100)
             .IsRequired();
 
+        // Para birimi ISO kodu olarak saklanır (TRY/EUR/USD). Mevcut kayıtlar için
+        // varsayılan TRY atanır; aksi halde eski sözleşmeler boş para birimiyle kalırdı.
+        modelBuilder.Entity<Contract>()
+            .Property(c => c.Currency)
+            .HasMaxLength(3)
+            .IsRequired()
+            .HasDefaultValue("TRY");
+
         modelBuilder.Entity<ContractItem>()
                     .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");
         modelBuilder.Entity<Contract>()

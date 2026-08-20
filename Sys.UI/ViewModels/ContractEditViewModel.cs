@@ -41,6 +41,11 @@ public partial class ContractEditViewModel : ViewModelBase
     [ObservableProperty]
     public partial string NewTotalAmountText { get; set; } = string.Empty;
 
+    // Etiket sabit "Yeni Bedel (TL)" yazıyordu; sözleşme EUR/USD ise yanlış bilgi
+    // veriyordu. Seçilen sözleşmenin para birimine göre güncelleniyor.
+    [ObservableProperty]
+    public partial string NewAmountLabel { get; set; } = "Yeni Bedel";
+
     [ObservableProperty]
     public partial DateTimeOffset? NewEndDate { get; set; }
 
@@ -120,6 +125,9 @@ public partial class ContractEditViewModel : ViewModelBase
         SuccessMessage = string.Empty;
         Reason = string.Empty;
         NewTotalAmountText = string.Empty;
+        NewAmountLabel = value is null
+            ? "Yeni Bedel"
+            : $"Yeni Bedel ({CurrencyHelper.Symbol(value.Currency)})";
         NewEndDate = null;
         NewDescription = string.Empty;
         NewCompanyName = string.Empty;

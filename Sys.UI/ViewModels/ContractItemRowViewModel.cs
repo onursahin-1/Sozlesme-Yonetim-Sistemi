@@ -15,6 +15,14 @@ public partial class ContractItemRowViewModel : ViewModelBase
     [ObservableProperty]
     public partial string QuantityText { get; set; } = "1";
 
+    // Birim artık serbest metin değil, listeden seçiliyor: elle yazıldığında herkes
+    // farklı yazıyordu ("adet", "Adet", "ad.") ve raporlamada tutarsızlık oluşuyordu.
+    public static string[] UnitOptions { get; } =
+    {
+        "adet", "kg", "litre", "metre", "m²", "m³",
+        "saat", "gün", "ay", "yıl", "paket", "kutu", "sefer", "hizmet"
+    };
+
     [ObservableProperty]
     public partial string Unit { get; set; } = "adet";
 

@@ -35,7 +35,7 @@
 				<TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"
                          PlaceholderText="Neden bu değişikliğe ihtiyaç var? Detaylı açıklayın..."/>
 
-				<TextBlock Text="Yeni Bedel (TL)" FontWeight="Bold" Margin="0,8,0,0"/>
+				<TextBlock Text="{Binding NewAmountLabel}" FontWeight="Bold" Margin="0,8,0,0"/>
 				<TextBox Text="{Binding NewTotalAmountText}" PlaceholderText="Değişmiyorsa boş bırakın" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 
 				<TextBlock Text="Yeni Bitiş Tarihi" FontWeight="Bold" Margin="0,8,0,0"/>

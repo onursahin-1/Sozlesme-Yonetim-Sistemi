@@ -93,7 +93,7 @@ public class ContractCardViewModel
         _ => "#EAECF0"
     };
 
-    public string BedelText => _contract.TotalAmount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")) + " TL";
+    public string BedelText => CurrencyHelper.Format(_contract.TotalAmount, _contract.Currency);
 
     public string GunKalanText
     {

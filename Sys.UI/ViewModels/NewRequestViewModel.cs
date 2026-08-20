@@ -55,6 +55,12 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
     [ObservableProperty]
     public partial string EstimatedAmountText { get; set; } = string.Empty;
 
+    // Talep aşamasında belirlenen para birimi, sözleşme oluşturulurken sihirbaza taşınır.
+    public string[] CurrencyOptions { get; } = CurrencyHelper.Options;
+
+    [ObservableProperty]
+    public partial string SelectedCurrency { get; set; } = "TRY";
+
     [ObservableProperty]
     public partial string Description { get; set; } = string.Empty;
 
@@ -159,6 +165,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
         TaxNo = editingContract.TaxNo;
         SapCariKodu = editingContract.SapCariKodu ?? string.Empty;
         SelectedCompanyType = editingContract.CompanyType ?? string.Empty;
+        SelectedCurrency = string.IsNullOrWhiteSpace(editingContract.Currency) ? "TRY" : editingContract.Currency;
     }
 
     public void SetSelectedFile(string path)
@@ -230,6 +237,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
                         SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
                         CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
                         TotalAmount = amount,
+                        Currency = SelectedCurrency,
                     };
 
                     await _contractService.UpdateRequestAsync(editedContract, _currentUser);
@@ -265,6 +273,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
                     SapCariKodu = string.IsNullOrWhiteSpace(SapCariKodu) ? null : SapCariKodu,
                     CompanyType = string.IsNullOrWhiteSpace(SelectedCompanyType) ? null : SelectedCompanyType,
                     TotalAmount = amount,
+                    Currency = SelectedCurrency,
                     CreatedByUserId = _currentUser.Id,
                 };
 

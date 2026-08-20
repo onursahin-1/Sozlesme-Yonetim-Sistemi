@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -141,7 +141,7 @@ public static class ContractPdfExporter
                 ("Başlangıç Tarihi", contract.StartDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
                 ("Bitiş Tarihi", contract.EndDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
                 ("Ödeme Periyodu", string.IsNullOrWhiteSpace(contract.PaymentPeriod) ? "-" : contract.PaymentPeriod!),
-                ("Toplam Bedel", contract.TotalAmount.ToString("N2", Tr) + " TL"),
+                ("Toplam Bedel", CurrencyHelper.Format(contract.TotalAmount, contract.Currency)),
             };
 
             const double labelWidth = 130;
@@ -212,7 +212,7 @@ public static class ContractPdfExporter
             EnsureSpace(20);
             _gfx.DrawString("Toplam", _fontLabel, XBrushes.Black,
                 new XRect(MarginLeft + colDesc, _y, colQty + colUnit - 6, 13), XStringFormats.TopRight);
-            DrawRight(grandTotal.ToString("N2", Tr) + " TL", _fontLabel, MarginLeft + colDesc + colQty + colUnit, colTotal - 6);
+            DrawRight(CurrencyHelper.Format(grandTotal, contract.Currency), _fontLabel, MarginLeft + colDesc + colQty + colUnit, colTotal - 6);
             _y += 20;
         }
 
@@ -252,7 +252,7 @@ public static class ContractPdfExporter
             DrawSectionHeading("Revizyon Geçmişi");
             foreach (var revision in contract.Revisions.OrderBy(r => r.ChangedAt))
             {
-                var detay = $"Önceki bedel: {revision.PreviousTotalAmount.ToString("N2", Tr)} TL";
+                var detay = $"Önceki bedel: {CurrencyHelper.Format(revision.PreviousTotalAmount, contract.Currency)}";
                 if (revision.PreviousEndDate.HasValue)
                     detay += $" · Önceki bitiş: {revision.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr)}";
 

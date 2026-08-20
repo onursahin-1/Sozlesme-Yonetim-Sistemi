@@ -74,7 +74,22 @@
                 </StackPanel>
 
                 <StackPanel Spacing="7">
-                    <TextBlock Text="Şifre" FontSize="12" FontWeight="SemiBold" Foreground="#3D3A34"/>
+                    <!--
+                      Caps Lock uyarısı etiketin sağında, satır içinde duruyor: ayrı bir
+                      kutu olarak altta gösterildiğinde formu aşağı itiyor ve gereğinden
+                      fazla dikkat çekiyordu. Burada alanın kendi başlığıyla aynı hizada,
+                      sadece kutu odaktayken ve kilit açıkken beliriyor.
+                    -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="Şifre" FontSize="12" FontWeight="SemiBold" Foreground="#3D3A34"/>
+                        <StackPanel Grid.Column="1" x:Name="CapsLockWarning" IsVisible="False"
+                                    Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                            <TextBlock Text="⇪" FontSize="12" Foreground="#B7791F" VerticalAlignment="Center"/>
+                            <TextBlock Text="Caps Lock açık" FontSize="11" Foreground="#B7791F"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
                     <TextBox x:Name="PasswordBox"
                              Text="{Binding Password}" PasswordChar="•" KeyDown="OnCredentialKeyDown"
                              KeyUp="OnPasswordKeyUp" GotFocus="OnPasswordFocusChanged"
@@ -82,21 +97,6 @@
                              BorderBrush="#DDD8CE" BorderThickness="1" CornerRadius="6"
                              Padding="12,10" FontSize="13"
                              PlaceholderText="••••••••"/>
-
-                    <!--
-                      Caps Lock uyarısı: şifre alanında yazarken harflerin büyük gidip
-                      gitmediği görünmediği için, hatalı giriş denemelerinin sık sebebi.
-                      Yalnızca şifre kutusu odaktayken ve Caps Lock açıkken görünür.
-                    -->
-                    <Border x:Name="CapsLockWarning" IsVisible="False"
-                            Background="#FDF3E2" BorderBrush="#E8CE9A" BorderThickness="1"
-                            CornerRadius="6" Padding="10,7">
-                        <StackPanel Orientation="Horizontal" Spacing="7">
-                            <TextBlock Text="⇪" FontSize="13" Foreground="#8A6A15" VerticalAlignment="Center"/>
-                            <TextBlock Text="Caps Lock açık" FontSize="11.5" Foreground="#8A6A15"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
 
                 <Border Background="#FBEDE9" BorderBrush="#E8C4B8" BorderThickness="1"

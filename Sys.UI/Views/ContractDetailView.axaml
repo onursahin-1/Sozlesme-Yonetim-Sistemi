@@ -267,7 +267,7 @@
 											<TextBlock Foreground="#555555">
 												<Run Text="Önceki Bedel: "/>
 												<Run Text="{Binding PreviousTotalAmount, StringFormat={}{0:N2}}"/>
-												<Run Text=" TL"/>
+												<Run Text="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CurrencySuffix}"/>
 											</TextBlock>
 											<TextBlock Text="{Binding PreviousEndDate, StringFormat='Önceki Bitiş: {0:dd.MM.yyyy}'}"
 	                                                   Foreground="#555555"

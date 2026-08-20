@@ -36,8 +36,13 @@
 			<TextBlock Classes="fieldError" Text="{Binding TypeError}"
                        IsVisible="{Binding TypeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-			<TextBlock Text="Tahmini Bedel (TL)"/>
-			<TextBox Text="{Binding EstimatedAmountText}" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+			<TextBlock Text="Tahmini Bedel"/>
+			<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+				<TextBox Grid.Column="0" Text="{Binding EstimatedAmountText}"
+						 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+				<ComboBox Grid.Column="1" Width="130"
+						  ItemsSource="{Binding CurrencyOptions}" SelectedItem="{Binding SelectedCurrency}"/>
+			</Grid>
 			<TextBlock Classes="fieldError" Text="{Binding AmountError}"
                        IsVisible="{Binding AmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 

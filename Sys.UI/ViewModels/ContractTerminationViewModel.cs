@@ -49,6 +49,15 @@ public partial class ContractTerminationViewModel : ViewModelBase
     [ObservableProperty]
     public partial string CompensationAmountText { get; set; } = string.Empty;
 
+    // Tazminat, sözleşmenin para biriminde ödenir; etiket sabit "TL" yazıyordu.
+    [ObservableProperty]
+    public partial string CompensationLabel { get; set; } = "Fesih Tazminatı";
+
+    partial void OnSelectedContractChanged(Contract? value)
+        => CompensationLabel = value is null
+            ? "Fesih Tazminatı"
+            : $"Fesih Tazminatı ({CurrencyHelper.Symbol(value.Currency)})";
+
     [ObservableProperty]
     public partial string SelectedCompensationDirection { get; set; } = string.Empty;
 

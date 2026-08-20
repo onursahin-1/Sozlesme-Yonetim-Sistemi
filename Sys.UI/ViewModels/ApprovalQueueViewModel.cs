@@ -199,7 +199,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 : full.CreatedByUser.FullName + (string.IsNullOrWhiteSpace(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
             DetailCompany = full.CompanyName;
             DetailStatus = ContractStatusHelper.ToLabel(full.Status);
-            DetailTotal = full.TotalAmount.ToString("N2", tr) + " TL";
+            DetailTotal = CurrencyHelper.Format(full.TotalAmount, full.Currency);
             DetailStart = full.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             DetailEnd = full.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             Items = new ObservableCollection<ContractItem>(full.Items);
@@ -222,7 +222,8 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 if (rev is not null)
                 {
                     HasRevisionHistory = true;
-                    RevisionInfo = $"Değişiklik Türü: {rev.ChangeType}\nGerekçe: {rev.Reason}\nÖnceki Bedel: {rev.PreviousTotalAmount:N2} TL";
+                    RevisionInfo = $"Değişiklik Türü: {rev.ChangeType}\nGerekçe: {rev.Reason}\n" +
+                                  $"Önceki Bedel: {CurrencyHelper.Format(rev.PreviousTotalAmount, full.Currency)}";
                 }
             }
         }

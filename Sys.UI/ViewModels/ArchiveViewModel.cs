@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
@@ -160,7 +160,7 @@ public partial class ArchiveViewModel : ViewModelBase
             DetailSapCariKodu = string.IsNullOrWhiteSpace(full.SapCariKodu) ? "-" : full.SapCariKodu!;
             DetailTaxNo = string.IsNullOrWhiteSpace(full.TaxNo) ? "-" : full.TaxNo;
             DetailType = string.IsNullOrWhiteSpace(full.Type) ? "-" : full.Type;
-            DetailTotal = full.TotalAmount.ToString("N2", tr) + " TL";
+            DetailTotal = CurrencyHelper.Format(full.TotalAmount, full.Currency);
             DetailStart = full.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             DetailEnd = full.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             DetailRequester = full.CreatedByUser?.FullName ?? "-";
