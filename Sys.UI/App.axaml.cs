@@ -44,12 +44,16 @@ public partial class App : Application
             }
 
             var userRepository = new UserRepository(settings.ConnectionString);
-            var authService = new AuthService(userRepository);
-            var userManagementService = new UserManagementService(userRepository);
+            var passwordResetRequestRepository = new PasswordResetRequestRepository(settings.ConnectionString);
+            var notificationRepository = new NotificationRepository(settings.ConnectionString);
+
+            // AuthService bildirim deposunu da alır: şifre sıfırlama talebi geldiğinde
+            // Admin'lere zil bildirimi gönderilir.
+            var authService = new AuthService(userRepository, passwordResetRequestRepository, notificationRepository);
+            var userManagementService = new UserManagementService(userRepository, passwordResetRequestRepository);
 
             var contractRepository = new ContractRepository(settings.ConnectionString);
             var attachmentRepository = new AttachmentRepository(settings.ConnectionString);
-            var notificationRepository = new NotificationRepository(settings.ConnectionString);
             var scheduledJobRepository = new ScheduledJobRepository(settings.ConnectionString);
             var contractService = new ContractService(contractRepository, attachmentRepository, notificationRepository, userRepository);
             var notificationService = new NotificationService(notificationRepository, contractRepository, userRepository);

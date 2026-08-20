@@ -22,6 +22,69 @@ public partial class LoginViewModel : ViewModelBase
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
+    // --- Şifremi unuttum ---
+    // E-posta altyapısı olmadığı için otomatik sıfırlama bağlantısı gönderilemiyor.
+    // Bunun yerine talep kayda geçiyor, Admin Kullanıcı Yönetimi ekranında görüp
+    // şifreyi sıfırlıyor ve kullanıcıya iletiyor.
+
+    [ObservableProperty]
+    public partial bool ShowForgotPasswordPanel { get; set; }
+
+    [ObservableProperty]
+    public partial string ForgotUsername { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string ForgotMessage { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial bool IsSubmittingReset { get; set; }
+
+    [RelayCommand]
+    private void ToggleForgotPassword()
+    {
+        ShowForgotPasswordPanel = !ShowForgotPasswordPanel;
+        ForgotMessage = string.Empty;
+        // Kullanıcı adını giriş kutusundan taşıyoruz; büyük ihtimalle aynı hesap.
+        ForgotUsername = ShowForgotPasswordPanel ? Username : string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task SubmitPasswordResetRequest()
+    {
+        if (IsSubmittingReset) return;
+        IsSubmittingReset = true;
+        try
+        {
+            ForgotMessage = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(ForgotUsername))
+            {
+                ForgotMessage = "Lütfen kullanıcı adınızı girin.";
+                return;
+            }
+
+            try
+            {
+                await _authService.RequestPasswordResetAsync(ForgotUsername);
+            }
+            catch
+            {
+                // Hata olsa bile aşağıdaki tek tip mesaj gösterilir; kullanıcıya
+                // sistemin iç durumu hakkında ipucu verilmez.
+            }
+
+            // Kullanıcı adı sistemde olsun ya da olmasın HER ZAMAN aynı mesaj gösterilir.
+            // Aksi halde giriş ekranı, hangi kullanıcı adlarının var olduğunu deneyerek
+            // öğrenmeye yarayan bir araca dönüşürdü.
+            ForgotMessage = "Talebiniz alındı. Sistem yöneticiniz sizinle iletişime geçecek.";
+            ForgotUsername = string.Empty;
+        }
+        finally
+        {
+            IsSubmittingReset = false;
+        }
+    }
+
     public LoginViewModel() : this(null!) { } // yalnızca tasarımcı önizlemesi için
 
     public LoginViewModel(AuthService authService)

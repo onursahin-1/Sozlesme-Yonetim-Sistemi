@@ -67,6 +67,40 @@
 
 			<StackPanel IsVisible="{Binding !IsLoading}" Spacing="12">
 
+				<!-- Giriş ekranındaki "Şifremi unuttum" akışından gelen talepler -->
+				<Border IsVisible="{Binding HasResetRequests}"
+						Background="#FFF6E5" BorderBrush="#E8C87A" BorderThickness="1"
+						CornerRadius="8" Padding="14">
+					<StackPanel Spacing="8">
+						<TextBlock Text="{Binding ResetRequestHeader}" FontWeight="Bold" Foreground="Black"/>
+						<TextBlock Text="Şifreyi sıfırlamak için ilgili kullanıcının satırındaki &quot;Şifre Sıfırla&quot; butonunu kullanın; talep otomatik kapanır."
+								   FontSize="11" Foreground="#7A5C10" TextWrapping="Wrap"/>
+
+						<ItemsControl ItemsSource="{Binding ResetRequests}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="vm:ResetRequestRowViewModel">
+									<Border Background="White" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
+										<Grid ColumnDefinitions="*,Auto">
+											<StackPanel Grid.Column="0" Spacing="2">
+												<TextBlock Text="{Binding DisplayText}" Foreground="Black" FontSize="12" TextWrapping="Wrap"/>
+												<TextBlock Text="{Binding TimeText}" Foreground="#999" FontSize="10"/>
+											</StackPanel>
+											<Button Grid.Column="1" Classes="flat" VerticalAlignment="Center"
+													Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).DismissResetRequestCommand}"
+													CommandParameter="{Binding}"
+													ToolTip.Tip="Talebi karşılamadan kapat">
+												<Border Background="#6B7280" CornerRadius="4" Padding="10,4">
+													<TextBlock Text="Kapat" Foreground="White" FontSize="11"/>
+												</Border>
+											</Button>
+										</Grid>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</Border>
+
 				<Button Classes="flat" HorizontalAlignment="Left"
 						Command="{Binding ToggleNewUserFormCommand}">
 					<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">

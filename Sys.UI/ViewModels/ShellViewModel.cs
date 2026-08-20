@@ -33,6 +33,7 @@ public partial class ShellViewModel : ViewModelBase
     private readonly ContractService? _contractService;
     private readonly UserManagementService? _userManagementService;
     private readonly NotificationService? _notificationService;
+    private readonly AuthService? _authService;
     private readonly string _attachmentsPath;
 
     public User CurrentUser { get; }
@@ -82,18 +83,20 @@ public partial class ShellViewModel : ViewModelBase
     // 99'dan fazlasında rozet genişleyip başlığı bozmasın diye kısaltılır.
     public string UnreadCountText => UnreadNotificationCount > 99 ? "99+" : UnreadNotificationCount.ToString();
 
-    // Bildirim özelliği yalnızca sözleşme iş akışına katılan roller için anlamlı;
-    // Admin sadece hesap yönetimi yaptığı için zil ikonu ona gösterilmez.
-    public bool ShowNotificationBell => _notificationService is not null && CurrentUser.Role != UserRole.Admin;
+    // Zil tüm rollerde görünür. Admin sözleşme iş akışına katılmaz ama şifre sıfırlama
+    // taleplerinden haberdar olması gerekir — aksi halde talebi fark etmek için Kullanıcı
+    // Yönetimi ekranını açmayı beklemek zorunda kalırdı.
+    public bool ShowNotificationBell => _notificationService is not null;
 
-    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null, null, null, string.Empty) { }
+    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null, null, null, null, string.Empty) { }
 
-    public ShellViewModel(User currentUser, ContractService? contractService, UserManagementService? userManagementService, NotificationService? notificationService, string attachmentsPath)
+    public ShellViewModel(User currentUser, ContractService? contractService, UserManagementService? userManagementService, NotificationService? notificationService, AuthService? authService, string attachmentsPath)
     {
         CurrentUser = currentUser;
         _contractService = contractService;
         _userManagementService = userManagementService;
         _notificationService = notificationService;
+        _authService = authService;
         _attachmentsPath = attachmentsPath;
         NavItems = new ObservableCollection<NavItem>(BuildNavItems(currentUser.Role));
         SelectedNavItem = NavItems.Count > 0 ? NavItems[0] : null;
@@ -191,6 +194,15 @@ public partial class ShellViewModel : ViewModelBase
         }
 
         IsNotificationPanelOpen = false;
+
+        // Şifre sıfırlama talebi bir sözleşmeye değil, Kullanıcı Yönetimi ekranına götürür.
+        if (row.Type == NotificationType.SifreSifirlamaTalebi)
+        {
+            var navItem = NavItems.FirstOrDefault(n => n.Key == "kullaniciYonetimi");
+            if (navItem is not null)
+                SelectedNavItem = navItem;
+            return;
+        }
 
         if (row.ContractId is null || _contractService is null) return;
 
@@ -365,6 +377,7 @@ public partial class ShellViewModel : ViewModelBase
             "onayBekleyen" => CreateApprovalQueueViewModel(),
             "auditLog" => new AuditLogViewModel(_contractService, CurrentUser),
             "kullaniciYonetimi" => new UserManagementViewModel(_userManagementService!, CurrentUser),
+            "sifreDegistir" => new ChangePasswordViewModel(_authService!, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
 
@@ -562,7 +575,12 @@ public partial class ShellViewModel : ViewModelBase
         CurrentPageContent = approvalVm;
     }
 
-    private static NavItem[] BuildNavItems(UserRole role) => role switch
+    // Şifre değiştirme her rolde bulunmalı, o yüzden role göre kurulan listenin
+    // sonuna tek yerden ekleniyor — yeni bir rol eklendiğinde de otomatik gelir.
+    private static NavItem[] BuildNavItems(UserRole role)
+        => [.. BuildRoleNavItems(role), new NavItem("sifreDegistir", "Şifre Değiştir")];
+
+    private static NavItem[] BuildRoleNavItems(UserRole role) => role switch
     {
         UserRole.Personel =>
         [

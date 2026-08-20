@@ -8,10 +8,29 @@ namespace Sys.Services;
 public class UserManagementService
 {
     private readonly IUserRepository _users;
+    private readonly IPasswordResetRequestRepository? _resetRequests;
 
-    public UserManagementService(IUserRepository users)
+    public UserManagementService(IUserRepository users, IPasswordResetRequestRepository? resetRequests = null)
     {
         _users = users;
+        _resetRequests = resetRequests;
+    }
+
+    // Giriş ekranından gelen, henüz karşılanmamış şifre sıfırlama talepleri.
+    public async Task<List<PasswordResetRequest>> GetPendingResetRequestsAsync(User actingUser)
+    {
+        EnsureAdmin(actingUser);
+        if (_resetRequests is null) return new List<PasswordResetRequest>();
+        return await _resetRequests.GetPendingAsync();
+    }
+
+    // Talebi karşılamadan kapatmak için (örn. kullanıcı adı hatalı girilmiş, yapılacak
+    // bir şey yok ya da kullanıcıyla başka bir yoldan hallolmuş).
+    public async Task DismissResetRequestAsync(User actingUser, int requestId)
+    {
+        EnsureAdmin(actingUser);
+        if (_resetRequests is null) return;
+        await _resetRequests.MarkHandledAsync(requestId, actingUser.Id);
     }
 
     private static void EnsureAdmin(User actingUser)
@@ -57,6 +76,11 @@ public class UserManagementService
         user.FailedLoginCount = 0;
         user.LockedUntil = null;
         await _users.UpdateAsync(user);
+
+        // Bu kullanıcının bekleyen sıfırlama talepleri artık karşılanmış sayılır;
+        // Admin'in listeden elle temizlemesi gerekmesin.
+        if (_resetRequests is not null)
+            await _resetRequests.MarkHandledForUserAsync(user.Id, actingUser.Id);
     }
 
     public async Task<User> SetDisabledAsync(User actingUser, int userId, bool disabled)

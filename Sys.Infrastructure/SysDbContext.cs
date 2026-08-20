@@ -18,6 +18,7 @@ public class SysDbContext : DbContext
     public DbSet<ContractTermination> ContractTerminations => Set<ContractTermination>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<ScheduledJobRun> ScheduledJobRuns => Set<ScheduledJobRun>();
+    public DbSet<PasswordResetRequest> PasswordResetRequests => Set<PasswordResetRequest>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Contract>()
@@ -104,6 +105,17 @@ public class SysDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Admin ekranı yalnızca bekleyen talepleri listeliyor; hız sınırı kontrolü de
+        // kullanıcı adına göre son talebi arıyor.
+        modelBuilder.Entity<PasswordResetRequest>()
+            .HasIndex(r => new { r.IsHandled, r.RequestedAt });
+        modelBuilder.Entity<PasswordResetRequest>()
+            .HasIndex(r => r.Username);
+        modelBuilder.Entity<PasswordResetRequest>()
+            .Property(r => r.Username)
+            .HasMaxLength(150)
+            .IsRequired();
 
         // Her zamanlanmış iş için tabloda tek satır bulunmalı; kilit mantığı buna dayanıyor.
         // İki istemci aynı anda satırı oluşturmaya çalışırsa bu index ikincisini engeller.

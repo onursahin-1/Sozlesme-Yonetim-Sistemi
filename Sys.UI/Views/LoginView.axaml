@@ -11,6 +11,33 @@
         <vm:LoginViewModel />
     </Design.DataContext>
 
+    <!-- Gövdesi şeffaf buton: renk/yazı içindeki elemandan gelir, tema hover'da ezemez -->
+    <UserControl.Styles>
+        <Style Selector="Button.link">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.link /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="Button.link:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.link:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.link:pointerover">
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+        <Style Selector="Button.link:disabled">
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+    </UserControl.Styles>
+
     <StackPanel Margin="30" VerticalAlignment="Center" Spacing="12">
         <TextBlock Text="SYS — Sözleşme Yönetim Sistemi" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
@@ -20,9 +47,39 @@
         <TextBlock Text="Şifre"/>
         <TextBox Text="{Binding Password}" PasswordChar="•"/>
 
-        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
+        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
         <Button Content="Giriş Yap" Command="{Binding LoginCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+
+        <Button Classes="link" HorizontalAlignment="Center" Margin="0,4,0,0"
+                Command="{Binding ToggleForgotPasswordCommand}">
+            <TextBlock Text="Şifremi unuttum" FontSize="12" Foreground="#4A90D9"/>
+        </Button>
+
+        <!-- Şifre sıfırlama talebi: e-posta altyapısı olmadığı için otomatik sıfırlama
+             yerine talep kaydediliyor, Admin karşılıyor. -->
+        <Border IsVisible="{Binding ShowForgotPasswordPanel}"
+                Background="#F5F5F5" CornerRadius="6" Padding="14" Margin="0,4,0,0">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Kullanıcı adınızı girin. Sistem yöneticinize bir sıfırlama talebi iletilecek."
+                           FontSize="11" Foreground="#555555" TextWrapping="Wrap"/>
+
+                <TextBox Text="{Binding ForgotUsername}" Background="White" Foreground="Black"
+                         PlaceholderText="Kullanıcı adı"/>
+
+                <Button Classes="link" HorizontalAlignment="Left"
+                        IsEnabled="{Binding !IsSubmittingReset}"
+                        Command="{Binding SubmitPasswordResetRequestCommand}">
+                    <Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
+                        <TextBlock Text="Talep Gönder" Foreground="White" FontSize="12"/>
+                    </Border>
+                </Button>
+
+                <TextBlock Text="{Binding ForgotMessage}" FontSize="11" Foreground="#1A6B2A" TextWrapping="Wrap"
+                           IsVisible="{Binding ForgotMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+        </Border>
     </StackPanel>
 
 </UserControl>

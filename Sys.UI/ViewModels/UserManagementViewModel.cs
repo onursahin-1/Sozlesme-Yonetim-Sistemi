@@ -60,6 +60,32 @@ public partial class UserRowViewModel : ObservableObject
     }
 }
 
+// Giriş ekranından gelen "şifremi unuttum" taleplerinden bir satır.
+public class ResetRequestRowViewModel
+{
+    private readonly PasswordResetRequest _request;
+
+    public ResetRequestRowViewModel(PasswordResetRequest request, string? matchedFullName)
+    {
+        _request = request;
+        MatchedFullName = matchedFullName;
+    }
+
+    public int Id => _request.Id;
+    public string Username => _request.Username;
+    public int? UserId => _request.UserId;
+
+    // Kullanıcı adı sistemde bulunamadıysa null olur — muhtemelen yazım hatası.
+    public string? MatchedFullName { get; }
+
+    public string DisplayText => MatchedFullName is null
+        ? $"\"{Username}\" — bu kullanıcı adı sistemde bulunamadı"
+        : $"{MatchedFullName} ({Username})";
+
+    public string TimeText => _request.RequestedAt.ToString("dd.MM.yyyy HH:mm");
+    public bool IsUnknownUser => MatchedFullName is null;
+}
+
 public partial class UserManagementViewModel : ViewModelBase
 {
     private readonly UserManagementService _userManagementService;
@@ -72,6 +98,15 @@ public partial class UserManagementViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; } = true;
+
+    // Giriş ekranından gelen, henüz karşılanmamış şifre sıfırlama talepleri.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasResetRequests))]
+    [NotifyPropertyChangedFor(nameof(ResetRequestHeader))]
+    public partial ObservableCollection<ResetRequestRowViewModel> ResetRequests { get; set; } = new();
+
+    public bool HasResetRequests => ResetRequests.Count > 0;
+    public string ResetRequestHeader => $"Bekleyen Şifre Sıfırlama Talepleri ({ResetRequests.Count})";
 
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
@@ -119,6 +154,8 @@ public partial class UserManagementViewModel : ViewModelBase
         {
             var users = await _userManagementService.GetAllUsersAsync(_currentUser);
             Users = new ObservableCollection<UserRowViewModel>(users.Select(u => new UserRowViewModel(u)));
+
+            await LoadResetRequestsAsync(users);
         }
         catch (Exception ex)
         {
@@ -127,6 +164,51 @@ public partial class UserManagementViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    // Talepler kullanıcı listesiyle birlikte yükleniyor; talepteki kullanıcı adı
+    // listeyle eşleştirilip Admin'e ad soyad gösteriliyor, eşleşmeyenler ise
+    // "sistemde bulunamadı" olarak işaretleniyor (muhtemelen yazım hatası).
+    private async Task LoadResetRequestsAsync(List<User> users)
+    {
+        try
+        {
+            var requests = await _userManagementService.GetPendingResetRequestsAsync(_currentUser);
+            var byId = users.ToDictionary(u => u.Id, u => u.FullName);
+
+            ResetRequests = new ObservableCollection<ResetRequestRowViewModel>(
+                requests.Select(r => new ResetRequestRowViewModel(
+                    r,
+                    r.UserId is not null && byId.TryGetValue(r.UserId.Value, out var name) ? name : null)));
+        }
+        catch
+        {
+            // Talepler yüklenemezse ekranın geri kalanı çalışmaya devam etmeli.
+            ResetRequests = new ObservableCollection<ResetRequestRowViewModel>();
+        }
+    }
+
+    // Talebi karşılamadan kapatır (örn. kullanıcı adı hatalı girilmiş).
+    [RelayCommand]
+    private async Task DismissResetRequest(ResetRequestRowViewModel row)
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        try
+        {
+            await _userManagementService.DismissResetRequestAsync(_currentUser, row.Id);
+            ResetRequests.Remove(row);
+            OnPropertyChanged(nameof(HasResetRequests));
+            OnPropertyChanged(nameof(ResetRequestHeader));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
@@ -218,6 +300,13 @@ public partial class UserManagementViewModel : ViewModelBase
                 SuccessMessage = $"{row.FullName} kullanıcısının şifresi sıfırlandı.";
                 row.IsResettingPassword = false;
                 row.NewPasswordText = string.Empty;
+
+                // Servis, bu kullanıcının bekleyen taleplerini karşılanmış olarak
+                // işaretledi; listeden de kaldırıp sayacı güncelliyoruz.
+                foreach (var handled in ResetRequests.Where(r => r.UserId == row.Id).ToList())
+                    ResetRequests.Remove(handled);
+                OnPropertyChanged(nameof(HasResetRequests));
+                OnPropertyChanged(nameof(ResetRequestHeader));
             }
             catch (Exception ex)
             {

@@ -36,7 +36,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnLoginSucceeded(User user)
     {
-        var shell = new ShellViewModel(user, _contractService, _userManagementService, _notificationService, _attachmentsPath);
+        var shell = new ShellViewModel(user, _contractService, _userManagementService, _notificationService, _authService, _attachmentsPath);
         shell.LogoutRequested += OnLogoutRequested;
         CurrentViewModel = shell;
     }

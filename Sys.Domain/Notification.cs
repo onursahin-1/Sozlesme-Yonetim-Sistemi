@@ -9,7 +9,10 @@ public enum NotificationType
     // Kullanıcının kendi talebi onaylandı veya reddedildi
     TalepSonucu,
     // Sözleşme üzerinde düzenleme / fesih talebi / ihlal bildirimi yapıldı
-    SozlesmeOlayi
+    SozlesmeOlayi,
+    // Giriş ekranından şifre sıfırlama talebi geldi (yalnızca Admin'e gider).
+    // EF enum'ları tamsayı olarak sakladığı için yeni değerler her zaman SONA eklenir.
+    SifreSifirlamaTalebi
 }
 
 public class Notification

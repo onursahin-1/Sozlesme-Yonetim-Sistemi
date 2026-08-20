@@ -18,6 +18,7 @@ public partial class NotificationRowViewModel : ObservableObject
 
     public int Id => _notification.Id;
     public int? ContractId => _notification.ContractId;
+    public NotificationType Type => _notification.Type;
     public string Title => _notification.Title;
     public string Message => _notification.Message;
     public DateTime CreatedAt => _notification.CreatedAt;
@@ -50,6 +51,7 @@ public partial class NotificationRowViewModel : ObservableObject
         NotificationType.OnayBekliyor => "📝",
         NotificationType.TalepSonucu => "✅",
         NotificationType.SozlesmeOlayi => "📄",
+        NotificationType.SifreSifirlamaTalebi => "🔑",
         _ => "•"
     };
 }
