@@ -11,19 +11,7 @@
 		<vm:UserManagementViewModel />
 	</Design.DataContext>
 
-	<!--
-	  RENKLİ BUTONLAR HAKKINDA:
-	  Avalonia'nın Fluent teması, farenin buton üzerine gelmesi (:pointerover) durumunda
-	  butonun ContentPresenter'ının Background ve Foreground değerlerini kendi tema
-	  renkleriyle eziyor. Butona doğrudan Background/Foreground vermek ya da
-	  Button.Styles ile :pointerover stili tanımlamak bu ezmeyi güvenilir şekilde
-	  engellemiyordu (buton hover'da görünmez oluyordu).
-
-	  Çözüm: Butonun kendi gövdesini tamamen şeffaf/çerçevesiz yapıyoruz ve rengi
-	  butonun İÇİNDEKİ Border'a, yazı rengini de İÇİNDEKİ TextBlock'a veriyoruz.
-	  Bunlar yerel (local) değer olduğu için tema hiçbir durumda üzerlerine yazamaz;
-	  böylece buton hover'da da normal, basılıyken de aynı görünür.
-	-->
+	<!-- Renkli butonlar Classes="flat" kullanır; stil tanımı App.axaml içindedir. -->
 	<ScrollViewer>
 		<StackPanel Margin="0,0,20,20" Spacing="12">
 

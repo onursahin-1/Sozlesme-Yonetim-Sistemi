@@ -10,10 +10,21 @@ namespace Sys.UI.ViewModels;
 // Kullanıcının kendi şifresini değiştirdiği ekran. Admin'in "şifre sıfırlama"
 // işlevinden farkı: mevcut şifre doğrulanır ve yeni şifreyi kullanıcıdan başka
 // kimse bilmez.
-public partial class ChangePasswordViewModel : ViewModelBase
+public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
 {
     private readonly AuthService _authService;
     private readonly User _currentUser;
+
+    // Bu ekran sol menüde bir bölüm değil, kullanıcı menüsünden açılan bir hesap
+    // işlemi. Bu yüzden kendi "Geri" aksiyonu var — kullanıcıyı geldiği ana bölüme
+    // döndürmesi için ShellViewModel bu olaya abone oluyor.
+    public event Action? BackRequested;
+
+    [RelayCommand]
+    private void Back() => BackRequested?.Invoke();
+
+    public bool CanHandleEscape => true;
+    public void HandleEscape() => BackRequested?.Invoke();
 
     [ObservableProperty]
     public partial string CurrentPassword { get; set; } = string.Empty;

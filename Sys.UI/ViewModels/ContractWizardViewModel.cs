@@ -24,7 +24,7 @@ public class WizardFileItem
     }
 }
 
-public partial class ContractWizardViewModel : ViewModelBase
+public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
@@ -131,6 +131,9 @@ public partial class ContractWizardViewModel : ViewModelBase
 
     [RelayCommand]
     private void Back() => BackRequested?.Invoke();
+
+    public bool CanHandleEscape => ShowBackButton;
+    public void HandleEscape() => BackRequested?.Invoke();
 
     public ContractWizardViewModel() : this(null!, new User(), string.Empty) { } // yalnızca tasarımcı önizlemesi için
 

@@ -21,6 +21,33 @@
         <FluentTheme />
 
         <!--
+          Gövde yazı tipi. Liste virgülle ayrılmış bir yedekleme zinciri: sistemde
+          yoksa sıradakine düşer. Segoe UI Variable, Windows 11'in modern arayüz fontu;
+          Inter ise pakette gömülü olduğu için her ortamda garantili son duraktır.
+        -->
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, avares://Avalonia.Fonts.Inter/Assets#Inter"/>
+        </Style>
+
+        <!--
+          Başlık yazı tipi: Bahnschrift (Microsoft'un DIN 1451 uyarlaması, Windows 10+
+          ile birlikte gelir). Geometrik ve endüstriyel karakteri Fakir logosunun
+          harf yapısıyla örtüşüyor; gövde fontundan ayrışarak hiyerarşi kuruyor.
+          Bulunamazsa Segoe UI'ya düşer.
+        -->
+        <Style Selector="TextBlock.display">
+            <Setter Property="FontFamily" Value="Bahnschrift, Segoe UI Variable Display, Segoe UI"/>
+        </Style>
+
+        <!-- Küçük büyük-harf etiketlerde harf aralığı açılınca okunaklılık belirgin artar -->
+        <Style Selector="TextBlock.sectionLabel">
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#8A8578"/>
+            <Setter Property="LetterSpacing" Value="0.8"/>
+        </Style>
+
+        <!--
           ORTAK BUTON STİLİ — Classes="flat"
 
           Sorun: Fluent teması, :pointerover durumunda butonun ContentPresenter'ındaki
@@ -70,6 +97,22 @@
         </Style>
         <Style Selector="Button.flat:disabled">
             <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+
+        <!--
+          Künye/detay ekranlarındaki etiket-değer ikilisi.
+          Etiket küçük, gri ve büyük harf; değer koyu ve normal boyutta. Amaç, gözün
+          önce değerleri taraması, etiketin yalnızca bağlam vermesi.
+        -->
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#8A94A6"/>
+        </Style>
+        <Style Selector="TextBlock.fieldValue">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#1A2E4A"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
         <!-- Alan bazlı form doğrulama mesajlarının ortak görünümü -->

@@ -6,21 +6,24 @@
 
 	<Grid ColumnDefinitions="320,*" Margin="24">
 
-		<!-- Sol: bekleyen sözleşmeler listesi -->
-		<StackPanel Grid.Column="0" Margin="0,0,16,0">
-			<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left" Margin="0,0,0,10"
-                    Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
-                    IsVisible="{Binding ShowBackButton}"
-                    Command="{Binding BackCommand}">
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#4B5563"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-				</Button.Styles>
+		<!--
+		  Sol: bekleyen sözleşmeler listesi.
+		  DockPanel kullanılıyor (eskiden StackPanel'di): StackPanel çocuklarına sınırsız
+		  yükseklik verdiği için ListBox tüm kayıtlar kadar uzuyor ve kendi kaydırma
+		  çubuğu hiç devreye girmiyordu — çok kayıt olduğunda alttakiler erişilemiyordu.
+		  DockPanel'in son çocuğu kalan alanı doldurur, böylece ListBox kendi içinde kayar.
+		-->
+		<DockPanel Grid.Column="0" Margin="0,0,16,0">
+			<Button DockPanel.Dock="Top" Classes="flat" HorizontalAlignment="Left" Margin="0,0,0,10"
+					IsVisible="{Binding ShowBackButton}" Command="{Binding BackCommand}">
+				<Border Background="#6B7280" CornerRadius="4" Padding="10,4">
+					<TextBlock Text="← Geri" Foreground="White" FontSize="12"/>
+				</Border>
 			</Button>
-			<TextBlock Text="{Binding PageTitle}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
-			<TextBlock Text="Onay bekleyen sözleşme yok." IsVisible="{Binding !PendingContracts.Count}" Foreground="Gray"/>
+			<!-- Başlık burada tekrar yazılmıyor: kabuk (ShellView) zaten sayfa başlığını
+			     üstte gösteriyordu, ikisi birden görününce başlık iki kez yazılmış oluyordu. -->
+			<TextBlock DockPanel.Dock="Top" Text="Onay bekleyen sözleşme yok."
+					   IsVisible="{Binding !PendingContracts.Count}" Foreground="Gray"/>
 			<ListBox ItemsSource="{Binding PendingContracts}"
                      SelectedItem="{Binding SelectedContract}">
 				<ListBox.ItemTemplate>
@@ -32,7 +35,7 @@
 					</DataTemplate>
 				</ListBox.ItemTemplate>
 			</ListBox>
-		</StackPanel>
+		</DockPanel>
 
 		<!-- Sağ: seçilen sözleşmenin detayı ve karar paneli -->
 		<ScrollViewer Grid.Column="1">
@@ -47,18 +50,56 @@
 				<TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
                            IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
+				<!-- Künye kartı: sözleşme detay ekranıyla aynı düzen ve stiller -->
 				<Border IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        Background="#F5F5F5" CornerRadius="8" Padding="16">
-					<StackPanel Spacing="8">
-						<TextBlock Text="{Binding DetailTitle}" FontSize="18" FontWeight="Bold" Foreground="Black"/>
-						<TextBlock Text="{Binding DetailNo}" FontSize="12" Foreground="#555555"/>
-						<TextBlock Text="{Binding DetailPeriod}" Foreground="Black" IsVisible="{Binding DetailPeriod, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-						<TextBlock Text="{Binding DetailRequester}" Foreground="Black" IsVisible="{Binding DetailRequester, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-						<TextBlock Text="{Binding DetailCompany}" Foreground="Black"/>
-						<TextBlock Text="{Binding DetailStatus}" Foreground="Black"/>
-						<TextBlock Text="{Binding DetailTotal}" Foreground="Black"/>
-						<TextBlock Text="{Binding DetailStart}" Foreground="Black"/>
-						<TextBlock Text="{Binding DetailEnd}" Foreground="Black"/>
+						Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
+						CornerRadius="10" Padding="20">
+					<StackPanel Spacing="14">
+
+						<StackPanel Spacing="3">
+							<TextBlock Text="{Binding DetailTitle}" FontSize="19" FontWeight="Bold"
+									   Foreground="#1A2E4A" TextWrapping="Wrap"/>
+							<TextBlock Text="{Binding DetailNo}" FontSize="12" Foreground="#8A94A6"/>
+						</StackPanel>
+
+						<Border Background="#EDF1F6" Height="1"/>
+
+						<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto"
+							  ColumnSpacing="24" RowSpacing="14">
+
+							<StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="FİRMA"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailCompany}"/>
+							</StackPanel>
+							<StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="DURUM"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailStatus}"/>
+							</StackPanel>
+
+							<StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="BEDEL"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailTotal}"/>
+							</StackPanel>
+							<StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="ÖDEME PERİYODU"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailPeriod}"/>
+							</StackPanel>
+
+							<StackPanel Grid.Row="2" Grid.Column="0" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="BAŞLANGIÇ"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailStart}"/>
+							</StackPanel>
+							<StackPanel Grid.Row="2" Grid.Column="1" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="BİTİŞ"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailEnd}"/>
+							</StackPanel>
+
+							<StackPanel Grid.Row="3" Grid.Column="0" Spacing="2">
+								<TextBlock Classes="fieldLabel" Text="TALEP EDEN"/>
+								<TextBlock Classes="fieldValue" Text="{Binding DetailRequester}"/>
+							</StackPanel>
+						</Grid>
+
 					</StackPanel>
 				</Border>
 
@@ -129,10 +170,16 @@
 					<TextBlock Text="Not (opsiyonel, özellikle reddederken açıklama girin):" FontWeight="Bold"/>
 					<TextBox Text="{Binding Note}" AcceptsReturn="True" Height="70" TextWrapping="Wrap"/>
 					<StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
-						<Button Content="Onayla" Background="#16A34A" Foreground="White" Padding="16,8"
-                                Click="OnApproveClick" IsEnabled="{Binding AllChecked}"/>
-						<Button Content="Reddet" Background="#DC2626" Foreground="White" Padding="16,8"
-                                Click="OnRejectClick"/>
+						<Button Classes="flat" Click="OnApproveClick" IsEnabled="{Binding AllChecked}">
+							<Border Background="#16A34A" CornerRadius="4" Padding="16,8">
+								<TextBlock Text="Onayla" Foreground="White"/>
+							</Border>
+						</Button>
+						<Button Classes="flat" Click="OnRejectClick">
+							<Border Background="#DC2626" CornerRadius="4" Padding="16,8">
+								<TextBlock Text="Reddet" Foreground="White"/>
+							</Border>
+						</Button>
 					</StackPanel>
 				</StackPanel>
 

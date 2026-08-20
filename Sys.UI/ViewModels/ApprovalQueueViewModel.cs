@@ -19,7 +19,7 @@ public partial class ChecklistItemViewModel : ObservableObject
         Label = label;
     }
 }
-public partial class ApprovalQueueViewModel : ViewModelBase
+public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
@@ -90,6 +90,9 @@ public partial class ApprovalQueueViewModel : ViewModelBase
 
     [RelayCommand]
     private void Back() => BackRequested?.Invoke();
+
+    public bool CanHandleEscape => ShowBackButton;
+    public void HandleEscape() => BackRequested?.Invoke();
     public ApprovalQueueViewModel() : this(null!, new User()) { } // tasarımcı önizlemesi için
     public ApprovalQueueViewModel(ContractService contractService, User currentUser, Contract? initialContract = null)
     {
@@ -185,17 +188,20 @@ public partial class ApprovalQueueViewModel : ViewModelBase
             }
             OnPropertyChanged(nameof(IsSybFinalCheck));
             OnPropertyChanged(nameof(AllChecked));
+            // Künye alanları ham değer olarak tutulur; etiket ("FİRMA", "BEDEL" vb.)
+            // ekranda ayrı bir TextBlock olarak yazıldığı için buraya ön ek konmuyor.
+            var tr = CultureInfo.GetCultureInfo("tr-TR");
             DetailTitle = full.Title;
-            DetailNo = "Sözleşme No: " + (string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!);
-            DetailPeriod = string.IsNullOrEmpty(full.PaymentPeriod) ? string.Empty : "Ödeme Periyodu: " + full.PaymentPeriod;
+            DetailNo = string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!;
+            DetailPeriod = string.IsNullOrWhiteSpace(full.PaymentPeriod) ? "-" : full.PaymentPeriod!;
             DetailRequester = full.CreatedByUser is null
-                ? string.Empty
-                : "Talep Eden: " + full.CreatedByUser.FullName + (string.IsNullOrEmpty(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
-            DetailCompany = "Firma: " + full.CompanyName;
-            DetailStatus = "Durum: " + ContractStatusHelper.ToLabel(full.Status);
-            DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
-            DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
-            DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
+                ? "-"
+                : full.CreatedByUser.FullName + (string.IsNullOrWhiteSpace(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
+            DetailCompany = full.CompanyName;
+            DetailStatus = ContractStatusHelper.ToLabel(full.Status);
+            DetailTotal = full.TotalAmount.ToString("N2", tr) + " TL";
+            DetailStart = full.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
+            DetailEnd = full.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<Attachment>(full.Attachments);
             IsPendingTermination = full.PendingTermination;

@@ -11,23 +11,14 @@
 		<vm:NewRequestViewModel />
 	</Design.DataContext>
 
-	<!--
-	  Alan bazlı hata mesajları: her doğrulama mesajı, ait olduğu kutunun hemen altında
-	  ve yalnızca o alanda hata varken görünür. Ortak görünüm tek bir stilde tanımlı.
-	-->
+	<!-- Alan bazlı hata mesajları ilgili kutunun hemen altında gösterilir (Classes="fieldError"). -->
 	<ScrollViewer>
 		<StackPanel Margin="0,0,20,20" Spacing="10" MaxWidth="600">
 
-			<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
-                    Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
-                    IsVisible="{Binding IsEditMode}"
-                    Command="{Binding CancelCommand}">
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#4B5563"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-				</Button.Styles>
+			<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding IsEditMode}" Command="{Binding CancelCommand}">
+				<Border Background="#6B7280" CornerRadius="4" Padding="10,4">
+					<TextBlock Text="← Geri" Foreground="White" FontSize="12"/>
+				</Border>
 			</Button>
 
 			<TextBlock Text="Talebi Düzenle" FontSize="16" FontWeight="Bold" Foreground="#A32D2D" IsVisible="{Binding IsEditMode}"/>
@@ -73,7 +64,7 @@
 
 			<TextBlock Text="Sözleşme Dosyası"/>
 			<StackPanel Orientation="Horizontal" Spacing="10">
-				<Button Content="Dosya Seç" Click="OnPickFileClick"/>
+				<Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
 				<TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
 				<Button Content="Kaldır" FontSize="11" Command="{Binding ClearFileCommand}"
                         IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>

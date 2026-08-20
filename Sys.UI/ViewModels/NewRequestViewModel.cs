@@ -9,7 +9,7 @@ using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
-public partial class NewRequestViewModel : ViewModelBase
+public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
@@ -35,6 +35,11 @@ public partial class NewRequestViewModel : ViewModelBase
     {
         CancelRequested?.Invoke();
     }
+
+    // Esc: yalnızca düzenleme modunda (İptal/Geri butonu görünürken) anlamlı.
+    // Yeni talep doldururken Esc'in formu kapatması istenmez — girilen veri kaybolurdu.
+    public bool CanHandleEscape => IsEditMode;
+    public void HandleEscape() => CancelRequested?.Invoke();
 
     public string[] TypeOptions { get; } = { "Hizmet", "Tedarik", "Eser", "Danışmanlık", "Kira", "Diğer" };
 

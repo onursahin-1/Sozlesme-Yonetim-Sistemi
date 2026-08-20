@@ -62,8 +62,13 @@
 							IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 				</StackPanel>
 
-				<Button Content="Değişiklik Talebini Gönder" Background="#B06A00" Foreground="White"
-                        Padding="16,8" Margin="0,16,0,0" Command="{Binding SubmitCommand}"/>
+				<Button Classes="flat" HorizontalAlignment="Left" Margin="0,16,0,0"
+                    IsEnabled="{Binding !IsBusy}"
+                    Command="{Binding SubmitCommand}">
+				<Border Background="#B06A00" CornerRadius="4" Padding="16,8">
+					<TextBlock Text="Değişiklik Talebini Gönder" Foreground="White"/>
+				</Border>
+			</Button>
 			</StackPanel>
 
 		</StackPanel>

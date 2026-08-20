@@ -28,45 +28,25 @@
 				<DatePicker SelectedDate="{Binding EndDate}"/>
 			</StackPanel>
 			<StackPanel VerticalAlignment="Bottom">
-				<Button Content="Tarih Filtresini Temizle" Command="{Binding ClearDateFilterCommand}"
-                        Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4">
-					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
-							<Setter Property="Background" Value="#1F5686"/>
-							<Setter Property="TextBlock.Foreground" Value="White"/>
-						</Style>
-					</Button.Styles>
+				<Button Classes="flat" Command="{Binding ClearDateFilterCommand}">
+					<Border Background="#2D6EA8" CornerRadius="4" Padding="10,4">
+						<TextBlock Text="Tarih Filtresini Temizle" Foreground="White"/>
+					</Border>
 				</Button>
 			</StackPanel>
 		</StackPanel>
 
 		<StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="12" Margin="0,12,0,0" HorizontalAlignment="Right">
-			<Button Content="◀ Önceki" Command="{Binding PreviousPageCommand}"
-                    Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4">
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#1F5686"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-					<Style Selector="Button:disabled /template/ ContentPresenter">
-						<Setter Property="Background" Value="#AAAAAA"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-				</Button.Styles>
+			<Button Classes="flat" Command="{Binding PreviousPageCommand}">
+				<Border Background="#2D6EA8" CornerRadius="4" Padding="10,4">
+					<TextBlock Text="◀ Önceki" Foreground="White"/>
+				</Border>
 			</Button>
 			<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center" FontSize="12"/>
-			<Button Content="Sonraki ▶" Command="{Binding NextPageCommand}"
-                    Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4">
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#1F5686"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-					<Style Selector="Button:disabled /template/ ContentPresenter">
-						<Setter Property="Background" Value="#AAAAAA"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-				</Button.Styles>
+			<Button Classes="flat" Command="{Binding NextPageCommand}">
+				<Border Background="#2D6EA8" CornerRadius="4" Padding="10,4">
+					<TextBlock Text="Sonraki ▶" Foreground="White"/>
+				</Border>
 			</Button>
 		</StackPanel>
 

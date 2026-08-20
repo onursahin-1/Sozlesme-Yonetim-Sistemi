@@ -11,7 +11,7 @@ using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
-public partial class ContractDetailViewModel : ViewModelBase
+public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
 {
     private readonly ContractService _contractService;
     private readonly User _currentUser;
@@ -25,6 +25,10 @@ public partial class ContractDetailViewModel : ViewModelBase
     [ObservableProperty]
     public partial Contract? Detail { get; set; }
 
+    // Künye alanları artık "Firma: X" gibi birleşik metin değil, ham değer olarak
+    // tutuluyor. Ekranda etiket (küçük, gri, büyük harf) ve değer ayrı gösterildiği
+    // için iki sütunlu düzen kurulabiliyor ve bilgi taranması kolaylaşıyor.
+
     [ObservableProperty]
     public partial string DetailTitle { get; set; } = string.Empty;
 
@@ -32,19 +36,22 @@ public partial class ContractDetailViewModel : ViewModelBase
     public partial string DetailNo { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string DetailPeriod { get; set; } = string.Empty;
-
-    [ObservableProperty]
-    public partial string DetailRequester { get; set; } = string.Empty;
-
-    [ObservableProperty]
     public partial string DetailCompany { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string DetailStatus { get; set; } = string.Empty;
+    public partial string DetailSapCariKodu { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailTaxNo { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailType { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string DetailTotal { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailRemainingDays { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial string DetailStart { get; set; } = string.Empty;
@@ -53,13 +60,36 @@ public partial class ContractDetailViewModel : ViewModelBase
     public partial string DetailEnd { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string DetailRequester { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailDepartment { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailPeriod { get; set; } = string.Empty;
+
+    // Durum, metin yerine renkli bir rozet olarak gösteriliyor — listedeki kartlarla
+    // aynı renk paleti kullanılıyor ki kullanıcı aynı durumu her yerde aynı renkte görsün.
+    [ObservableProperty]
+    public partial string DetailStatus { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DetailStatusColorHex { get; set; } = "#555555";
+
+    [ObservableProperty]
+    public partial string DetailStatusBgHex { get; set; } = "#EAECF0";
+
+    [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
 
     [ObservableProperty]
     public partial ObservableCollection<Attachment> Attachments { get; set; } = new();
 
+    // Sözleşmenin süreç zaman çizelgesi: talep, her onay/red kararı ve bugünkü durum.
+    // Ayrı bir "Aşama Geçmişi" listesi tutulmuyor — bu koleksiyon zaten aynı
+    // ApprovalLog kayıtlarından besleniyor, ikisi birlikte çelişkili görünüyordu.
     [ObservableProperty]
-    public partial ObservableCollection<ApprovalLog> ApprovalLogs { get; set; } = new();
+    public partial ObservableCollection<ContractStepViewModel> Steps { get; set; } = new();
 
     [ObservableProperty]
     public partial ObservableCollection<ContractRevision> Revisions { get; set; } = new();
@@ -79,6 +109,10 @@ public partial class ContractDetailViewModel : ViewModelBase
 
     [RelayCommand]
     private void Back() => BackRequested?.Invoke();
+
+    // Esc: yalnızca bir yerden yönlendirilerek gelindiyse (Geri butonu görünürken) çalışır.
+    public bool CanHandleEscape => ShowBackButton;
+    public void HandleEscape() => BackRequested?.Invoke();
 
     public ContractDetailViewModel() : this(null!, new User()) { } // yalnızca tasarımcı önizlemesi için
 
@@ -127,9 +161,9 @@ public partial class ContractDetailViewModel : ViewModelBase
     partial void OnSelectedContractChanged(Contract? value)
     {
         ErrorMessage = string.Empty;
+        Steps = new ObservableCollection<ContractStepViewModel>();
         Items = new ObservableCollection<ContractItem>();
         Attachments = new ObservableCollection<Attachment>();
-        ApprovalLogs = new ObservableCollection<ApprovalLog>();
         Revisions = new ObservableCollection<ContractRevision>();
         Terminations = new ObservableCollection<ContractTermination>();
         Detail = null;
@@ -155,21 +189,32 @@ public partial class ContractDetailViewModel : ViewModelBase
             }
 
             Detail = full;
+
+            var tr = CultureInfo.GetCultureInfo("tr-TR");
+            var card = new ContractCardViewModel(full);
+
             DetailTitle = full.Title;
-            DetailNo = "Sözleşme No: " + (string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!);
-            DetailPeriod = string.IsNullOrEmpty(full.PaymentPeriod) ? string.Empty : "Ödeme Periyodu: " + full.PaymentPeriod;
-            DetailRequester = full.CreatedByUser is null
-                ? string.Empty
-                : "Talep Eden: " + full.CreatedByUser.FullName + (string.IsNullOrEmpty(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
-            DetailCompany = "Firma: " + full.CompanyName;
-            DetailStatus = "Durum: " + ContractStatusHelper.ToLabel(full.Status);
-            DetailTotal = "Toplam Tutar: " + full.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
-            DetailStart = "Başlangıç: " + (full.StartDate?.ToString("dd.MM.yyyy") ?? "-");
-            DetailEnd = "Bitiş: " + (full.EndDate?.ToString("dd.MM.yyyy") ?? "-");
+            DetailNo = string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!;
+            DetailCompany = full.CompanyName;
+            DetailSapCariKodu = string.IsNullOrWhiteSpace(full.SapCariKodu) ? "-" : full.SapCariKodu!;
+            DetailTaxNo = string.IsNullOrWhiteSpace(full.TaxNo) ? "-" : full.TaxNo;
+            DetailType = string.IsNullOrWhiteSpace(full.Type) ? "-" : full.Type;
+            DetailTotal = full.TotalAmount.ToString("N2", tr) + " TL";
+            DetailRemainingDays = card.GunKalanText;
+            DetailStart = full.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
+            DetailEnd = full.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";
+            DetailRequester = full.CreatedByUser?.FullName ?? "-";
+            DetailDepartment = string.IsNullOrWhiteSpace(full.CreatedByUser?.Department) ? "-" : full.CreatedByUser!.Department!;
+            DetailPeriod = string.IsNullOrWhiteSpace(full.PaymentPeriod) ? "-" : full.PaymentPeriod!;
+
+            // Durum rozeti için liste kartlarıyla aynı etiket ve renkler.
+            DetailStatus = card.StatusLabel;
+            DetailStatusColorHex = card.StatusColorHex;
+            DetailStatusBgHex = card.StatusBgHex;
 
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<Attachment>(full.Attachments);
-            ApprovalLogs = new ObservableCollection<ApprovalLog>(full.ApprovalLogs);
+            Steps = new ObservableCollection<ContractStepViewModel>(ContractStepViewModel.Build(full));
             Revisions = new ObservableCollection<ContractRevision>(full.Revisions);
             Terminations = new ObservableCollection<ContractTermination>(full.Terminations);
         }

@@ -88,6 +88,49 @@ public partial class ShellViewModel : ViewModelBase
     // Yönetimi ekranını açmayı beklemek zorunda kalırdı.
     public bool ShowNotificationBell => _notificationService is not null;
 
+    // --- Kullanıcı menüsü (üst çubukta ada tıklayınca açılır) ---
+    // Şifre değiştirme ve çıkış birer "bölüm" değil hesap işlemi olduğu için sol
+    // menüde değil burada duruyorlar.
+
+    [ObservableProperty]
+    public partial bool IsUserMenuOpen { get; set; }
+
+    [RelayCommand]
+    private void ToggleUserMenu()
+    {
+        IsUserMenuOpen = !IsUserMenuOpen;
+        if (IsUserMenuOpen) IsNotificationPanelOpen = false;
+    }
+
+    [RelayCommand]
+    private void CloseUserMenu() => IsUserMenuOpen = false;
+
+    // Şifre değiştirme ekranı sol menüde olmadığı için hiçbir menü öğesi seçili
+    // kalmıyor; kullanıcı "bir bölümün içinde değilim" hissini alıyor. Ekranın
+    // kendi "Geri" butonu ve Esc kısayolu onu ilk bölüme geri döndürüyor.
+    [RelayCommand]
+    private void OpenChangePassword()
+    {
+        IsUserMenuOpen = false;
+        if (_authService is null) return;
+
+        var vm = new ChangePasswordViewModel(_authService, CurrentUser);
+        vm.BackRequested += () =>
+        {
+            var first = NavItems.FirstOrDefault();
+            if (first is null) return;
+            SelectedNavItem = first;      // normal gezinme akışını tetikler
+            UpdateCurrentPage(first);
+        };
+
+        _suppressNavUpdate = true;
+        SelectedNavItem = null;
+        _suppressNavUpdate = false;
+
+        CurrentPageTitle = "Şifre Değiştir";
+        CurrentPageContent = vm;
+    }
+
     public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null, null, null, null, string.Empty) { }
 
     public ShellViewModel(User currentUser, ContractService? contractService, UserManagementService? userManagementService, NotificationService? notificationService, AuthService? authService, string attachmentsPath)
@@ -377,7 +420,6 @@ public partial class ShellViewModel : ViewModelBase
             "onayBekleyen" => CreateApprovalQueueViewModel(),
             "auditLog" => new AuditLogViewModel(_contractService, CurrentUser),
             "kullaniciYonetimi" => new UserManagementViewModel(_userManagementService!, CurrentUser),
-            "sifreDegistir" => new ChangePasswordViewModel(_authService!, CurrentUser),
             _ => new PlaceholderViewModel { Title = CurrentPageTitle }
         };
 
@@ -575,12 +617,9 @@ public partial class ShellViewModel : ViewModelBase
         CurrentPageContent = approvalVm;
     }
 
-    // Şifre değiştirme her rolde bulunmalı, o yüzden role göre kurulan listenin
-    // sonuna tek yerden ekleniyor — yeni bir rol eklendiğinde de otomatik gelir.
-    private static NavItem[] BuildNavItems(UserRole role)
-        => [.. BuildRoleNavItems(role), new NavItem("sifreDegistir", "Şifre Değiştir")];
-
-    private static NavItem[] BuildRoleNavItems(UserRole role) => role switch
+    // Şifre değiştirme sol menüde bir "bölüm" değil, üst çubuktaki kullanıcı
+    // menüsünden açılan bir hesap işlemi — bkz. OpenChangePasswordCommand.
+    private static NavItem[] BuildNavItems(UserRole role) => role switch
     {
         UserRole.Personel =>
         [

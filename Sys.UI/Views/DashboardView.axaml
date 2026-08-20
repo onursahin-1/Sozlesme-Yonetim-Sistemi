@@ -92,15 +92,12 @@
 				</ItemsControl.ItemsPanel>
 				<ItemsControl.ItemTemplate>
 					<DataTemplate x:DataType="vm:DashboardQuickActionItem">
-						<Button Content="{Binding Label}" Background="#2D6EA8" Foreground="White" Padding="12,6" CornerRadius="4"
+						<Button Classes="flat"
 								Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).QuickActionCommand}"
 								CommandParameter="{Binding NavKey}">
-							<Button.Styles>
-								<Style Selector="Button:pointerover /template/ ContentPresenter">
-									<Setter Property="Background" Value="#1F5686"/>
-									<Setter Property="TextBlock.Foreground" Value="White"/>
-								</Style>
-							</Button.Styles>
+							<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
+								<TextBlock Text="{Binding Label}" Foreground="White"/>
+							</Border>
 						</Button>
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>

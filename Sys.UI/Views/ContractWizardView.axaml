@@ -13,20 +13,14 @@
 		<vm:ContractWizardViewModel />
 	</Design.DataContext>
 
-	<!-- Alan bazlı doğrulama mesajlarının ortak görünümü -->
+	<!-- Alan bazlı hata mesajları ilgili kutunun hemen altında gösterilir (Classes="fieldError"). -->
 	<ScrollViewer Margin="0,0,20,20">
 		<StackPanel Spacing="14" MaxWidth="700">
 
-			<Button Content="← Geri" FontSize="12" HorizontalAlignment="Left"
-					Background="#6B7280" Foreground="White" Padding="10,4" CornerRadius="4"
-					IsVisible="{Binding ShowBackButton}"
-					Command="{Binding BackCommand}">
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#4B5563"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-				</Button.Styles>
+			<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding ShowBackButton}" Command="{Binding BackCommand}">
+				<Border Background="#6B7280" CornerRadius="4" Padding="10,4">
+					<TextBlock Text="← Geri" Foreground="White" FontSize="12"/>
+				</Border>
 			</Button>
 
 			<!-- Adım göstergesi: aktif adım koyu mavi/kalın, diğerleri gri gösterilir -->
@@ -118,7 +112,7 @@
 			<StackPanel IsVisible="{Binding IsStep3}" Spacing="14">
 				<StackPanel Spacing="6">
 					<TextBlock Text="Sözleşme Dosyası"/>
-					<Button Content="Dosya Ekle" Click="OnPickSozlesmeFileClick"/>
+					<Button Content="📎 Dosya Ekle" Click="OnPickSozlesmeFileClick"/>
 					<ItemsControl ItemsSource="{Binding SozlesmeFileNames}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
@@ -135,7 +129,7 @@
 
 				<StackPanel Spacing="6">
 					<TextBlock Text="Ekler"/>
-					<Button Content="Dosya Ekle" Click="OnPickEkFileClick"/>
+					<Button Content="📎 Dosya Ekle" Click="OnPickEkFileClick"/>
 					<ItemsControl ItemsSource="{Binding EkFileNames}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
@@ -152,7 +146,7 @@
 
 				<StackPanel Spacing="6">
 					<TextBlock Text="Teminat"/>
-					<Button Content="Dosya Ekle" Click="OnPickTeminatFileClick"/>
+					<Button Content="📎 Dosya Ekle" Click="OnPickTeminatFileClick"/>
 					<ItemsControl ItemsSource="{Binding TeminatFileNames}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>

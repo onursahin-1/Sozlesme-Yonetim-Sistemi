@@ -65,8 +65,13 @@
 				</StackPanel>
 			</StackPanel>
 
-			<Button Content="Fesih Talebini Gönder" Background="#A32D2D" Foreground="White"
-                    Padding="16,8" Margin="0,8,0,0" Click="OnSubmitClick"/>
+			<Button Classes="flat" HorizontalAlignment="Left" Margin="0,8,0,0"
+                    IsEnabled="{Binding !IsBusy}"
+                    Click="OnSubmitClick">
+				<Border Background="#A32D2D" CornerRadius="4" Padding="16,8">
+					<TextBlock Text="Fesih Talebini Gönder" Foreground="White"/>
+				</Border>
+			</Button>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

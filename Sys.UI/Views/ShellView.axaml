@@ -24,7 +24,6 @@
 				<TextBlock Grid.Column="0" Text="SYS — Sözleşme Yönetim Sistemi" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
 				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
 					<TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
-					<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White" VerticalAlignment="Center"/>
 
 					<!-- Bildirim zili: okunmamış sayısı sağ üstte kırmızı rozet olarak görünür -->
 					<Button Classes="flat" VerticalAlignment="Center"
@@ -45,7 +44,22 @@
 						</Panel>
 					</Button>
 
-					<Button Content="Çıkış" Command="{Binding LogoutCommand}"/>
+					<!--
+					  Kullanıcı menüsü: ada tıklayınca şifre değiştirme ve çıkış seçenekleri
+					  açılır. Bunlar birer "bölüm" olmadığı için sol menüde yer almıyorlar.
+					-->
+					<Button Classes="flat" VerticalAlignment="Center"
+							Command="{Binding ToggleUserMenuCommand}">
+						<Border Background="#22FFFFFF" BorderBrush="#55FFFFFF" BorderThickness="1"
+								CornerRadius="4" Padding="12,5">
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White"
+										   FontSize="12" VerticalAlignment="Center"/>
+								<TextBlock Text="⌄" Foreground="#CADCFC" FontSize="12"
+										   VerticalAlignment="Center" Margin="0,-4,0,0"/>
+							</StackPanel>
+						</Border>
+					</Button>
 				</StackPanel>
 			</Grid>
 		</Border>
@@ -94,6 +108,57 @@
 			</Style>
 		</Button.Styles>
 	</Button>
+
+	<!-- Kullanıcı menüsü açıkken ekranın kalanına tıklamak menüyü kapatır -->
+	<Button IsVisible="{Binding IsUserMenuOpen}"
+            Command="{Binding CloseUserMenuCommand}"
+            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+            BorderThickness="0" CornerRadius="0" Cursor="Arrow">
+		<Button.Styles>
+			<Style Selector="Button /template/ ContentPresenter">
+				<Setter Property="Background" Value="#01000000"/>
+			</Style>
+			<Style Selector="Button:pointerover /template/ ContentPresenter">
+				<Setter Property="Background" Value="#01000000"/>
+			</Style>
+			<Style Selector="Button:pressed /template/ ContentPresenter">
+				<Setter Property="Background" Value="#01000000"/>
+			</Style>
+		</Button.Styles>
+	</Button>
+
+	<!-- Kullanıcı menüsü: adın altında, sağ üstte açılır -->
+	<Border IsVisible="{Binding IsUserMenuOpen}"
+			HorizontalAlignment="Right" VerticalAlignment="Top"
+			Margin="0,52,16,0" MinWidth="200"
+			Background="White" BorderBrush="#B9C6D8" BorderThickness="1" CornerRadius="8"
+			BoxShadow="0 6 20 0 #33000000">
+		<StackPanel Margin="6">
+
+			<Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+					Command="{Binding OpenChangePasswordCommand}">
+				<Border Background="Transparent" CornerRadius="5" Padding="12,9">
+					<StackPanel Orientation="Horizontal" Spacing="10">
+						<TextBlock Text="🔑" FontSize="12" VerticalAlignment="Center"/>
+						<TextBlock Text="Şifre Değiştir" Foreground="#1A2E4A" FontSize="12.5" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Border>
+			</Button>
+
+			<Border Background="#EDF1F6" Height="1" Margin="8,4"/>
+
+			<Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+					Command="{Binding LogoutCommand}">
+				<Border Background="Transparent" CornerRadius="5" Padding="12,9">
+					<StackPanel Orientation="Horizontal" Spacing="10">
+						<TextBlock Text="⏻" FontSize="12" Foreground="#A32D2D" VerticalAlignment="Center"/>
+						<TextBlock Text="Çıkış Yap" Foreground="#A32D2D" FontSize="12.5" VerticalAlignment="Center"/>
+					</StackPanel>
+				</Border>
+			</Button>
+
+		</StackPanel>
+	</Border>
 
 	<!-- Bildirim paneli: zilin altında, sağ üstte açılır -->
 	<Border IsVisible="{Binding IsNotificationPanelOpen}"

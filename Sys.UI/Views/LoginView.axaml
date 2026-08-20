@@ -3,7 +3,7 @@
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="350"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
              x:Class="Sys.UI.Views.LoginView"
              x:DataType="vm:LoginViewModel">
 
@@ -11,48 +11,148 @@
         <vm:LoginViewModel />
     </Design.DataContext>
 
-    <StackPanel Margin="30" VerticalAlignment="Center" Spacing="12">
-        <TextBlock Text="SYS — Sözleşme Yönetim Sistemi" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+    <!--
+      Giriş ekranı — sıcak nötr palet (mavi yok).
+      Grafit (#1B1A18) marka paneli, kum tonu (#FAF8F4) form zemini, vurgu için
+      kehribar (#C8952A). Renk yerine tipografi ve boşlukla hiyerarşi kuruluyor;
+      logo siyah-beyaz olduğu için bu palet onunla çakışmıyor, tamamlıyor.
+    -->
+    <!-- Sol panel oransal: dar ekranda daralır, geniş ekranda büyür.
+         Sabit 400 px, geniş monitörde küçücük bir şerit gibi kalıyordu. -->
+    <Grid ColumnDefinitions="34*,66*">
 
-        <TextBlock Text="Kullanıcı Adı"/>
-        <TextBox Text="{Binding Username}"/>
+        <!-- Sol: marka paneli -->
+        <Border Grid.Column="0" MinWidth="360" Background="#1B1A18">
+            <Grid RowDefinitions="*,Auto">
 
-        <TextBlock Text="Şifre"/>
-        <TextBox Text="{Binding Password}" PasswordChar="•"/>
+                <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Margin="40,0" Spacing="30">
 
-        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
-                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    <!--
+                      Logo beyaz ve şeffaf arka planlı olduğu için doğrudan koyu zeminin
+                      üzerine konuyor; arkasına beyaz kart koymak gerekmiyor, hatta
+                      koymamak daha temiz duruyor.
+                    -->
+                    <Image Source="avares://Sys.UI/Assets/fakir-logo-white.png"
+                           Width="270" Stretch="Uniform" HorizontalAlignment="Center"/>
 
-        <Button Content="Giriş Yap" Command="{Binding LoginCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                    <StackPanel Spacing="18" HorizontalAlignment="Center">
+                        <Border Background="#C8952A" Height="2" Width="48" HorizontalAlignment="Center"/>
+                        <TextBlock Classes="display" Text="SÖZLEŞME&#x0a;YÖNETİM SİSTEMİ"
+                                   Foreground="#F5F2EC" FontSize="29" FontWeight="SemiBold"
+                                   LineHeight="40" LetterSpacing="1.5"
+                                   TextAlignment="Center" HorizontalAlignment="Center"/>
+                    </StackPanel>
 
-        <Button Classes="flat" HorizontalAlignment="Center" Margin="0,4,0,0"
-                Command="{Binding ToggleForgotPasswordCommand}">
-            <TextBlock Text="Şifremi unuttum" FontSize="12" Foreground="#4A90D9"/>
-        </Button>
+                </StackPanel>
 
-        <!-- Şifre sıfırlama talebi: e-posta altyapısı olmadığı için otomatik sıfırlama
-             yerine talep kaydediliyor, Admin karşılıyor. -->
-        <Border IsVisible="{Binding ShowForgotPasswordPanel}"
-                Background="#F5F5F5" CornerRadius="6" Padding="14" Margin="0,4,0,0">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Kullanıcı adınızı girin. Sistem yöneticinize bir sıfırlama talebi iletilecek."
-                           FontSize="11" Foreground="#555555" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Text="Fakir Hausgeräte" Foreground="#5C574E"
+                           FontSize="11" LetterSpacing="0.5"
+                           HorizontalAlignment="Center" Margin="0,0,0,32"/>
+            </Grid>
+        </Border>
 
-                <TextBox Text="{Binding ForgotUsername}" Background="White" Foreground="Black"
-                         PlaceholderText="Kullanıcı adı"/>
+        <!-- Sağ: giriş formu -->
+        <Border Grid.Column="1" Background="#FAF8F4">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Width="340" Spacing="16">
 
-                <Button Classes="flat" HorizontalAlignment="Left"
-                        IsEnabled="{Binding !IsSubmittingReset}"
-                        Command="{Binding SubmitPasswordResetRequestCommand}">
-                    <Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
-                        <TextBlock Text="Talep Gönder" Foreground="White" FontSize="12"/>
+                <StackPanel Spacing="6" Margin="0,0,0,8">
+                    <TextBlock Classes="display" Text="Hoş geldiniz" FontSize="28" FontWeight="SemiBold"
+                               Foreground="#1B1A18" LetterSpacing="-0.4"/>
+                    <TextBlock Text="Devam etmek için hesabınıza giriş yapın."
+                               FontSize="13" Foreground="#8A8578"/>
+                </StackPanel>
+
+                <StackPanel Spacing="7">
+                    <TextBlock Text="Kullanıcı Adı" FontSize="12" FontWeight="SemiBold" Foreground="#3D3A34"/>
+                    <TextBox x:Name="UsernameBox" Text="{Binding Username}" KeyDown="OnCredentialKeyDown"
+                             Background="White" Foreground="#1B1A18"
+                             BorderBrush="#DDD8CE" BorderThickness="1" CornerRadius="6"
+                             Padding="12,10" FontSize="13"
+                             PlaceholderText="kullanici.adi"/>
+                </StackPanel>
+
+                <StackPanel Spacing="7">
+                    <TextBlock Text="Şifre" FontSize="12" FontWeight="SemiBold" Foreground="#3D3A34"/>
+                    <TextBox x:Name="PasswordBox"
+                             Text="{Binding Password}" PasswordChar="•" KeyDown="OnCredentialKeyDown"
+                             KeyUp="OnPasswordKeyUp" GotFocus="OnPasswordFocusChanged"
+                             Background="White" Foreground="#1B1A18"
+                             BorderBrush="#DDD8CE" BorderThickness="1" CornerRadius="6"
+                             Padding="12,10" FontSize="13"
+                             PlaceholderText="••••••••"/>
+
+                    <!--
+                      Caps Lock uyarısı: şifre alanında yazarken harflerin büyük gidip
+                      gitmediği görünmediği için, hatalı giriş denemelerinin sık sebebi.
+                      Yalnızca şifre kutusu odaktayken ve Caps Lock açıkken görünür.
+                    -->
+                    <Border x:Name="CapsLockWarning" IsVisible="False"
+                            Background="#FDF3E2" BorderBrush="#E8CE9A" BorderThickness="1"
+                            CornerRadius="6" Padding="10,7">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <TextBlock Text="⇪" FontSize="13" Foreground="#8A6A15" VerticalAlignment="Center"/>
+                            <TextBlock Text="Caps Lock açık" FontSize="11.5" Foreground="#8A6A15"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <Border Background="#FBEDE9" BorderBrush="#E8C4B8" BorderThickness="1"
+                        CornerRadius="6" Padding="12,10"
+                        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#9B3B25" FontSize="12" TextWrapping="Wrap"/>
+                </Border>
+
+                <!-- Birincil eylem: grafit dolgu. Renk yerine koyuluk kontrastıyla öne çıkıyor. -->
+                <Button Classes="flat" HorizontalAlignment="Stretch" Margin="0,6,0,0"
+                        Command="{Binding LoginCommand}"
+                        ToolTip.Tip="Enter tuşuyla da giriş yapabilirsiniz">
+                    <Border Background="#1B1A18" CornerRadius="6" Padding="14,12">
+                        <TextBlock Text="Giriş Yap" Foreground="#F5F2EC" FontSize="13.5" FontWeight="SemiBold"
+                                   LetterSpacing="0.2" HorizontalAlignment="Center"/>
                     </Border>
                 </Button>
 
-                <TextBlock Text="{Binding ForgotMessage}" FontSize="11" Foreground="#1A6B2A" TextWrapping="Wrap"
-                           IsVisible="{Binding ForgotMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <Button Classes="flat" HorizontalAlignment="Center" Margin="0,2,0,0"
+                        Command="{Binding ToggleForgotPasswordCommand}">
+                    <TextBlock Text="Şifremi unuttum" FontSize="12" Foreground="#8A8578"/>
+                </Button>
+
+                <!-- Şifre sıfırlama talebi: e-posta altyapısı olmadığı için otomatik
+                     sıfırlama yerine talep kaydediliyor, Admin karşılıyor. -->
+                <Border IsVisible="{Binding ShowForgotPasswordPanel}"
+                        Background="White" BorderBrush="#E5E0D6" BorderThickness="1"
+                        CornerRadius="8" Padding="16" Margin="0,2,0,0">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Kullanıcı adınızı girin. Sistem yöneticinize bir sıfırlama talebi iletilecek."
+                                   FontSize="11.5" Foreground="#8A8578" TextWrapping="Wrap" LineHeight="17"/>
+
+                        <TextBox Text="{Binding ForgotUsername}" Background="White" Foreground="#1B1A18"
+                                 BorderBrush="#DDD8CE" BorderThickness="1" CornerRadius="6"
+                                 Padding="12,9" FontSize="13"
+                                 PlaceholderText="Kullanıcı adı" KeyDown="OnForgotKeyDown"/>
+
+                        <Button Classes="flat" HorizontalAlignment="Left"
+                                IsEnabled="{Binding !IsSubmittingReset}"
+                                Command="{Binding SubmitPasswordResetRequestCommand}">
+                            <Border Background="#C8952A" CornerRadius="6" Padding="16,8">
+                                <TextBlock Text="Talep Gönder" Foreground="#1B1A18" FontSize="12" FontWeight="SemiBold"/>
+                            </Border>
+                        </Button>
+
+                        <Border Background="#EEF2E9" CornerRadius="6" Padding="11,9"
+                                IsVisible="{Binding ForgotMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding ForgotMessage}" FontSize="11.5" Foreground="#4A6136"
+                                       TextWrapping="Wrap" LineHeight="17"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
             </StackPanel>
         </Border>
-    </StackPanel>
+
+    </Grid>
 
 </UserControl>

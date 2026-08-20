@@ -14,7 +14,9 @@ public partial class ConfirmDialog : Window
     public ConfirmDialog(string message, string confirmText = "Evet, Devam Et") : this()
     {
         MessageText.Text = message;
-        ConfirmButton.Content = confirmText;
+        // Butonun içeriği artık Border+TextBlock olduğu için yazı doğrudan TextBlock'a
+        // yazılır; Content'e atamak butonun renkli gövdesini ezerdi.
+        ConfirmButtonText.Text = confirmText;
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(false);

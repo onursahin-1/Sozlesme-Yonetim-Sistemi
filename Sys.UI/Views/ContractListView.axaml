@@ -22,15 +22,10 @@
 		<!-- Arama kutusu + Yenile butonu -->
 		<Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto" HorizontalAlignment="Left" Margin="0,0,0,10">
 			<TextBox Grid.Column="0" Text="{Binding SearchText}" PlaceholderText="Başlık veya firma adına göre ara..." Width="320"/>
-			<Button Grid.Column="1" Content="⟳ Yenile" FontSize="12" Margin="10,0,0,0"
-                    Background="#4B5563" Foreground="White" Padding="10,4" CornerRadius="4"
-                    Command="{Binding RefreshCommand}">
-				<Button.Styles>
-					<Style Selector="Button:pointerover /template/ ContentPresenter">
-						<Setter Property="Background" Value="#374151"/>
-						<Setter Property="TextBlock.Foreground" Value="White"/>
-					</Style>
-				</Button.Styles>
+			<Button Classes="flat" Grid.Column="1" Margin="10,0,0,0" Command="{Binding RefreshCommand}">
+				<Border Background="#4B5563" CornerRadius="4" Padding="10,4">
+					<TextBlock Text="⟳ Yenile" Foreground="White" FontSize="12"/>
+				</Border>
 			</Button>
 		</Grid>
 
@@ -112,52 +107,25 @@
 							<TextBlock Text="{Binding RejectionNoteText}" FontSize="11" Foreground="#A32D2D" FontStyle="Italic"
                                        TextWrapping="Wrap" Margin="0,4,0,0" IsVisible="{Binding IsRejected}"/>
 							<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
-								<Button Content="Detay" FontSize="11" HorizontalAlignment="Left"
-                                        Background="#4B5563" Foreground="White" Padding="10,4" CornerRadius="4"
-                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).ViewDetailsCommand}"
-                                        CommandParameter="{Binding}">
-									<Button.Styles>
-										<Style Selector="Button:pointerover /template/ ContentPresenter">
-											<Setter Property="Background" Value="#374151"/>
-											<Setter Property="TextBlock.Foreground" Value="White"/>
-										</Style>
-									</Button.Styles>
+								<Button Classes="flat" HorizontalAlignment="Left" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).ViewDetailsCommand}" CommandParameter="{Binding}">
+									<Border Background="#4B5563" CornerRadius="4" Padding="10,4">
+										<TextBlock Text="Detay" Foreground="White" FontSize="11"/>
+									</Border>
 								</Button>
-								<Button Content="Düzenle" FontSize="11" HorizontalAlignment="Left"
-                                        Background="#2D6EA8" Foreground="White" Padding="10,4" CornerRadius="4"
-                                        IsVisible="{Binding IsEditable}"
-                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}"
-                                        CommandParameter="{Binding}">
-									<Button.Styles>
-										<Style Selector="Button:pointerover /template/ ContentPresenter">
-											<Setter Property="Background" Value="#1F5686"/>
-											<Setter Property="TextBlock.Foreground" Value="White"/>
-										</Style>
-									</Button.Styles>
+								<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding IsEditable}" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}" CommandParameter="{Binding}">
+									<Border Background="#2D6EA8" CornerRadius="4" Padding="10,4">
+										<TextBlock Text="Düzenle" Foreground="White" FontSize="11"/>
+									</Border>
 								</Button>
-								<Button Content="Sözleşme Yarat" FontSize="11" HorizontalAlignment="Left"
-                                        Background="#7C3AED" Foreground="White" Padding="10,4" CornerRadius="4"
-                                        IsVisible="{Binding NeedsContractCreation}"
-                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestContractCreationCommand}"
-                                        CommandParameter="{Binding}">
-									<Button.Styles>
-										<Style Selector="Button:pointerover /template/ ContentPresenter">
-											<Setter Property="Background" Value="#5B21B6"/>
-											<Setter Property="TextBlock.Foreground" Value="White"/>
-										</Style>
-									</Button.Styles>
+								<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding NeedsContractCreation}" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestContractCreationCommand}" CommandParameter="{Binding}">
+									<Border Background="#7C3AED" CornerRadius="4" Padding="10,4">
+										<TextBlock Text="Sözleşme Yarat" Foreground="White" FontSize="11"/>
+									</Border>
 								</Button>
-								<Button Content="Son Kontrol'e Git" FontSize="11" HorizontalAlignment="Left"
-                                        Background="#B06A00" Foreground="White" Padding="10,4" CornerRadius="4"
-                                        IsVisible="{Binding NeedsSybSonKontrol}"
-                                        Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestSonKontrolCommand}"
-                                        CommandParameter="{Binding}">
-									<Button.Styles>
-										<Style Selector="Button:pointerover /template/ ContentPresenter">
-											<Setter Property="Background" Value="#8A5200"/>
-											<Setter Property="TextBlock.Foreground" Value="White"/>
-										</Style>
-									</Button.Styles>
+								<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding NeedsSybSonKontrol}" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestSonKontrolCommand}" CommandParameter="{Binding}">
+									<Border Background="#B06A00" CornerRadius="4" Padding="10,4">
+										<TextBlock Text="Son Kontrol'e Git" Foreground="White" FontSize="11"/>
+									</Border>
 								</Button>
 							</StackPanel>
 						</StackPanel>
