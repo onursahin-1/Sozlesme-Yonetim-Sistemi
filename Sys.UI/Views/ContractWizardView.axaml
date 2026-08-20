@@ -13,6 +13,16 @@
 		<vm:ContractWizardViewModel />
 	</Design.DataContext>
 
+	<!-- Alan bazlı doğrulama mesajlarının ortak görünümü -->
+	<UserControl.Styles>
+		<Style Selector="TextBlock.fieldError">
+			<Setter Property="Foreground" Value="#D14343"/>
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="Margin" Value="2,-6,0,0"/>
+		</Style>
+	</UserControl.Styles>
+
 	<ScrollViewer Margin="0,0,20,20">
 		<StackPanel Spacing="14" MaxWidth="700">
 
@@ -40,7 +50,9 @@
 						   Foreground="{Binding IsStep3, Converter={x:Static conv:BoolBrushConverter.StepIndicator}}"/>
 			</StackPanel>
 
-			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red"/>
+			<!-- Kısa özet; ayrıntılı mesaj ilgili alanın altında gösteriliyor -->
+			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<!-- ADIM 1 -->
 			<StackPanel IsVisible="{Binding IsStep1}" Spacing="10">
@@ -56,17 +68,29 @@
 						</DataTemplate>
 					</ComboBox.ItemTemplate>
 				</ComboBox>
+				<TextBlock Classes="fieldError" Text="{Binding RequestError}"
+                           IsVisible="{Binding RequestError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 				<TextBlock Text="Bekleyen talep yok." IsVisible="{Binding !PendingRequests.Count}" Foreground="Gray"/>
+
 				<TextBlock Text="Başlangıç Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
 				<DatePicker SelectedDate="{Binding StartDate}"/>
+				<TextBlock Classes="fieldError" Text="{Binding StartDateError}"
+                           IsVisible="{Binding StartDateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 				<TextBlock Text="Bitiş Tarihi *" FontWeight="Bold" Margin="0,10,0,0"/>
 				<DatePicker SelectedDate="{Binding EndDate}"/>
+				<TextBlock Classes="fieldError" Text="{Binding EndDateError}"
+                           IsVisible="{Binding EndDateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
 				<TextBlock Text="Ödeme Periyodu *" FontWeight="Bold" Margin="0,10,0,0"/>
 				<ComboBox ItemsSource="{Binding PaymentPeriodOptions}" SelectedItem="{Binding SelectedPaymentPeriod}" HorizontalAlignment="Stretch"/>
+				<TextBlock Classes="fieldError" Text="{Binding PaymentPeriodError}"
+                           IsVisible="{Binding PaymentPeriodError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 				<TextBlock Text="SAP Cari Kodu *" FontWeight="Bold" Margin="0,10,0,0"/>
 				<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX"/>
+				<TextBlock Classes="fieldError" Text="{Binding SapCariKoduError}"
+                           IsVisible="{Binding SapCariKoduError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 				<TextBlock Text="Firma Türü" FontWeight="Bold" Margin="0,10,0,0"/>
 				<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>

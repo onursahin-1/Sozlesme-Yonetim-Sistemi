@@ -17,6 +17,7 @@ public class SysDbContext : DbContext
     public DbSet<ContractRevision> ContractRevisions => Set<ContractRevision>();
     public DbSet<ContractTermination> ContractTerminations => Set<ContractTermination>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<ScheduledJobRun> ScheduledJobRuns => Set<ScheduledJobRun>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Contract>()
@@ -103,6 +104,17 @@ public class SysDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Her zamanlanmış iş için tabloda tek satır bulunmalı; kilit mantığı buna dayanıyor.
+        // İki istemci aynı anda satırı oluşturmaya çalışırsa bu index ikincisini engeller.
+        modelBuilder.Entity<ScheduledJobRun>()
+            .HasIndex(j => j.JobName)
+            .IsUnique();
+
+        modelBuilder.Entity<ScheduledJobRun>()
+            .Property(j => j.JobName)
+            .HasMaxLength(100)
+            .IsRequired();
 
         modelBuilder.Entity<ContractItem>()
                     .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");

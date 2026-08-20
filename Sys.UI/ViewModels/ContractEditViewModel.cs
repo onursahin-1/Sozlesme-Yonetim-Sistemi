@@ -182,7 +182,7 @@ public partial class ContractEditViewModel : ViewModelBase
                         FilePath = savedPath,
                         UploadedAt = DateTime.Now,
                         UploadedByUserId = _currentUser.Id,
-                    });
+                    }, _currentUser);
                 }
 
                 SuccessMessage = "Değişiklik talebi gönderildi. Sözleşme yeniden onay sürecine alındı.";

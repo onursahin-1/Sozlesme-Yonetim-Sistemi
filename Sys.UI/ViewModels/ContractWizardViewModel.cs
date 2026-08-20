@@ -70,6 +70,49 @@ public partial class ContractWizardViewModel : ViewModelBase
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
 
+    // --- 1. adımın alan bazlı doğrulama mesajları ---
+
+    [ObservableProperty]
+    public partial string RequestError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string StartDateError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string EndDateError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string PaymentPeriodError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string SapCariKoduError { get; set; } = string.Empty;
+
+    private bool HasStepOneErrors =>
+        !string.IsNullOrEmpty(RequestError) ||
+        !string.IsNullOrEmpty(StartDateError) ||
+        !string.IsNullOrEmpty(EndDateError) ||
+        !string.IsNullOrEmpty(PaymentPeriodError) ||
+        !string.IsNullOrEmpty(SapCariKoduError);
+
+    private void ClearStepOneErrors()
+    {
+        RequestError = string.Empty;
+        StartDateError = string.Empty;
+        EndDateError = string.Empty;
+        PaymentPeriodError = string.Empty;
+        SapCariKoduError = string.Empty;
+    }
+
+    // Kullanıcı alanı düzeltmeye başlar başlamaz uyarı kaybolur.
+    partial void OnStartDateChanged(DateTimeOffset? value)
+    {
+        StartDateError = string.Empty;
+        EndDateError = string.Empty; // bitiş/başlangıç karşılaştırması da geçersizleşir
+    }
+    partial void OnEndDateChanged(DateTimeOffset? value) => EndDateError = string.Empty;
+    partial void OnSelectedPaymentPeriodChanged(string value) => PaymentPeriodError = string.Empty;
+    partial void OnSapCariKoduChanged(string value) => SapCariKoduError = string.Empty;
+
     public ObservableCollection<ContractItemRowViewModel> Items { get; } = new();
     public ObservableCollection<WizardFileItem> SozlesmeFileNames { get; } = new();
     public ObservableCollection<WizardFileItem> EkFileNames { get; } = new();
@@ -192,6 +235,7 @@ public partial class ContractWizardViewModel : ViewModelBase
 
     partial void OnSelectedRequestChanged(Contract? value)
     {
+        RequestError = string.Empty;
         SapCariKodu = value?.SapCariKodu ?? string.Empty;
         SelectedCompanyType = value?.CompanyType ?? string.Empty;
     }
@@ -203,37 +247,31 @@ public partial class ContractWizardViewModel : ViewModelBase
 
         if (CurrentStep == 1)
         {
+            // Eskiden ilk hatada durulup tek bir mesaj gösteriliyordu; kullanıcı bir alanı
+            // düzeltip tekrar deneyince bir sonraki hatayı görüyordu. Artık tüm alanlar
+            // birlikte doğrulanıp her mesaj kendi alanının altında gösteriliyor.
+            ClearStepOneErrors();
+
             if (SelectedRequest is null)
-            {
-                ErrorMessage = "Lütfen bir talep seçin.";
-                return;
-            }
+                RequestError = "Bir talep seçilmelidir.";
 
             if (StartDate is null)
-            {
-                ErrorMessage = "Başlangıç tarihi zorunludur.";
-                return;
-            }
+                StartDateError = "Başlangıç tarihi zorunludur.";
 
             if (EndDate is null)
-            {
-                ErrorMessage = "Bitiş tarihi zorunludur.";
-                return;
-            }
+                EndDateError = "Bitiş tarihi zorunludur.";
+            else if (StartDate is not null && EndDate.Value.Date <= StartDate.Value.Date)
+                EndDateError = "Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.";
 
-            if (EndDate.Value.Date <= StartDate.Value.Date)
-            {
-                ErrorMessage = "Bitiş tarihi, başlangıç tarihinden sonra olmalı.";
-                return;
-            }
             if (string.IsNullOrEmpty(SelectedPaymentPeriod))
-            {
-                ErrorMessage = "Ödeme periyodu seçilmelidir.";
-                return;
-            }
+                PaymentPeriodError = "Ödeme periyodu seçilmelidir.";
+
             if (string.IsNullOrWhiteSpace(SapCariKodu))
+                SapCariKoduError = "SAP cari kodu zorunludur.";
+
+            if (HasStepOneErrors)
             {
-                ErrorMessage = "SAP Cari Kodu zorunludur.";
+                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
                 return;
             }
         }

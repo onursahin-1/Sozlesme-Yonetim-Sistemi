@@ -175,11 +175,29 @@ public class ContractService
         var (allItems, _) = await _contracts.GetAuditLogsPagedAsync(1, take, null, null, null);
         return allItems;
     }
-    public async Task<Contract> CreateRequestAsync(Contract contract)
+    // Talep oluşturma/güncelleme yalnızca Personel ve SYB'ye açıktır. Müdür yalnızca
+    // onaylar, Admin ise sözleşme iş akışına hiç katılmaz.
+    private static void EnsureCanCreateRequest(User actingUser)
     {
+        if (actingUser.Role is not (UserRole.Personel or UserRole.SYB))
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+    }
+
+    public async Task<Contract> CreateRequestAsync(Contract contract, User actingUser)
+    {
+        EnsureCanCreateRequest(actingUser);
+
+        // Sahiplik ve başlangıç durumu çağıranın gönderdiği değere bırakılmaz; servis
+        // içinde sabitlenir. Aksi halde bir çağrı talebi başka bir kullanıcının üzerine
+        // yazabilir ya da talebi doğrudan ileri bir aşamada başlatabilirdi.
+        contract.Id = 0;
+        contract.CreatedByUserId = actingUser.Id;
         contract.Status = ContractStatus.Talep;
         contract.Stage = 0;
         contract.CreatedAt = DateTime.Now;
+        contract.WasRejected = false;
+        contract.LastRejectionNote = null;
+        contract.LastRejectedAt = null;
         await _contracts.AddAsync(contract);
         await LogAuditAsync(contract.Id, "TalepOluşturuldu", contract.CreatedByUserId, $"{contract.Title} için yeni talep oluşturuldu.");
 
@@ -193,6 +211,11 @@ public class ContractService
     }
     public async Task UpdateRequestAsync(Contract contract, User actingUser)
     {
+        EnsureCanCreateRequest(actingUser);
+
+        // GetContractDetailAsync, Personel için başkasının talebinde null döner —
+        // sahiplik kontrolü buradan gelir. Rol kontrolü ise yukarıda ayrıca yapılır,
+        // böylece Müdür/Admin talep düzenleyemez.
         var existing = await GetContractDetailAsync(contract.Id, actingUser);
         if (existing is null)
             throw new InvalidOperationException("Bu talebi düzenleme yetkiniz yok.");
@@ -207,8 +230,23 @@ public class ContractService
         await NotifyAsync(sybIds, contract.Id, NotificationType.SozlesmeOlayi,
             "Talep güncellendi", $"\"{contract.Title}\" talebi düzenlenip yeniden gönderildi.");
     }
-    public async Task AddAttachmentAsync(Attachment attachment)
+    public async Task AddAttachmentAsync(Attachment attachment, User actingUser)
     {
+        if (actingUser.Role == UserRole.Admin)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        // Kullanıcının bu sözleşmeye erişimi var mı? GetContractDetailAsync, Personel
+        // için başkasının sözleşmesinde null döner — böylece bir kullanıcı görmediği
+        // bir sözleşmeye dosya ekleyemez.
+        var contract = await GetContractDetailAsync(attachment.ContractId, actingUser);
+        if (contract is null)
+            throw new InvalidOperationException("Bu sözleşmeye dosya ekleme yetkiniz yok.");
+
+        // Yükleyen bilgisi çağıranın gönderdiği değere bırakılmaz.
+        attachment.UploadedByUserId = actingUser.Id;
+        if (attachment.UploadedAt == default)
+            attachment.UploadedAt = DateTime.Now;
+
         await _attachments.AddAsync(attachment);
     }
 

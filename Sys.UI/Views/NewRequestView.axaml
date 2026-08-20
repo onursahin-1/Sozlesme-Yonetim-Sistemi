@@ -11,6 +11,19 @@
 		<vm:NewRequestViewModel />
 	</Design.DataContext>
 
+	<!--
+	  Alan bazlı hata mesajları: her doğrulama mesajı, ait olduğu kutunun hemen altında
+	  ve yalnızca o alanda hata varken görünür. Ortak görünüm tek bir stilde tanımlı.
+	-->
+	<UserControl.Styles>
+		<Style Selector="TextBlock.fieldError">
+			<Setter Property="Foreground" Value="#D14343"/>
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+			<Setter Property="Margin" Value="2,-4,0,0"/>
+		</Style>
+	</UserControl.Styles>
+
 	<ScrollViewer>
 		<StackPanel Margin="0,0,20,20" Spacing="10" MaxWidth="600">
 
@@ -33,21 +46,33 @@
 
 			<TextBlock Text="Konu / Başlık *"/>
 			<TextBox Text="{Binding Title}"/>
+			<TextBlock Classes="fieldError" Text="{Binding TitleError}"
+                       IsVisible="{Binding TitleError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<TextBlock Text="Sözleşme Türü"/>
 			<ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding Type}" HorizontalAlignment="Stretch"/>
+			<TextBlock Classes="fieldError" Text="{Binding TypeError}"
+                       IsVisible="{Binding TypeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<TextBlock Text="Tahmini Bedel (TL)"/>
 			<TextBox Text="{Binding EstimatedAmountText}" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+			<TextBlock Classes="fieldError" Text="{Binding AmountError}"
+                       IsVisible="{Binding AmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<TextBlock Text="İşin Tanımı *"/>
 			<TextBox Text="{Binding Description}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"/>
+			<TextBlock Classes="fieldError" Text="{Binding DescriptionError}"
+                       IsVisible="{Binding DescriptionError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<TextBlock Text="Firma Adı *"/>
 			<TextBox Text="{Binding CompanyName}"/>
+			<TextBlock Classes="fieldError" Text="{Binding CompanyNameError}"
+                       IsVisible="{Binding CompanyNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<TextBlock Text="Vergi No *"/>
 			<TextBox Text="{Binding TaxNo}"/>
+			<TextBlock Classes="fieldError" Text="{Binding TaxNoError}"
+                       IsVisible="{Binding TaxNoError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 			<TextBlock Text="SAP Cari Kodu"/>
 			<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX (yoksa boş bırakın)"/>
@@ -63,7 +88,9 @@
                         IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 			</StackPanel>
 
-			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
+			<!-- Artık yalnızca kısa bir özet; ayrıntı ilgili alanın altında gösteriliyor -->
+			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
+                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 			<TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"/>
 
 			<StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">

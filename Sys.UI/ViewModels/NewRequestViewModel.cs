@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -79,6 +78,57 @@ public partial class NewRequestViewModel : ViewModelBase
     [ObservableProperty]
     public partial string SuccessMessage { get; set; } = string.Empty;
 
+    // --- Alan bazlı doğrulama mesajları ---
+    // Hatalar eskiden tek bir satırda toplu gösteriliyordu ("Lütfen şu alanları kontrol
+    // edin: ..."); uzun formda hangi kutunun sorunlu olduğunu bulmak zordu. Artık her
+    // alanın kendi mesajı, kutusunun hemen altında görünüyor. Alttaki ErrorMessage ise
+    // yalnızca kısa bir özet olarak kalıyor.
+
+    [ObservableProperty]
+    public partial string TitleError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string TypeError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string AmountError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string DescriptionError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CompanyNameError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string TaxNoError { get; set; } = string.Empty;
+
+    private bool HasFieldErrors =>
+        !string.IsNullOrEmpty(TitleError) ||
+        !string.IsNullOrEmpty(TypeError) ||
+        !string.IsNullOrEmpty(AmountError) ||
+        !string.IsNullOrEmpty(DescriptionError) ||
+        !string.IsNullOrEmpty(CompanyNameError) ||
+        !string.IsNullOrEmpty(TaxNoError);
+
+    private void ClearFieldErrors()
+    {
+        TitleError = string.Empty;
+        TypeError = string.Empty;
+        AmountError = string.Empty;
+        DescriptionError = string.Empty;
+        CompanyNameError = string.Empty;
+        TaxNoError = string.Empty;
+    }
+
+    // Kullanıcı hatalı alanı düzeltmeye başladığında mesaj hemen kaybolur; hâlâ kırmızı
+    // duran bir uyarıyla uğraşmak zorunda kalmaz. Doğrulama yine gönderimde yapılır.
+    partial void OnTitleChanged(string value) => TitleError = string.Empty;
+    partial void OnTypeChanged(string value) => TypeError = string.Empty;
+    partial void OnEstimatedAmountTextChanged(string value) => AmountError = string.Empty;
+    partial void OnDescriptionChanged(string value) => DescriptionError = string.Empty;
+    partial void OnCompanyNameChanged(string value) => CompanyNameError = string.Empty;
+    partial void OnTaxNoChanged(string value) => TaxNoError = string.Empty;
+
     public NewRequestViewModel() : this(null!, new User(), string.Empty) { } // yalnızca tasarımcı önizlemesi için
 
     public NewRequestViewModel(ContractService contractService, User currentUser, string attachmentsBasePath)
@@ -130,29 +180,30 @@ public partial class NewRequestViewModel : ViewModelBase
         {
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
+            ClearFieldErrors();
 
-            var errors = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(Title)) errors.Add("Konu / Başlık");
-            if (string.IsNullOrWhiteSpace(Type)) errors.Add("Sözleşme Türü");
-            if (string.IsNullOrWhiteSpace(Description)) errors.Add("İşin Tanımı");
-            if (string.IsNullOrWhiteSpace(CompanyName)) errors.Add("Firma Adı");
+            if (string.IsNullOrWhiteSpace(Title)) TitleError = "Konu / başlık zorunludur.";
+            if (string.IsNullOrWhiteSpace(Type)) TypeError = "Sözleşme türü seçilmelidir.";
+            if (string.IsNullOrWhiteSpace(Description)) DescriptionError = "İşin tanımı zorunludur.";
+            if (string.IsNullOrWhiteSpace(CompanyName)) CompanyNameError = "Firma adı zorunludur.";
 
             if (string.IsNullOrWhiteSpace(TaxNo))
-                errors.Add("Vergi No");
+                TaxNoError = "Vergi no zorunludur.";
             else if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
-                errors.Add("Vergi No (10 haneli rakamdan oluşmalı)");
+                TaxNoError = "Vergi no 10 haneli ve yalnızca rakamlardan oluşmalıdır.";
 
             decimal amount = 0;
             if (!string.IsNullOrWhiteSpace(EstimatedAmountText))
             {
-                if (!decimal.TryParse(EstimatedAmountText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out amount) || amount < 0)
-                    errors.Add("Tahmini Bedel (negatif olamaz)");
+                if (!decimal.TryParse(EstimatedAmountText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out amount))
+                    AmountError = "Geçerli bir tutar girin (örn. 12.500,00).";
+                else if (amount < 0)
+                    AmountError = "Tutar negatif olamaz.";
             }
 
-            if (errors.Count > 0)
+            if (HasFieldErrors)
             {
-                ErrorMessage = "Lütfen şu alanları kontrol edin: " + string.Join(", ", errors);
+                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
                 return;
             }
 
@@ -189,7 +240,7 @@ public partial class NewRequestViewModel : ViewModelBase
                             FilePath = savedPath,
                             UploadedAt = DateTime.Now,
                             UploadedByUserId = _currentUser.Id,
-                        });
+                        }, _currentUser);
                     }
 
                     SuccessMessage = "Talep güncellendi ve yeniden gönderildi.";
@@ -212,7 +263,7 @@ public partial class NewRequestViewModel : ViewModelBase
                     CreatedByUserId = _currentUser.Id,
                 };
 
-                var saved = await _contractService.CreateRequestAsync(contract);
+                var saved = await _contractService.CreateRequestAsync(contract, _currentUser);
 
                 if (!string.IsNullOrEmpty(SelectedFilePath))
                 {
@@ -225,7 +276,7 @@ public partial class NewRequestViewModel : ViewModelBase
                         FilePath = savedPath,
                         UploadedAt = DateTime.Now,
                         UploadedByUserId = _currentUser.Id,
-                    });
+                    }, _currentUser);
                 }
 
                 SuccessMessage = "Talep başarıyla oluşturuldu.";

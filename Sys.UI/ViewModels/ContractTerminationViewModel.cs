@@ -179,7 +179,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
                     FilePath = savedPath,
                     UploadedAt = DateTime.Now,
                     UploadedByUserId = _currentUser.Id,
-                });
+                }, _currentUser);
 
                 SuccessMessage = "Fesih talebi gönderildi. SYB ve Müdür onayı bekleniyor.";
                 SelectedContract = null;

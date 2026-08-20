@@ -50,8 +50,10 @@ public partial class App : Application
             var contractRepository = new ContractRepository(settings.ConnectionString);
             var attachmentRepository = new AttachmentRepository(settings.ConnectionString);
             var notificationRepository = new NotificationRepository(settings.ConnectionString);
+            var scheduledJobRepository = new ScheduledJobRepository(settings.ConnectionString);
             var contractService = new ContractService(contractRepository, attachmentRepository, notificationRepository, userRepository);
             var notificationService = new NotificationService(notificationRepository, contractRepository, userRepository);
+            var maintenanceService = new MaintenanceService(scheduledJobRepository, contractService, notificationService);
 
             try
             {
@@ -69,11 +71,10 @@ public partial class App : Application
                     if (settings.EnableDevSeed)
                         await DbSeeder.SeedAsync(seedDb);
 
-                    await contractService.ReconcileContractStatusesAsync();
-
-                    // Durumlar güncellendikten sonra "yaklaşan bitiş" bildirimleri üretilir;
-                    // böylece kullanıcı giriş yaptığında bildirimler hazır olur.
-                    await notificationService.GenerateUpcomingEndingNotificationsAsync();
+                    // Bakım işi (durum güncelleme + yaklaşan bitiş bildirimleri) artık
+                    // MaintenanceService üzerinden çalışıyor. Son bir saat içinde başka bir
+                    // istemci çalıştırdıysa burada sessizce atlanır — veriler zaten günceldir.
+                    await maintenanceService.RunHourlyMaintenanceAsync();
                 }).GetAwaiter().GetResult();
             }
             catch (Exception ex)
@@ -84,16 +85,20 @@ public partial class App : Application
                 File.WriteAllText(logPath, ex.ToString());
             }
 
-            // Uygulama açık kaldığı sürece, her saat başı sözleşme durumlarını
-            // (Aktif/Uyarı/Tamamlandı) otomatik olarak yeniden değerlendirir.
-            // Böylece gün içinde süresi dolan bir sözleşme, uygulama yeniden
-            // açılana kadar beklemeden güncellenir.
+            // Uygulama açık kaldığı sürece, her saat başı bakım işi denenir: sözleşme
+            // durumları (Aktif/Uyarı/Tamamlandı) yeniden değerlendirilir ve yaklaşan
+            // bitiş bildirimleri üretilir. Böylece gün içinde süresi dolan bir sözleşme,
+            // uygulama yeniden açılana kadar beklemeden güncellenir.
+            //
+            // Zamanlayıcı her istemcide çalışsa da işi yalnızca kilidi alan bir istemci
+            // yürütür; diğerleri sessizce atlar. Kontrol aralığı 15 dakikaya çekildi:
+            // iş zaten saatte bir kez çalışıyor, sık deneme sadece "kilidi alan istemci
+            // kapanırsa bir sonrakinin devralması"nı hızlandırıyor.
             _reconcileTimer = new Timer(async _ =>
             {
                 try
                 {
-                    await contractService.ReconcileContractStatusesAsync();
-                    await notificationService.GenerateUpcomingEndingNotificationsAsync();
+                    await maintenanceService.RunHourlyMaintenanceAsync();
                 }
                 catch (Exception ex)
                 {
@@ -102,7 +107,7 @@ public partial class App : Application
                         "sys-reconcile-error.txt");
                     File.WriteAllText(logPath, ex.ToString());
                 }
-            }, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
+            }, null, TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15));
 
             desktop.MainWindow = new MainWindow
             {

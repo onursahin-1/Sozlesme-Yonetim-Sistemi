@@ -139,7 +139,7 @@ public partial class ViolationReportViewModel : ViewModelBase
                         FilePath = savedPath,
                         UploadedAt = DateTime.Now,
                         UploadedByUserId = _currentUser.Id,
-                    });
+                    }, _currentUser);
                 }
 
                 SuccessMessage = "İhlal formu SYB'ye iletildi.";

@@ -152,4 +152,83 @@ public class ContractServiceAuthorizationTests
         Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
         Assert.Equal(1, contract.Stage);
     }
+
+    [Fact]
+    public async Task CreateRequestAsync_Mudur_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var mudur = new User { Id = 7, Role = UserRole.Mudur };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateRequestAsync(new Contract(), mudur));
+    }
+
+    [Fact]
+    public async Task CreateRequestAsync_Admin_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var admin = new User { Id = 9, Role = UserRole.Admin };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateRequestAsync(new Contract(), admin));
+    }
+
+    // Talebin sahibi ve başlangıç durumu çağıranın gönderdiği değere güvenilerek değil,
+    // servis içinde belirlenir; aksi halde bir talep başka bir kullanıcının üzerine
+    // yazılabilir ya da doğrudan ileri bir aşamada başlatılabilirdi.
+    [Fact]
+    public async Task CreateRequestAsync_OverridesCallerSuppliedOwnerAndState()
+    {
+        var service = CreateService(out _);
+        var personel = new User { Id = 42, Role = UserRole.Personel };
+
+        var contract = new Contract
+        {
+            Id = 999,
+            CreatedByUserId = 1,           // başka bir kullanıcı
+            Status = ContractStatus.Aktif, // aşama atlatma denemesi
+            Stage = 2,
+            Title = "Test",
+        };
+
+        var result = await service.CreateRequestAsync(contract, personel);
+
+        Assert.Equal(0, result.Id);
+        Assert.Equal(42, result.CreatedByUserId);
+        Assert.Equal(ContractStatus.Talep, result.Status);
+        Assert.Equal(0, result.Stage);
+    }
+
+    [Fact]
+    public async Task UpdateRequestAsync_Mudur_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var mudur = new User { Id = 7, Role = UserRole.Mudur };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.UpdateRequestAsync(new Contract { Id = 1 }, mudur));
+    }
+
+    [Fact]
+    public async Task AddAttachmentAsync_Admin_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var admin = new User { Id = 9, Role = UserRole.Admin };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.AddAttachmentAsync(new Attachment { ContractId = 1 }, admin));
+    }
+
+    // Kullanıcı göremediği bir sözleşmeye dosya ekleyemez. FakeContractRepository
+    // GetByIdWithDetailsAsync için null döndüğü için burada "sözleşme bulunamadı"
+    // yolu sınanıyor; gerçek repoda Personel'in başkasının sözleşmesi de null döner.
+    [Fact]
+    public async Task AddAttachmentAsync_UnreachableContract_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var personel = new User { Id = 42, Role = UserRole.Personel };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.AddAttachmentAsync(new Attachment { ContractId = 123 }, personel));
+    }
 }
