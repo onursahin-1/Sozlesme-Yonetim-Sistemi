@@ -189,6 +189,52 @@ public partial class ContractDetailViewModel : ViewModelBase
     // yönetimi (EditContractAsync/RequestTerminationAsync gibi) zaten SYB'e ait.
     public bool CanDeleteAttachments => _currentUser.Role == UserRole.SYB;
 
+    // Yazdır butonu yalnızca bir sözleşme seçiliyken anlamlı.
+    public bool CanPrint => Detail is not null;
+
+    partial void OnDetailChanged(Contract? value) => OnPropertyChanged(nameof(CanPrint));
+
+    // Varsayılan dosya adı: sözleşme no varsa onu, yoksa talep referans numarasını kullanır.
+    // Windows'ta geçersiz olan karakterler temizlenir.
+    public string SuggestedPdfFileName
+    {
+        get
+        {
+            var baseName = Detail is null
+                ? "sozlesme"
+                : (string.IsNullOrWhiteSpace(Detail.ContractNo) ? Detail.RequestRefNo : Detail.ContractNo!);
+
+            foreach (var invalid in Path.GetInvalidFileNameChars())
+                baseName = baseName.Replace(invalid, '_');
+
+            return $"{baseName}.pdf";
+        }
+    }
+
+    // Dosya seçim penceresi yalnızca code-behind'dan açılabildiği için, "Yazdır"
+    // butonunun handler'ı kullanıcının seçtiği yolu buraya iletir. PDF üretimi,
+    // denetim kaydı ve dosyanın açılması burada tek yerde yapılır.
+    public async Task ExportPdfAsync(string destinationPath)
+    {
+        if (Detail is null) return;
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            Printing.ContractPdfExporter.Export(Detail, destinationPath);
+            await _contractService.LogContractPrintedAsync(Detail, _currentUser);
+
+            // PDF'i sistemin varsayılan görüntüleyicisinde açıyoruz; kullanıcı yazdırma
+            // işlemini oradan yapıyor. Avalonia'nın yerleşik yazdırma desteği yok.
+            var psi = new System.Diagnostics.ProcessStartInfo(destinationPath) { UseShellExecute = true };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "PDF oluşturulamadı: " + ex.Message;
+        }
+    }
+
     [RelayCommand]
     private async Task OpenAttachment(Attachment attachment)
     {

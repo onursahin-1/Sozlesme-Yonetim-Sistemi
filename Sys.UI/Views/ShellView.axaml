@@ -11,6 +11,39 @@
 		<vm:ShellViewModel />
 	</Design.DataContext>
 
+	<!--
+	  Classes="flat": butonun kendi gövdesi şeffaf kalır, renk/yazı içindeki Border ve
+	  TextBlock'tan gelir. Fluent teması :pointerover durumunda ContentPresenter'ın
+	  renklerini ezdiği için, doğrudan butona renk vermek hover'da butonu görünmez kılıyordu.
+	-->
+	<UserControl.Styles>
+		<Style Selector="Button.flat">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		<Style Selector="Button.flat /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+		<Style Selector="Button.flat:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="Button.flat:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="Button.flat:pointerover">
+			<Setter Property="Opacity" Value="0.85"/>
+		</Style>
+		<Style Selector="Button.flat:pressed">
+			<Setter Property="Opacity" Value="0.7"/>
+		</Style>
+	</UserControl.Styles>
+
+	<!-- Panel: bildirim listesi ana içeriğin ÜSTÜNDE açılabilsin diye katmanlı yerleşim -->
+	<Panel>
 	<DockPanel>
 		<Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="16,10">
 			<Grid ColumnDefinitions="*,Auto">
@@ -18,6 +51,26 @@
 				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
 					<TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
 					<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White" VerticalAlignment="Center"/>
+
+					<!-- Bildirim zili: okunmamış sayısı sağ üstte kırmızı rozet olarak görünür -->
+					<Button Classes="flat" VerticalAlignment="Center"
+                            IsVisible="{Binding ShowNotificationBell}"
+                            Command="{Binding ToggleNotificationPanelCommand}"
+                            ToolTip.Tip="Bildirimler">
+						<!-- Background="Transparent": zilin sadece glif alanına değil, tüm
+						     kutusuna tıklanabilsin diye hit-test yüzeyi oluşturur. -->
+						<Panel Width="30" Height="26" Background="Transparent">
+							<TextBlock Text="🔔" FontSize="17" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							<Border Background="#DC2626" CornerRadius="9" MinWidth="18" Height="16" Padding="4,0"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    IsVisible="{Binding HasUnreadNotifications}">
+								<TextBlock Text="{Binding UnreadCountText}" Foreground="White" FontSize="10" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+						</Panel>
+					</Button>
+
 					<Button Content="Çıkış" Command="{Binding LogoutCommand}"/>
 				</StackPanel>
 			</Grid>
@@ -44,5 +97,99 @@
 			<ContentControl Content="{Binding CurrentPageContent}" Margin="20,0,20,20"/>
 		</DockPanel>
 	</DockPanel>
+
+	<!--
+	  Panel açıkken ekranın kalanına tıklamak paneli kapatır.
+	  Classes="flat" KULLANILMIYOR: o stil ContentPresenter'ın arka planını Transparent
+	  yaptığı için yüzey tıklamayı yakalamazdı. Burada tüm durumlarda neredeyse görünmez
+	  ama hit-test edilebilir bir arka plan (#01000000) veriliyor.
+	-->
+	<Button IsVisible="{Binding IsNotificationPanelOpen}"
+            Command="{Binding CloseNotificationPanelCommand}"
+            HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+            BorderThickness="0" CornerRadius="0" Cursor="Arrow">
+		<Button.Styles>
+			<Style Selector="Button /template/ ContentPresenter">
+				<Setter Property="Background" Value="#01000000"/>
+			</Style>
+			<Style Selector="Button:pointerover /template/ ContentPresenter">
+				<Setter Property="Background" Value="#01000000"/>
+			</Style>
+			<Style Selector="Button:pressed /template/ ContentPresenter">
+				<Setter Property="Background" Value="#01000000"/>
+			</Style>
+		</Button.Styles>
+	</Button>
+
+	<!-- Bildirim paneli: zilin altında, sağ üstte açılır -->
+	<Border IsVisible="{Binding IsNotificationPanelOpen}"
+            HorizontalAlignment="Right" VerticalAlignment="Top"
+            Margin="0,52,16,0" Width="380" MaxHeight="460"
+            Background="White" BorderBrush="#B9C6D8" BorderThickness="1" CornerRadius="8"
+            BoxShadow="0 6 20 0 #33000000">
+		<DockPanel>
+			<Border DockPanel.Dock="Top" Background="#F2F5F9" CornerRadius="8,8,0,0" Padding="14,10"
+                    BorderBrush="#E1E7EF" BorderThickness="0,0,0,1">
+				<Grid ColumnDefinitions="*,Auto,Auto">
+					<TextBlock Grid.Column="0" Text="Bildirimler" FontWeight="Bold" Foreground="Black" VerticalAlignment="Center"/>
+					<Button Grid.Column="1" Classes="flat" Margin="0,0,10,0"
+                            IsVisible="{Binding HasUnreadNotifications}"
+                            Command="{Binding MarkAllNotificationsReadCommand}">
+						<TextBlock Text="Tümünü okundu işaretle" FontSize="11" Foreground="#2D6EA8"/>
+					</Button>
+					<Button Grid.Column="2" Classes="flat"
+                            IsVisible="{Binding HasReadNotifications}"
+                            Command="{Binding DeleteReadNotificationsCommand}"
+                            ToolTip.Tip="Okunmuş bildirimlerin hepsini siler">
+						<TextBlock Text="Okunanları sil" FontSize="11" Foreground="#A32D2D"/>
+					</Button>
+				</Grid>
+			</Border>
+
+			<TextBlock DockPanel.Dock="Top" Text="Henüz bildiriminiz yok." Foreground="Gray"
+                       Margin="14,20" HorizontalAlignment="Center"
+                       IsVisible="{Binding HasNoNotifications}"/>
+
+			<ScrollViewer>
+				<ItemsControl ItemsSource="{Binding Notifications}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="vm:NotificationRowViewModel">
+							<Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                    Command="{Binding $parent[UserControl].((vm:ShellViewModel)DataContext).OpenNotificationCommand}"
+                                    CommandParameter="{Binding}">
+								<Border Background="{Binding RowBackgroundHex}" Padding="14,10"
+                                        BorderBrush="#EDF1F6" BorderThickness="0,0,0,1">
+									<Grid ColumnDefinitions="Auto,*,Auto">
+										<TextBlock Grid.Column="0" Text="{Binding TypeIcon}" FontSize="15"
+                                                   Margin="0,0,10,0" VerticalAlignment="Top"/>
+										<StackPanel Grid.Column="1" Spacing="2">
+											<TextBlock Text="{Binding Title}" Foreground="Black" FontSize="12"
+                                                       FontWeight="{Binding TitleWeight}"/>
+											<TextBlock Text="{Binding Message}" Foreground="#444" FontSize="11" TextWrapping="Wrap"/>
+											<TextBlock Text="{Binding TimeText}" Foreground="#999" FontSize="10"/>
+										</StackPanel>
+
+										<!-- Silme yalnızca okunmuş bildirimlerde görünür.
+										     İç içe buton: tıklama dış satır butonuna geçmez. -->
+										<Button Grid.Column="2" Classes="flat" VerticalAlignment="Top" Margin="8,0,0,0"
+                                                IsVisible="{Binding IsRead}"
+                                                Command="{Binding $parent[UserControl].((vm:ShellViewModel)DataContext).DeleteNotificationCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Bu bildirimi sil">
+											<Border Background="Transparent" Width="20" Height="20" CornerRadius="10">
+												<TextBlock Text="✕" FontSize="11" Foreground="#8A94A6"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+											</Border>
+										</Button>
+									</Grid>
+								</Border>
+							</Button>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+		</DockPanel>
+	</Border>
+	</Panel>
 
 </UserControl>

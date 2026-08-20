@@ -17,10 +17,82 @@ public class ContractService
 {
     private readonly IContractRepository _contracts;
     private readonly IAttachmentRepository _attachments;
-    public ContractService(IContractRepository contracts, IAttachmentRepository attachments)
+
+    // Bildirim bağımlılıkları opsiyonel: verilmezse (örn. birim testlerinde) bildirim
+    // üretilmez, iş kuralları aynen çalışmaya devam eder.
+    private readonly INotificationRepository? _notifications;
+    private readonly IUserRepository? _users;
+
+    public ContractService(
+        IContractRepository contracts,
+        IAttachmentRepository attachments,
+        INotificationRepository? notifications = null,
+        IUserRepository? users = null)
     {
         _contracts = contracts;
         _attachments = attachments;
+        _notifications = notifications;
+        _users = users;
+    }
+
+    // Bildirim oluşturma, hiçbir zaman asıl iş akışını bozmamalı: bildirim yazılamazsa
+    // (bağlantı hatası vb.) onay/fesih işlemi başarılı sayılmaya devam eder.
+    private async Task NotifyAsync(IEnumerable<int> userIds, int contractId, NotificationType type, string title, string message)
+    {
+        if (_notifications is null) return;
+
+        var list = userIds.Distinct().Select(id => new Notification
+        {
+            UserId = id,
+            ContractId = contractId,
+            Type = type,
+            Title = title,
+            Message = message,
+            CreatedAt = DateTime.Now
+        }).ToList();
+
+        if (list.Count == 0) return;
+
+        try
+        {
+            await _notifications.AddManyAsync(list);
+        }
+        catch
+        {
+            // Bildirim kritik olmayan bir yan etki; sessizce geçilir.
+        }
+    }
+
+    private async Task<List<int>> GetActiveUserIdsByRoleAsync(UserRole role)
+    {
+        if (_users is null) return new List<int>();
+        try
+        {
+            var all = await _users.GetAllAsync();
+            return all.Where(u => u.Role == role && !u.IsDisabled).Select(u => u.Id).ToList();
+        }
+        catch
+        {
+            return new List<int>();
+        }
+    }
+
+    // Bir sözleşme onay aşamasına girdiğinde/ilerlediğinde, o aşamadan sorumlu role
+    // "onayınızı bekliyor" bildirimi gönderir. Aşama-rol eşlemesi DecideApprovalAsync
+    // içindeki kuralla aynıdır (1: SYB, 2: Müdür).
+    private async Task NotifyStageOwnersAsync(Contract contract, string konu)
+    {
+        var role = contract.Stage switch
+        {
+            1 => (UserRole?)UserRole.SYB,
+            2 => UserRole.Mudur,
+            _ => null
+        };
+        if (role is null) return;
+
+        var userIds = await GetActiveUserIdsByRoleAsync(role.Value);
+        await NotifyAsync(userIds, contract.Id, NotificationType.OnayBekliyor,
+            "Onayınızı bekliyor", $"\"{contract.Title}\" {konu} onayınızı bekliyor.");
     }
     private async Task LogAuditAsync(int contractId, string action, int actingUserId, string? detail)
     {
@@ -110,6 +182,13 @@ public class ContractService
         contract.CreatedAt = DateTime.Now;
         await _contracts.AddAsync(contract);
         await LogAuditAsync(contract.Id, "TalepOluşturuldu", contract.CreatedByUserId, $"{contract.Title} için yeni talep oluşturuldu.");
+
+        // Yeni talep henüz onay aşamasında değil (Stage 0), ama sözleşmeyi oluşturacak
+        // olan SYB'nin talepten haberi olmalı — aksi halde listeyi elle taramak gerekir.
+        var sybIds = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
+        await NotifyAsync(sybIds, contract.Id, NotificationType.SozlesmeOlayi,
+            "Yeni sözleşme talebi", $"\"{contract.Title}\" için yeni bir sözleşme talebi oluşturuldu.");
+
         return contract;
     }
     public async Task UpdateRequestAsync(Contract contract, User actingUser)
@@ -121,6 +200,12 @@ public class ContractService
             throw new InvalidOperationException("Bu talep artık düzenlenemez, işlem görmüş.");
         await _contracts.UpdateRequestAsync(contract);
         await LogAuditAsync(contract.Id, "TalepGüncellendi", actingUser.Id, $"{contract.Title} talebi düzenlenip yeniden gönderildi.");
+
+        // Genellikle reddedilmiş bir talep düzeltilip yeniden gönderilir; SYB'nin
+        // güncellenmiş talebi tekrar ele alması gerektiğini bilmesi lazım.
+        var sybIds = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
+        await NotifyAsync(sybIds, contract.Id, NotificationType.SozlesmeOlayi,
+            "Talep güncellendi", $"\"{contract.Title}\" talebi düzenlenip yeniden gönderildi.");
     }
     public async Task AddAttachmentAsync(Attachment attachment)
     {
@@ -149,6 +234,11 @@ public class ContractService
 
     public Task LogAttachmentDownloadedAsync(Attachment attachment, User actingUser)
         => LogAttachmentAccessAsync(attachment, "Ekİndirildi", actingUser);
+
+    // Sözleşme künyesinin PDF olarak dışa aktarılması da denetim kaydına yazılır:
+    // sözleşme verisi uygulama dışına çıkmış oluyor, kimin ne zaman aldığı izlenebilmeli.
+    public Task LogContractPrintedAsync(Contract contract, User actingUser)
+        => LogAuditAsync(contract.Id, "SözleşmeYazdırıldı", actingUser.Id, contract.Title);
 
     public async Task DeleteAttachmentAsync(Attachment attachment, User actingUser)
     {
@@ -187,6 +277,15 @@ public class ContractService
             ActionDate = DateTime.Now,
         };
         await _contracts.FinalizeCreationAsync(contract, items, attachments, auditLog);
+
+        // Onay zincirinin BAŞLANGICI burası: sözleşme Stage 1'e (SYB Son Kontrol) taşındı.
+        // Bu bildirim olmadan zincir hiç başlamıyor, sonraki aşamaların bildirimleri de
+        // dolayısıyla tetiklenmiyordu.
+        await NotifyStageOwnersAsync(contract, "sözleşmesi");
+
+        // Talebi açan kişi de sözleşmesinin oluşturulup onaya girdiğini görsün.
+        await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
+            "Sözleşmeniz oluşturuldu", $"\"{contract.Title}\" sözleşmesi oluşturuldu ve onay sürecine girdi.");
     }
     public async Task<Contract?> GetContractDetailAsync(int id, User currentUser)
     {
@@ -208,6 +307,11 @@ public class ContractService
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
         if (decision == ApprovalDecision.Red && string.IsNullOrWhiteSpace(note))
             throw new InvalidOperationException("Reddetme işlemi için bir gerekçe girilmelidir.");
+        // Bildirim metninde kullanılacak konu, aşağıdaki durum değişikliklerinden ÖNCE
+        // saklanır: karar uygulandığında PendingEdit/PendingTermination temizlenebiliyor.
+        var bildirimKonusu = contract.PendingTermination ? "fesih talebi"
+            : contract.PendingEdit ? "düzenleme talebi"
+            : "sözleşmesi";
         var log = new ApprovalLog
         {
             StepNumber = contract.Stage,
@@ -323,6 +427,23 @@ public class ContractService
             ActionDate = DateTime.Now,
         };
         await _contracts.ApplyDecisionAsync(contract, log, auditLog);
+
+        // Karar kaydedildikten sonra sözleşmenin ULAŞTIĞI aşamaya göre bildirim üretilir.
+        if (contract.Stage is 1 or 2)
+        {
+            // Bir sonraki onay aşamasına geçti (ya da Müdür reddedip SYB'ye geri gönderdi).
+            await NotifyStageOwnersAsync(contract, bildirimKonusu);
+        }
+        else
+        {
+            // Süreç tamamlandı ya da talep sahibine geri döndü — sonucu talebi açan kişi görsün.
+            var (baslik, mesaj) = decision == ApprovalDecision.Onay
+                ? ("Talebiniz onaylandı", $"\"{contract.Title}\" {bildirimKonusu} onaylandı.")
+                : ("Talebiniz reddedildi", $"\"{contract.Title}\" {bildirimKonusu} reddedildi. Gerekçe: {note}");
+
+            await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id,
+                NotificationType.TalepSonucu, baslik, mesaj);
+        }
     }
 
     public async Task<List<Contract>> GetPendingApprovalsAsync(User currentUser)
@@ -381,6 +502,11 @@ public class ContractService
             ActionDate = DateTime.Now,
         };
         await _contracts.ApplyEditAsync(contract, revision, editAuditLog);
+
+        // Düzenleme onay sürecine girdi: 1. aşamadan sorumlu SYB'ye ve sözleşme sahibine haber ver.
+        await NotifyStageOwnersAsync(contract, "düzenleme talebi");
+        await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
+            "Sözleşmede düzenleme", $"\"{contract.Title}\" sözleşmesinde düzenleme yapıldı ve onaya gönderildi. Gerekçe: {reason}");
     }
     public async Task<List<Contract>> GetViolationReportableContractsAsync(User currentUser)
     {
@@ -411,6 +537,12 @@ public class ContractService
             ActionDate = DateTime.Now,
         };
         await _contracts.ApplyViolationAsync(contract, violation, violationAuditLog);
+
+        // İhlal bir onay süreci başlatmaz ama SYB'nin ve sözleşme sahibinin haberi olmalı.
+        var ihlalHedefleri = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
+        ihlalHedefleri.Add(contract.CreatedByUserId);
+        await NotifyAsync(ihlalHedefleri, contract.Id, NotificationType.SozlesmeOlayi,
+            "İhlal bildirildi", $"\"{contract.Title}\" sözleşmesinde ihlal bildirildi ({violationType}).");
     }
     public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
     {
@@ -459,6 +591,10 @@ public class ContractService
             ActionDate = DateTime.Now,
         };
         await _contracts.ApplyTerminationRequestAsync(contract, termination, terminationAuditLog);
+
+        await NotifyStageOwnersAsync(contract, "fesih talebi");
+        await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
+            "Fesih talebi", $"\"{contract.Title}\" sözleşmesi için fesih talebi oluşturuldu. Gerekçe: {reason}");
     }
     public async Task<List<string>> GetAuditLogUserOptionsAsync(User currentUser)
     {

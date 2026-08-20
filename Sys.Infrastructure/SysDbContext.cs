@@ -16,6 +16,7 @@ public class SysDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<ContractRevision> ContractRevisions => Set<ContractRevision>();
     public DbSet<ContractTermination> ContractTerminations => Set<ContractTermination>();
+    public DbSet<Notification> Notifications => Set<Notification>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Contract>()
@@ -81,6 +82,27 @@ public class SysDbContext : DbContext
         // ActionDate'e göre sıralıyor.
         modelBuilder.Entity<AuditLog>()
             .HasIndex(a => a.ActionDate);
+
+        // Zil ikonu her ekran geçişinde okunmamış sayısını sorguluyor; bildirim listesi de
+        // kullanıcıya göre filtrelenip tarihe göre sıralanıyor.
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.UserId, n.IsRead });
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.CreatedAt);
+
+        // Tekrarlayan taramaların aynı olay için mükerrer bildirim üretmesini veritabanı
+        // seviyesinde engeller. Olay anında üretilen bildirimlerde DedupeKey null olduğu
+        // için index filtreli tanımlandı (birden fazla null serbest).
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new { n.UserId, n.DedupeKey })
+            .IsUnique()
+            .HasFilter("[DedupeKey] IS NOT NULL");
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ContractItem>()
                     .Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");

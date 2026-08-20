@@ -34,6 +34,7 @@ public class AuditLogRowViewModel
         "EkGörüntülendi" => "Ek Görüntülendi",
         "Ekİndirildi" => "Ek İndirildi",
         "EkSilindi" => "Ek Silindi",
+        "SözleşmeYazdırıldı" => "Sözleşme Yazdırıldı",
         _ => _log.Action
     };
     public string DetailText => _log.Detail ?? string.Empty;

@@ -4,6 +4,37 @@
              x:Class="Sys.UI.Views.ContractDetailView"
              x:DataType="vm:ContractDetailViewModel">
 
+	<!--
+	  Classes="flat": butonun gövdesi şeffaf kalır, renk/yazı içindeki Border ve
+	  TextBlock'tan gelir. Fluent teması :pointerover durumunda ContentPresenter'ın
+	  renklerini ezdiği için doğrudan butona renk vermek hover'da butonu görünmez kılıyordu.
+	-->
+	<UserControl.Styles>
+		<Style Selector="Button.flat">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Cursor" Value="Hand"/>
+		</Style>
+		<Style Selector="Button.flat /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+		<Style Selector="Button.flat:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="Button.flat:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="Button.flat:pointerover">
+			<Setter Property="Opacity" Value="0.85"/>
+		</Style>
+		<Style Selector="Button.flat:pressed">
+			<Setter Property="Opacity" Value="0.7"/>
+		</Style>
+	</UserControl.Styles>
+
 	<Grid RowDefinitions="Auto,Auto,*" Margin="24">
 
 		<StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
@@ -27,6 +58,16 @@
                       ItemsSource="{Binding AvailableContracts}"
                       SelectedItem="{Binding SelectedContract}"
                       DisplayMemberBinding="{Binding Title}"/>
+
+			<!-- PDF üretip sistemin görüntüleyicisinde açar; yazdırma oradan yapılır -->
+			<Button Classes="flat" VerticalAlignment="Center"
+                    IsVisible="{Binding CanPrint}"
+                    Click="OnPrintClick"
+                    ToolTip.Tip="Sözleşme künyesini PDF olarak kaydeder ve açar">
+				<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
+					<TextBlock Text="🖨 Yazdır" Foreground="White" FontSize="12"/>
+				</Border>
+			</Button>
 		</StackPanel>
 
 		<ScrollViewer Grid.Row="2">

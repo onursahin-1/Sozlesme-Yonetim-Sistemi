@@ -49,7 +49,9 @@ public partial class App : Application
 
             var contractRepository = new ContractRepository(settings.ConnectionString);
             var attachmentRepository = new AttachmentRepository(settings.ConnectionString);
-            var contractService = new ContractService(contractRepository, attachmentRepository);
+            var notificationRepository = new NotificationRepository(settings.ConnectionString);
+            var contractService = new ContractService(contractRepository, attachmentRepository, notificationRepository, userRepository);
+            var notificationService = new NotificationService(notificationRepository, contractRepository, userRepository);
 
             try
             {
@@ -68,6 +70,10 @@ public partial class App : Application
                         await DbSeeder.SeedAsync(seedDb);
 
                     await contractService.ReconcileContractStatusesAsync();
+
+                    // Durumlar güncellendikten sonra "yaklaşan bitiş" bildirimleri üretilir;
+                    // böylece kullanıcı giriş yaptığında bildirimler hazır olur.
+                    await notificationService.GenerateUpcomingEndingNotificationsAsync();
                 }).GetAwaiter().GetResult();
             }
             catch (Exception ex)
@@ -87,6 +93,7 @@ public partial class App : Application
                 try
                 {
                     await contractService.ReconcileContractStatusesAsync();
+                    await notificationService.GenerateUpcomingEndingNotificationsAsync();
                 }
                 catch (Exception ex)
                 {
@@ -99,7 +106,7 @@ public partial class App : Application
 
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainViewModel(authService, contractService, userManagementService, settings.AttachmentsPath),
+                DataContext = new MainViewModel(authService, contractService, userManagementService, notificationService, settings.AttachmentsPath),
             };
         }
 

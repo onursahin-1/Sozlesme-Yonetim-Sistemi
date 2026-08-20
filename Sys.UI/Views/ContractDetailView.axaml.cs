@@ -43,6 +43,40 @@ public partial class ContractDetailView : UserControl
         }
     }
 
+    private async void OnPrintClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ContractDetailViewModel vm) return;
+
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel is null) return;
+
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "PDF Olarak Kaydet",
+                SuggestedFileName = vm.SuggestedPdfFileName,
+                DefaultExtension = "pdf",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("PDF Belgesi") { Patterns = new[] { "*.pdf" } }
+                },
+            });
+
+            if (file is null) return;
+
+            var path = file.TryGetLocalPath();
+            if (path is not null)
+            {
+                await vm.ExportPdfAsync(path);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            vm.ErrorMessage = "PDF oluşturulurken bir hata oluştu: " + ex.Message;
+        }
+    }
+
     private async void OnDeleteAttachmentClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: Attachment attachment }) return;

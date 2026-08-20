@@ -32,6 +32,7 @@ public partial class ShellViewModel : ViewModelBase
 {
     private readonly ContractService? _contractService;
     private readonly UserManagementService? _userManagementService;
+    private readonly NotificationService? _notificationService;
     private readonly string _attachmentsPath;
 
     public User CurrentUser { get; }
@@ -57,17 +58,233 @@ public partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     public partial ViewModelBase? CurrentPageContent { get; set; }
 
-    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null, null, string.Empty) { }
+    // --- Bildirimler (üst çubuktaki zil) ---
 
-    public ShellViewModel(User currentUser, ContractService? contractService, UserManagementService? userManagementService, string attachmentsPath)
+    [ObservableProperty]
+    public partial ObservableCollection<NotificationRowViewModel> Notifications { get; set; } = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUnreadNotifications))]
+    [NotifyPropertyChangedFor(nameof(UnreadCountText))]
+    public partial int UnreadNotificationCount { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsNotificationPanelOpen { get; set; }
+
+    [ObservableProperty]
+    public partial bool HasNoNotifications { get; set; }
+
+    // Başlıktaki "Okunanları sil" aksiyonu yalnızca silinecek bir şey varken görünür.
+    [ObservableProperty]
+    public partial bool HasReadNotifications { get; set; }
+
+    public bool HasUnreadNotifications => UnreadNotificationCount > 0;
+    // 99'dan fazlasında rozet genişleyip başlığı bozmasın diye kısaltılır.
+    public string UnreadCountText => UnreadNotificationCount > 99 ? "99+" : UnreadNotificationCount.ToString();
+
+    // Bildirim özelliği yalnızca sözleşme iş akışına katılan roller için anlamlı;
+    // Admin sadece hesap yönetimi yaptığı için zil ikonu ona gösterilmez.
+    public bool ShowNotificationBell => _notificationService is not null && CurrentUser.Role != UserRole.Admin;
+
+    public ShellViewModel() : this(new User { FullName = "Tasarım Modu", Role = UserRole.Personel }, null, null, null, string.Empty) { }
+
+    public ShellViewModel(User currentUser, ContractService? contractService, UserManagementService? userManagementService, NotificationService? notificationService, string attachmentsPath)
     {
         CurrentUser = currentUser;
         _contractService = contractService;
         _userManagementService = userManagementService;
+        _notificationService = notificationService;
         _attachmentsPath = attachmentsPath;
         NavItems = new ObservableCollection<NavItem>(BuildNavItems(currentUser.Role));
         SelectedNavItem = NavItems.Count > 0 ? NavItems[0] : null;
         UpdateCurrentPage(SelectedNavItem);
+        _ = RefreshUnreadNotificationCountAsync();
+        StartNotificationPolling();
+    }
+
+    // Kullanıcı aynı ekranda dursa bile başka birinin ürettiği bildirimin rozete
+    // yansıması için dakikada bir okunmamış sayısı tazelenir. Yalnızca sayı sorgulanır
+    // (COUNT), bildirim listesi çekilmez — maliyeti düşüktür.
+    private Avalonia.Threading.DispatcherTimer? _notificationTimer;
+
+    private void StartNotificationPolling()
+    {
+        if (_notificationService is null) return;
+
+        _notificationTimer = new Avalonia.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(1)
+        };
+        _notificationTimer.Tick += async (_, _) =>
+        {
+            await RefreshUnreadNotificationCountAsync();
+            // Panel açıkken liste de tazelensin ki yeni bildirim anında görünsün.
+            if (IsNotificationPanelOpen)
+                await LoadNotificationsAsync();
+        };
+        _notificationTimer.Start();
+    }
+
+    // Zile tıklandığında paneli açar/kapatır. Açılışta liste veritabanından tazelenir,
+    // böylece başka bir kullanıcının az önce oluşturduğu bildirim de görünür.
+    [RelayCommand]
+    private async Task ToggleNotificationPanel()
+    {
+        IsNotificationPanelOpen = !IsNotificationPanelOpen;
+        if (IsNotificationPanelOpen)
+            await LoadNotificationsAsync();
+    }
+
+    [RelayCommand]
+    private void CloseNotificationPanel() => IsNotificationPanelOpen = false;
+
+    private async Task LoadNotificationsAsync()
+    {
+        if (_notificationService is null) return;
+        try
+        {
+            var items = await _notificationService.GetForUserAsync(CurrentUser);
+            Notifications = new ObservableCollection<NotificationRowViewModel>(
+                items.Select(n => new NotificationRowViewModel(n)));
+            UnreadNotificationCount = await _notificationService.GetUnreadCountAsync(CurrentUser);
+            UpdateNotificationListFlags();
+        }
+        catch
+        {
+            // Bildirimler yüklenemezse ekranın geri kalanı çalışmaya devam etmeli.
+        }
+    }
+
+    // Rozetteki sayıyı, paneli açmadan tazeler. Her ekran geçişinde çağrılır.
+    private async Task RefreshUnreadNotificationCountAsync()
+    {
+        if (_notificationService is null) return;
+        try
+        {
+            UnreadNotificationCount = await _notificationService.GetUnreadCountAsync(CurrentUser);
+        }
+        catch
+        {
+            // Rozet güncellenemezse sessizce yut — kritik bir işlev değil.
+        }
+    }
+
+    // Bildirime tıklandığında okundu işaretlenir ve (varsa) ilgili sözleşme detayı açılır.
+    [RelayCommand]
+    private async Task OpenNotification(NotificationRowViewModel row)
+    {
+        if (_notificationService is null) return;
+
+        if (!row.IsRead)
+        {
+            try
+            {
+                await _notificationService.MarkReadAsync(CurrentUser, row.Id);
+                row.IsRead = true;
+                if (UnreadNotificationCount > 0) UnreadNotificationCount--;
+                UpdateNotificationListFlags();
+            }
+            catch
+            {
+                // Okundu işaretlenemezse yönlendirmeyi yine de yapalım.
+            }
+        }
+
+        IsNotificationPanelOpen = false;
+
+        if (row.ContractId is null || _contractService is null) return;
+
+        try
+        {
+            var contract = await _contractService.GetContractDetailAsync(row.ContractId.Value, CurrentUser);
+            if (contract is null) return;
+            OpenContractFromNotification(contract);
+        }
+        catch
+        {
+            // Sözleşme açılamazsa (yetki/silinmiş kayıt) sessizce geç.
+        }
+    }
+
+    [RelayCommand]
+    private async Task MarkAllNotificationsRead()
+    {
+        if (_notificationService is null) return;
+        try
+        {
+            await _notificationService.MarkAllReadAsync(CurrentUser);
+            foreach (var row in Notifications)
+                row.IsRead = true;
+            UnreadNotificationCount = 0;
+            UpdateNotificationListFlags();
+        }
+        catch
+        {
+            // Sessizce geç.
+        }
+    }
+
+    // Tek bir okunmuş bildirimi siler. Silme butonu yalnızca okunmuş satırlarda görünür,
+    // böylece henüz görülmemiş bir bildirim yanlışlıkla kaybolmaz.
+    [RelayCommand]
+    private async Task DeleteNotification(NotificationRowViewModel row)
+    {
+        if (_notificationService is null || !row.IsRead) return;
+        try
+        {
+            await _notificationService.DeleteReadAsync(CurrentUser, row.Id);
+            Notifications.Remove(row);
+            UpdateNotificationListFlags();
+        }
+        catch
+        {
+            // Sessizce geç.
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteReadNotifications()
+    {
+        if (_notificationService is null) return;
+        try
+        {
+            await _notificationService.DeleteAllReadAsync(CurrentUser);
+            foreach (var row in Notifications.Where(n => n.IsRead).ToList())
+                Notifications.Remove(row);
+            UpdateNotificationListFlags();
+        }
+        catch
+        {
+            // Sessizce geç.
+        }
+    }
+
+    private void UpdateNotificationListFlags()
+    {
+        HasNoNotifications = Notifications.Count == 0;
+        HasReadNotifications = Notifications.Any(n => n.IsRead);
+    }
+
+    // Bildirimden açılan sözleşmenin "Geri" butonu kullanıcıyı geldiği ekrana değil,
+    // gösterge paneline götürür — bildirim her ekrandan açılabildiği için sabit,
+    // tahmin edilebilir bir dönüş noktası daha anlaşılır.
+    private void OpenContractFromNotification(Contract contract)
+    {
+        var detailVm = new ContractDetailViewModel(_contractService!, CurrentUser, contract);
+        detailVm.BackRequested += () =>
+        {
+            var dashboard = NavItems.FirstOrDefault(n => n.Key == "dashboard");
+            if (dashboard is not null)
+            {
+                SetSelectedNavItemSilently("dashboard");
+                CurrentPageTitle = "Gösterge Paneli";
+                CurrentPageContent = CreateDashboardViewModel();
+            }
+        };
+
+        SetSelectedNavItemSilently("sozlesmeGoruntule");
+        CurrentPageTitle = "Sözleşmeleri Görüntüle";
+        CurrentPageContent = detailVm;
     }
 
     // Dashboard kartı, "Detay"/"Sözleşme Yarat"/"Son Kontrol" gibi programatik geçişlerde
@@ -116,6 +333,7 @@ public partial class ShellViewModel : ViewModelBase
     {
         CurrentPageTitle = value?.Label ?? string.Empty;
         _ = RefreshPendingApprovalCountAsync();
+        _ = RefreshUnreadNotificationCountAsync();
 
         if (_contractService is null)
         {
@@ -387,6 +605,10 @@ public partial class ShellViewModel : ViewModelBase
     [RelayCommand]
     private void Logout()
     {
+        // Çıkışta zamanlayıcı durdurulmazsa, oturum kapandıktan sonra da eski kullanıcının
+        // bildirimlerini sorgulamaya devam ederdi.
+        _notificationTimer?.Stop();
+        _notificationTimer = null;
         LogoutRequested?.Invoke();
     }
 }
