@@ -22,6 +22,31 @@ public interface IContractRepository
     Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses);
     Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId);
 
+    // --- Gösterge paneli toplamları ---
+    // Hepsi veritabanı tarafında hesaplanır; panel için tüm sözleşmeleri belleğe
+    // çekmek gerekmez.
+
+    // Yürürlükteki sözleşmelerin para birimi başına toplam bedeli ve adedi.
+    Task<List<CurrencyTotal>> GetActiveValueByCurrencyAsync(int? createdByUserId);
+
+    // Belirtilen ayda açılan talep / yürürlüğe giren / feshedilen sözleşme sayıları.
+    Task<MonthlyStats> GetMonthlyStatsAsync(int? createdByUserId, DateTime monthStart, DateTime monthEnd);
+
+    // Önümüzdeki 90 gün içinde biten sözleşmelerin 30 günlük dilimlere dağılımı.
+    Task<EndingCalendar> GetEndingCalendarAsync(int? createdByUserId, DateTime today);
+
+    // Yürürlükteki sözleşmelerin türe göre dağılımı (çoktan aza).
+    Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId);
+
+    // Belirli bir aşamada bekleyen sözleşme sayısı ("sizi bekleyen işler" için).
+    Task<int> CountByStageAsync(int stage);
+
+    // Belirli durumlardaki sözleşme sayısı.
+    Task<int> CountByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses);
+
+    // Reddedilmiş (düzeltme bekleyen) talep sayısı.
+    Task<int> CountRejectedRequestsAsync(int? createdByUserId);
+
     // Sözleşme listesi ekranı için: filtreleme, arama ve sayfalama veritabanı tarafında
     // yapılır. Böylece kayıt sayısı arttığında tüm tablo belleğe çekilmez.
     // includeStatuses: sadece bu durumlar (null = durum filtresi yok)

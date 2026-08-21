@@ -41,6 +41,26 @@ public class FakeContractRepository : IContractRepository
     public Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)
         => Task.FromResult(new Dictionary<ContractStatus, int>());
 
+    // --- Gösterge paneli toplamları (testlerde kullanılmıyor, boş dönerler) ---
+    public Task<List<CurrencyTotal>> GetActiveValueByCurrencyAsync(int? createdByUserId)
+        => Task.FromResult(new List<CurrencyTotal>());
+
+    public Task<MonthlyStats> GetMonthlyStatsAsync(int? createdByUserId, DateTime monthStart, DateTime monthEnd)
+        => Task.FromResult(new MonthlyStats());
+
+    public Task<EndingCalendar> GetEndingCalendarAsync(int? createdByUserId, DateTime today)
+        => Task.FromResult(new EndingCalendar());
+
+    public Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId)
+        => Task.FromResult(new List<TypeCount>());
+
+    public Task<int> CountByStageAsync(int stage) => Task.FromResult(0);
+
+    public Task<int> CountByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
+        => Task.FromResult(0);
+
+    public Task<int> CountRejectedRequestsAsync(int? createdByUserId) => Task.FromResult(0);
+
     public Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
         int? createdByUserId,
         ContractStatus[]? includeStatuses,

@@ -279,6 +279,119 @@ public class ContractRepository : IContractRepository
         return (items, totalCount);
     }
 
+    // --- Gösterge paneli toplamları ---
+
+    // "Yürürlükteki" sayılan durumlar: panelin değer/dağılım kutuları bu kümeye bakar.
+    private static readonly ContractStatus[] LiveStatuses =
+        { ContractStatus.Aktif, ContractStatus.Uyari, ContractStatus.Ihlal };
+
+    private static IQueryable<Contract> ScopeToUser(IQueryable<Contract> query, int? createdByUserId)
+        => createdByUserId.HasValue ? query.Where(c => c.CreatedByUserId == createdByUserId.Value) : query;
+
+    public async Task<List<CurrencyTotal>> GetActiveValueByCurrencyAsync(int? createdByUserId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var query = ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .Where(c => LiveStatuses.Contains(c.Status));
+
+        var rows = await query
+            .GroupBy(c => c.Currency)
+            .Select(g => new { Currency = g.Key, Amount = g.Sum(c => c.TotalAmount), Count = g.Count() })
+            .ToListAsync();
+
+        return rows
+            .OrderByDescending(r => r.Amount)
+            .Select(r => new CurrencyTotal(r.Currency, r.Amount, r.Count))
+            .ToList();
+    }
+
+    public async Task<MonthlyStats> GetMonthlyStatsAsync(int? createdByUserId, DateTime monthStart, DateTime monthEnd)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var newRequests = await ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .CountAsync(c => c.CreatedAt >= monthStart && c.CreatedAt < monthEnd);
+
+        // "Yürürlüğe giren" ve "feshedilen" bilgisi sözleşmede tarihli olarak tutulmuyor;
+        // onay kayıtlarından çıkarılıyor. Son aşama (3) kararı bu ay verilmişse sayılır.
+        var contractIds = ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId).Select(c => c.Id);
+
+        var activated = await db.ApprovalLogs.AsNoTracking()
+            .Where(a => contractIds.Contains(a.ContractId))
+            .Where(a => a.StepNumber == 2 && a.Decision == ApprovalDecision.Onay)
+            .CountAsync(a => a.ActionDate >= monthStart && a.ActionDate < monthEnd);
+
+        var terminated = await ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .Where(c => c.Status == ContractStatus.Feshedildi)
+            .Join(db.ContractTerminations.AsNoTracking(),
+                  c => c.Id, t => t.ContractId, (c, t) => t.RequestedAt)
+            .CountAsync(d => d >= monthStart && d < monthEnd);
+
+        return new MonthlyStats
+        {
+            NewRequests = newRequests,
+            Activated = activated,
+            Terminated = terminated,
+        };
+    }
+
+    public async Task<EndingCalendar> GetEndingCalendarAsync(int? createdByUserId, DateTime today)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var d30 = today.AddDays(30);
+        var d60 = today.AddDays(60);
+        var d90 = today.AddDays(90);
+
+        var query = ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .Where(c => LiveStatuses.Contains(c.Status))
+            .Where(c => c.EndDate != null && c.EndDate >= today && c.EndDate <= d90);
+
+        // Dilimler kümülatif değil: bir sözleşme yalnızca bir aralıkta sayılır.
+        return new EndingCalendar
+        {
+            Within30 = await query.CountAsync(c => c.EndDate <= d30),
+            Within60 = await query.CountAsync(c => c.EndDate > d30 && c.EndDate <= d60),
+            Within90 = await query.CountAsync(c => c.EndDate > d60),
+        };
+    }
+
+    public async Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var rows = await ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .Where(c => LiveStatuses.Contains(c.Status))
+            .GroupBy(c => c.Type)
+            .Select(g => new { Type = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return rows
+            .OrderByDescending(r => r.Count)
+            .Select(r => new TypeCount(string.IsNullOrWhiteSpace(r.Type) ? "Belirtilmemiş" : r.Type, r.Count))
+            .ToList();
+    }
+
+    public async Task<int> CountByStageAsync(int stage)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Contracts.AsNoTracking().CountAsync(c => c.Stage == stage);
+    }
+
+    public async Task<int> CountByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .CountAsync(c => statuses.Contains(c.Status));
+    }
+
+    public async Task<int> CountRejectedRequestsAsync(int? createdByUserId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .CountAsync(c => c.Status == ContractStatus.Talep && c.WasRejected);
+    }
+
     public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);

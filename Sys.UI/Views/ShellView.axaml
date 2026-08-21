@@ -19,9 +19,16 @@
 	<!-- Panel: bildirim listesi ana içeriğin ÜSTÜNDE açılabilsin diye katmanlı yerleşim -->
 	<Panel>
 	<DockPanel>
-		<Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="16,10">
+		<Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="24,12">
 			<Grid ColumnDefinitions="*,Auto">
-				<TextBlock Grid.Column="0" Text="SYS — Sözleşme Yönetim Sistemi" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+				<!--
+				  Kurum logosu. Beyaz ve şeffaf arka planlı sürüm kullanılıyor, koyu
+				  çubuğun üzerine doğrudan oturuyor. Yükseklikten sınırlandırılıyor ki
+				  çubuğun yüksekliği logonun oranına göre değişmesin.
+				-->
+				<Image Grid.Column="0" Source="avares://Sys.UI/Assets/fakir-logo-white.png"
+					   Height="34" Stretch="Uniform" HorizontalAlignment="Left"
+					   VerticalAlignment="Center" Margin="8,0,0,0"/>
 				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
 					<TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
 
@@ -81,7 +88,9 @@
 		</ListBox>
 
 		<DockPanel>
-			<TextBlock DockPanel.Dock="Top" Text="{Binding CurrentPageTitle}" FontSize="20" FontWeight="Bold" Margin="20,20,20,10"/>
+			<TextBlock DockPanel.Dock="Top" Text="{Binding CurrentPageTitle}" FontSize="20" FontWeight="Bold"
+					   Margin="20,20,20,10"
+					   IsVisible="{Binding CurrentPageTitle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 			<ContentControl Content="{Binding CurrentPageContent}" Margin="20,0,20,20"/>
 		</DockPanel>
 	</DockPanel>

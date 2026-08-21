@@ -3,7 +3,7 @@
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
              x:Class="Sys.UI.Views.DashboardView"
              x:DataType="vm:DashboardViewModel">
 
@@ -11,151 +11,365 @@
 		<vm:DashboardViewModel />
 	</Design.DataContext>
 
+	<!--
+	  Panelin amacı "kaç sözleşme var" değil, "ne yapmam gerekiyor" sorusuna cevap
+	  vermek. Bu yüzden en üstte durum sayıları, hemen altında kullanıcının kendi
+	  aksiyonunu bekleyen işler, sonra portföy istatistikleri geliyor.
+	-->
+	<UserControl.Styles>
+		<!-- Kart: beyaz zemin, ince çerçeve, yumuşak köşe — uygulama genelindeki dil -->
+		<Style Selector="Border.card">
+			<Setter Property="Background" Value="White"/>
+			<Setter Property="BorderBrush" Value="#E3E7EE"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="CornerRadius" Value="10"/>
+			<Setter Property="Padding" Value="18"/>
+		</Style>
+		<Style Selector="TextBlock.cardTitle">
+			<Setter Property="FontSize" Value="10.5"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#8A94A6"/>
+			<Setter Property="LetterSpacing" Value="0.8"/>
+		</Style>
+	</UserControl.Styles>
+
 	<ScrollViewer>
-		<StackPanel Margin="20" Spacing="12">
-			<TextBlock Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+		<StackPanel Margin="0,20,20,24" Spacing="18">
 
 			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
 					   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-			<!-- Durum kartları: tıklanabilenler ilgili listeye o filtre uygulanmış şekilde götürür -->
-			<UniformGrid Columns="4" IsVisible="{Binding !IsLoading}">
-				<Button Background="#E6F4E7" CornerRadius="8" Margin="6" Padding="16" HorizontalAlignment="Stretch"
-						Command="{Binding FilterCardCommand}" CommandParameter="aktif"
-						IsEnabled="{Binding AktifCardClickable}">
-					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
-							<Setter Property="Background" Value="#D2ECD4"/>
-						</Style>
-						<Style Selector="Button:disabled /template/ ContentPresenter">
-							<Setter Property="Background" Value="#E6F4E7"/>
-						</Style>
-					</Button.Styles>
-					<StackPanel HorizontalAlignment="Left">
-						<TextBlock Text="Aktif" FontSize="12" Foreground="#555"/>
-						<TextBlock Text="{Binding Aktif}" FontSize="28" FontWeight="Bold" Foreground="#1A6B2A"/>
-					</StackPanel>
-				</Button>
-				<Button Background="#D6E9F8" CornerRadius="8" Margin="6" Padding="16" HorizontalAlignment="Stretch"
-						Command="{Binding FilterCardCommand}" CommandParameter="onay_bekliyor"
-						IsEnabled="{Binding OnayBekliyorCardClickable}">
-					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
-							<Setter Property="Background" Value="#C2DFF3"/>
-						</Style>
-					</Button.Styles>
-					<StackPanel HorizontalAlignment="Left">
-						<TextBlock Text="Onay Bekliyor" FontSize="12" Foreground="#555"/>
-						<TextBlock Text="{Binding OnayBekliyor}" FontSize="28" FontWeight="Bold" Foreground="#2D6EA8"/>
-					</StackPanel>
-				</Button>
-				<Button Background="#FFF3CD" CornerRadius="8" Margin="6" Padding="16" HorizontalAlignment="Stretch"
-						Command="{Binding FilterCardCommand}" CommandParameter="uyari"
-						IsEnabled="{Binding UyariCardClickable}">
-					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
-							<Setter Property="Background" Value="#FCE9AF"/>
-						</Style>
-						<Style Selector="Button:disabled /template/ ContentPresenter">
-							<Setter Property="Background" Value="#FFF3CD"/>
-						</Style>
-					</Button.Styles>
-					<StackPanel HorizontalAlignment="Left">
-						<TextBlock Text="Bitiş Uyarısı" FontSize="12" Foreground="#555"/>
-						<TextBlock Text="{Binding Uyari}" FontSize="28" FontWeight="Bold" Foreground="#B06A00"/>
-					</StackPanel>
-				</Button>
-				<Button Background="#FDECEA" CornerRadius="8" Margin="6" Padding="16" HorizontalAlignment="Stretch"
-						Command="{Binding FilterCardCommand}" CommandParameter="ihlal"
-						IsEnabled="{Binding IhlalCardClickable}">
-					<Button.Styles>
-						<Style Selector="Button:pointerover /template/ ContentPresenter">
-							<Setter Property="Background" Value="#FAD8D4"/>
-						</Style>
-						<Style Selector="Button:disabled /template/ ContentPresenter">
-							<Setter Property="Background" Value="#FDECEA"/>
-						</Style>
-					</Button.Styles>
-					<StackPanel HorizontalAlignment="Left">
-						<TextBlock Text="İhlal" FontSize="12" Foreground="#555"/>
-						<TextBlock Text="{Binding Ihlal}" FontSize="28" FontWeight="Bold" Foreground="#A32D2D"/>
-					</StackPanel>
-				</Button>
-			</UniformGrid>
+			<TextBlock Text="Yükleniyor..." Foreground="Gray" IsVisible="{Binding IsLoading}"/>
 
-			<!-- Hızlı Aksiyonlar -->
-			<ItemsControl ItemsSource="{Binding QuickActions}" IsVisible="{Binding !IsLoading}" Margin="0,4,0,0">
-				<ItemsControl.ItemsPanel>
-					<ItemsPanelTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="8"/>
-					</ItemsPanelTemplate>
-				</ItemsControl.ItemsPanel>
-				<ItemsControl.ItemTemplate>
-					<DataTemplate x:DataType="vm:DashboardQuickActionItem">
-						<Button Classes="flat"
-								Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).QuickActionCommand}"
-								CommandParameter="{Binding NavKey}">
-							<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
-								<TextBlock Text="{Binding Label}" Foreground="White"/>
-							</Border>
-						</Button>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
-			</ItemsControl>
+			<StackPanel IsVisible="{Binding !IsLoading}" Spacing="18">
 
-			<!-- Yaklaşan Bitişler -->
-			<StackPanel Spacing="6" IsVisible="{Binding !IsLoading}">
-				<TextBlock Text="Yaklaşan Bitişler (30 gün içinde)" FontWeight="Bold" FontSize="14" Margin="0,14,0,0"/>
-				<TextBlock Text="Önümüzdeki 30 gün içinde sona erecek sözleşme yok." Foreground="Gray" FontSize="12"
-						   IsVisible="{Binding !UpcomingEndings.Count}"/>
-				<ItemsControl ItemsSource="{Binding UpcomingEndings}">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate x:DataType="vm:DashboardUpcomingRowViewModel">
-							<Button HorizontalAlignment="Stretch" Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-									CornerRadius="6" Padding="10,8" Margin="0,0,0,6"
-									Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenUpcomingCommand}"
-									CommandParameter="{Binding}">
-								<Button.Styles>
-									<Style Selector="Button:pointerover /template/ ContentPresenter">
-										<Setter Property="Background" Value="#F3F6FA"/>
-									</Style>
-								</Button.Styles>
-								<Grid ColumnDefinitions="*,Auto">
-									<StackPanel Grid.Column="0" HorizontalAlignment="Left">
-										<TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12" Foreground="Black"/>
-										<TextBlock FontSize="11" Foreground="#888">
-											<Run Text="{Binding RefNoText}"/>
-											<Run Text=" · "/>
-											<Run Text="{Binding CompanyName}"/>
-										</TextBlock>
-									</StackPanel>
-									<TextBlock Grid.Column="1" Text="{Binding GunKalanText}" FontSize="11" Foreground="#B06A00" VerticalAlignment="Center"/>
-								</Grid>
-							</Button>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
-			</StackPanel>
+				<!-- Karşılama -->
+				<StackPanel Spacing="2">
+					<TextBlock Classes="display" Text="{Binding GreetingText}" FontSize="22"
+							   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+					<TextBlock Text="{Binding TodayText}" FontSize="12.5" Foreground="#8A94A6"/>
+				</StackPanel>
 
-			<!-- Son Aktiviteler: yalnızca Müdür'de görünür ("İşlem Geçmişi" ekranıyla aynı sınır) -->
-			<StackPanel Spacing="4" IsVisible="{Binding ShowRecentActivity}">
-				<TextBlock Text="Son Aktiviteler" FontWeight="Bold" FontSize="14" Margin="0,14,0,0"/>
-				<TextBlock Text="Henüz bir aktivite yok." Foreground="Gray" FontSize="12"
-						   IsVisible="{Binding !RecentActivity.Count}"/>
-				<ItemsControl ItemsSource="{Binding RecentActivity}">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate x:DataType="vm:AuditLogRowViewModel">
-							<Grid ColumnDefinitions="Auto,*" Margin="0,0,0,4">
-								<TextBlock Grid.Column="0" Text="{Binding DateText}" FontSize="11" Foreground="Gray" Margin="0,0,10,0" VerticalAlignment="Top"/>
-								<TextBlock Grid.Column="1" FontSize="11" TextWrapping="Wrap">
-									<Run Text="{Binding UserText}" FontWeight="Bold"/>
-									<Run Text=" — "/>
-									<Run Text="{Binding ActionText}"/>
-								</TextBlock>
+				<!--
+				  Durum kartları: ikon rozetleri kaldırıldı. Rengi artık ince bir dikey şerit
+				  ve sayı taşıyor; zemin ilgili rengin çok açık bir tonu. Sayılar başlık
+				  fontuyla (Bahnschrift) yazılıyor — rakamları geniş ve eşit aralıklı olduğu
+				  için sayı gösteriminde gövde fontundan belirgin şekilde daha iyi duruyor.
+				-->
+				<UniformGrid Columns="4">
+					<Button Classes="statCard" Margin="0,0,12,0"
+							Command="{Binding FilterCardCommand}" CommandParameter="aktif"
+							IsEnabled="{Binding AktifCardClickable}">
+						<Border Background="#F6FBF7" BorderBrush="#E8ECF2" BorderThickness="1"
+								CornerRadius="10" Padding="16,15">
+							<Grid ColumnDefinitions="Auto,*">
+								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
+								<Border Grid.Column="0" Width="3" CornerRadius="2"
+										Background="#1A6B2A" Margin="0,2,14,2"/>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="display" Text="{Binding Aktif}"
+											   FontSize="34" FontWeight="SemiBold" Foreground="#1A6B2A"
+											   LetterSpacing="-0.5"/>
+									<TextBlock Text="Aktif" FontSize="12.5" FontWeight="SemiBold"
+											   Foreground="#3D4654"/>
+									<TextBlock Text="yürürlükteki sözleşme" FontSize="10.5" Foreground="#9CA3AF"/>
+								</StackPanel>
 							</Grid>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+						</Border>
+					</Button>
+
+					<Button Classes="statCard" Margin="0,0,12,0"
+							Command="{Binding FilterCardCommand}" CommandParameter="onay_bekliyor"
+							IsEnabled="{Binding OnayBekliyorCardClickable}">
+						<Border Background="#F5F9FD" BorderBrush="#E8ECF2" BorderThickness="1"
+								CornerRadius="10" Padding="16,15">
+							<Grid ColumnDefinitions="Auto,*">
+								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
+								<Border Grid.Column="0" Width="3" CornerRadius="2"
+										Background="#2D6EA8" Margin="0,2,14,2"/>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="display" Text="{Binding OnayBekliyor}"
+											   FontSize="34" FontWeight="SemiBold" Foreground="#2D6EA8"
+											   LetterSpacing="-0.5"/>
+									<TextBlock Text="Onay Bekliyor" FontSize="12.5" FontWeight="SemiBold"
+											   Foreground="#3D4654"/>
+									<TextBlock Text="süreçte bekleyen" FontSize="10.5" Foreground="#9CA3AF"/>
+								</StackPanel>
+							</Grid>
+						</Border>
+					</Button>
+
+					<Button Classes="statCard" Margin="0,0,12,0"
+							Command="{Binding FilterCardCommand}" CommandParameter="uyari"
+							IsEnabled="{Binding UyariCardClickable}">
+						<Border Background="#FEFAF2" BorderBrush="#E8ECF2" BorderThickness="1"
+								CornerRadius="10" Padding="16,15">
+							<Grid ColumnDefinitions="Auto,*">
+								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
+								<Border Grid.Column="0" Width="3" CornerRadius="2"
+										Background="#B06A00" Margin="0,2,14,2"/>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="display" Text="{Binding Uyari}"
+											   FontSize="34" FontWeight="SemiBold" Foreground="#B06A00"
+											   LetterSpacing="-0.5"/>
+									<TextBlock Text="Bitiş Uyarısı" FontSize="12.5" FontWeight="SemiBold"
+											   Foreground="#3D4654"/>
+									<TextBlock Text="30 günden az kaldı" FontSize="10.5" Foreground="#9CA3AF"/>
+								</StackPanel>
+							</Grid>
+						</Border>
+					</Button>
+
+					<Button Classes="statCard"
+							Command="{Binding FilterCardCommand}" CommandParameter="ihlal"
+							IsEnabled="{Binding IhlalCardClickable}">
+						<Border Background="#FDF7F6" BorderBrush="#E8ECF2" BorderThickness="1"
+								CornerRadius="10" Padding="16,15">
+							<Grid ColumnDefinitions="Auto,*">
+								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
+								<Border Grid.Column="0" Width="3" CornerRadius="2"
+										Background="#A32D2D" Margin="0,2,14,2"/>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="display" Text="{Binding Ihlal}"
+											   FontSize="34" FontWeight="SemiBold" Foreground="#A32D2D"
+											   LetterSpacing="-0.5"/>
+									<TextBlock Text="İhlal" FontSize="12.5" FontWeight="SemiBold"
+											   Foreground="#3D4654"/>
+									<TextBlock Text="bildirilmiş ihlal" FontSize="10.5" Foreground="#9CA3AF"/>
+								</StackPanel>
+							</Grid>
+						</Border>
+					</Button>
+				</UniformGrid>
+
+				<!--
+				  Sizi bekleyen işler: panelin en önemli kutusu. Kullanıcı "onay bekliyor: 7"
+				  gördüğünde bunun kaçının KENDİSİNİ beklediğini bilmiyordu.
+				-->
+				<Border Classes="card" IsVisible="{Binding HasPendingWork}">
+					<StackPanel Spacing="12">
+						<TextBlock Classes="cardTitle" Text="SİZİ BEKLEYEN İŞLER"/>
+						<ItemsControl ItemsSource="{Binding PendingWork}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="vm:PendingWorkRowViewModel">
+									<Button Classes="flat" HorizontalAlignment="Stretch"
+											HorizontalContentAlignment="Stretch" Margin="0,0,0,8"
+											Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenPendingWorkCommand}"
+											CommandParameter="{Binding}">
+										<Border Background="#F7F9FC" BorderBrush="#E8ECF2" BorderThickness="1"
+												CornerRadius="8" Padding="14,12">
+											<Grid ColumnDefinitions="Auto,*,Auto">
+												<Border Grid.Column="0" Background="{Binding ColorHex}"
+														Width="4" CornerRadius="2" Margin="0,0,14,0"/>
+												<StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+													<TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+															   Foreground="#1A2E4A"/>
+													<TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#8A94A6"
+															   TextWrapping="Wrap"/>
+												</StackPanel>
+												<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
+															VerticalAlignment="Center">
+													<Border Background="{Binding ColorHex}" CornerRadius="11"
+															MinWidth="26" Height="22" Padding="8,0">
+														<TextBlock Text="{Binding CountText}" Foreground="White"
+																   FontSize="12" FontWeight="Bold"
+																   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+													</Border>
+													<TextBlock Text="›" FontSize="17" Foreground="#B9C1CE"
+															   VerticalAlignment="Center"/>
+												</StackPanel>
+											</Grid>
+										</Border>
+									</Button>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</Border>
+
+				<!-- Portföy istatistikleri: yalnızca genel görünürlüğü olan roller -->
+				<Grid ColumnDefinitions="*,*" ColumnSpacing="14" IsVisible="{Binding ShowPortfolioStats}">
+
+					<Border Grid.Column="0" Classes="card">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="cardTitle" Text="TOPLAM SÖZLEŞME DEĞERİ"/>
+							<TextBlock Text="Yürürlükteki sözleşme yok." FontSize="12" Foreground="#9CA3AF"
+									   IsVisible="{Binding !HasActiveValue}"/>
+							<ItemsControl ItemsSource="{Binding ActiveValue}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:CurrencyTotalRowViewModel">
+										<StackPanel Spacing="1" Margin="0,0,0,10">
+											<TextBlock Text="{Binding AmountText}" FontSize="19" FontWeight="Bold"
+													   Foreground="#1A2E4A"/>
+											<TextBlock Text="{Binding CountText}" FontSize="11" Foreground="#8A94A6"/>
+										</StackPanel>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+							<TextBlock Text="Kur dönüşümü yapılmaz; her para birimi ayrı gösterilir."
+									   FontSize="10.5" Foreground="#B9C1CE" TextWrapping="Wrap"/>
+						</StackPanel>
+					</Border>
+
+					<Border Grid.Column="1" Classes="card">
+						<StackPanel Spacing="12">
+							<StackPanel Spacing="2">
+								<TextBlock Classes="cardTitle" Text="BU AY"/>
+								<TextBlock Text="{Binding MonthLabel}" FontSize="11" Foreground="#B9C1CE"/>
+							</StackPanel>
+
+							<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="Yeni talep" FontSize="12.5" Foreground="#4B5563"/>
+								<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MonthNewRequests}"
+										   FontSize="15" FontWeight="Bold" Foreground="#1A2E4A"/>
+
+								<TextBlock Grid.Row="1" Grid.Column="0" Text="Yürürlüğe giren" FontSize="12.5" Foreground="#4B5563"/>
+								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MonthActivated}"
+										   FontSize="15" FontWeight="Bold" Foreground="#1A6B2A"/>
+
+								<TextBlock Grid.Row="2" Grid.Column="0" Text="Feshedilen" FontSize="12.5" Foreground="#4B5563"/>
+								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MonthTerminated}"
+										   FontSize="15" FontWeight="Bold" Foreground="#A32D2D"/>
+							</Grid>
+						</StackPanel>
+					</Border>
+
+				</Grid>
+
+				<!-- İki sütun: solda bitiş takvimi + tür dağılımı, sağda yaklaşan bitişler -->
+				<Grid ColumnDefinitions="340,*" ColumnSpacing="14">
+
+					<StackPanel Grid.Column="0" Spacing="14">
+
+						<Border Classes="card" IsVisible="{Binding ShowPortfolioStats}">
+							<StackPanel Spacing="12">
+								<TextBlock Classes="cardTitle" Text="BİTİŞ TAKVİMİ"/>
+								<TextBlock Text="Önümüzdeki 90 günde biten sözleşme yok." FontSize="12"
+										   Foreground="#9CA3AF" TextWrapping="Wrap" IsVisible="{Binding !HasEndings}"/>
+
+								<StackPanel Spacing="10" IsVisible="{Binding HasEndings}">
+									<Grid ColumnDefinitions="*,Auto">
+										<TextBlock Grid.Column="0" Text="0 – 30 gün" FontSize="12.5" Foreground="#4B5563"/>
+										<TextBlock Grid.Column="1" Text="{Binding Ending30}" FontSize="14"
+												   FontWeight="Bold" Foreground="#B06A00"/>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<TextBlock Grid.Column="0" Text="31 – 60 gün" FontSize="12.5" Foreground="#4B5563"/>
+										<TextBlock Grid.Column="1" Text="{Binding Ending60}" FontSize="14"
+												   FontWeight="Bold" Foreground="#8A94A6"/>
+									</Grid>
+									<Grid ColumnDefinitions="*,Auto">
+										<TextBlock Grid.Column="0" Text="61 – 90 gün" FontSize="12.5" Foreground="#4B5563"/>
+										<TextBlock Grid.Column="1" Text="{Binding Ending90}" FontSize="14"
+												   FontWeight="Bold" Foreground="#8A94A6"/>
+									</Grid>
+								</StackPanel>
+							</StackPanel>
+						</Border>
+
+						<Border Classes="card" IsVisible="{Binding HasTypeBreakdown}">
+							<StackPanel Spacing="12">
+								<TextBlock Classes="cardTitle" Text="TÜR DAĞILIMI"/>
+								<ItemsControl ItemsSource="{Binding TypeBreakdown}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="vm:TypeBreakdownRowViewModel">
+											<StackPanel Spacing="4" Margin="0,0,0,10">
+												<Grid ColumnDefinitions="*,Auto">
+													<TextBlock Grid.Column="0" Text="{Binding Type}" FontSize="12"
+															   Foreground="#4B5563"/>
+													<TextBlock Grid.Column="1" Text="{Binding CountText}" FontSize="12"
+															   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+												</Grid>
+												<!-- Çubuk, en yüksek değere oranlanır (0..1) -->
+												<Border Background="#EDF1F6" Height="6" CornerRadius="3">
+													<Border Background="#2D6EA8" Height="6" CornerRadius="3"
+															HorizontalAlignment="Left"
+															Width="{Binding BarRatio, Converter={x:Static vm:RatioToWidthConverter.Instance}, ConverterParameter=280}"/>
+												</Border>
+											</StackPanel>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</Border>
+
+					</StackPanel>
+
+					<StackPanel Grid.Column="1" Spacing="14">
+
+						<Border Classes="card">
+							<StackPanel Spacing="12">
+								<TextBlock Classes="cardTitle" Text="YAKLAŞAN BİTİŞLER (30 GÜN İÇİNDE)"/>
+								<TextBlock Text="Önümüzdeki 30 gün içinde sona erecek sözleşme yok."
+										   FontSize="12" Foreground="#9CA3AF"
+										   IsVisible="{Binding !UpcomingEndings.Count}"/>
+								<ItemsControl ItemsSource="{Binding UpcomingEndings}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="vm:DashboardUpcomingRowViewModel">
+											<Button Classes="flat" HorizontalAlignment="Stretch"
+													HorizontalContentAlignment="Stretch" Margin="0,0,0,6"
+													Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenUpcomingCommand}"
+													CommandParameter="{Binding}">
+												<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+														CornerRadius="8" Padding="12,10">
+													<Grid ColumnDefinitions="*,Auto">
+														<StackPanel Grid.Column="0" Spacing="2">
+															<TextBlock Text="{Binding Title}" FontSize="12.5"
+																	   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+															<TextBlock FontSize="11" Foreground="#8A94A6">
+																<Run Text="{Binding RefNoText}"/>
+																<Run Text=" · "/>
+																<Run Text="{Binding CompanyName}"/>
+															</TextBlock>
+														</StackPanel>
+														<TextBlock Grid.Column="1" Text="{Binding GunKalanText}"
+																   FontSize="11.5" FontWeight="SemiBold"
+																   Foreground="#B06A00" VerticalAlignment="Center"/>
+													</Grid>
+												</Border>
+											</Button>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</Border>
+
+						<!--
+						  Son aktiviteler kimin ne yaptığını isim isim gösterdiği için
+						  "İşlem Geçmişi" ekranıyla aynı yetki sınırına tabidir: yalnızca Müdür.
+						-->
+						<Border Classes="card" IsVisible="{Binding ShowRecentActivity}">
+							<StackPanel Spacing="12">
+								<TextBlock Classes="cardTitle" Text="SON AKTİVİTELER"/>
+								<ItemsControl ItemsSource="{Binding RecentActivity}">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="vm:AuditLogRowViewModel">
+											<Border BorderBrush="#EDF1F6" BorderThickness="0,0,0,1" Padding="0,8">
+												<Grid ColumnDefinitions="*,Auto">
+													<StackPanel Grid.Column="0" Spacing="2">
+														<TextBlock Text="{Binding ActionText}" FontSize="12.5"
+																   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+														<TextBlock Text="{Binding DetailText}" FontSize="11"
+																   Foreground="#8A94A6" TextWrapping="Wrap"/>
+													</StackPanel>
+													<StackPanel Grid.Column="1" Spacing="2" Margin="12,0,0,0">
+														<TextBlock Text="{Binding UserText}" FontSize="11"
+																   Foreground="#4B5563" HorizontalAlignment="Right"/>
+														<TextBlock Text="{Binding ActionDate, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
+																   FontSize="10.5" Foreground="#B9C1CE"
+																   HorizontalAlignment="Right"/>
+													</StackPanel>
+												</Grid>
+											</Border>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</Border>
+
+					</StackPanel>
+				</Grid>
+
 			</StackPanel>
 		</StackPanel>
 	</ScrollViewer>

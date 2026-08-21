@@ -33,17 +33,49 @@ public class DashboardUpcomingRowViewModel
     }
 }
 
-// "Hızlı Aksiyonlar" satırındaki her buton için.
-public class DashboardQuickActionItem
+// "Sizi bekleyen işler" listesindeki bir satır.
+public class PendingWorkRowViewModel
 {
-    public DashboardQuickActionItem(string label, string navKey)
+    private readonly PendingWorkItem _item;
+
+    public PendingWorkRowViewModel(PendingWorkItem item) => _item = item;
+
+    public string Title => _item.Title;
+    public string Subtitle => _item.Subtitle;
+    public string CountText => _item.Count.ToString();
+    public string NavKey => _item.NavKey;
+    public string ColorHex => _item.ColorHex;
+}
+
+// Para birimi başına toplam değer satırı.
+public class CurrencyTotalRowViewModel
+{
+    public CurrencyTotalRowViewModel(CurrencyTotal total)
     {
-        Label = label;
-        NavKey = navKey;
+        AmountText = CurrencyHelper.Format(total.Amount, total.Currency);
+        Label = CurrencyHelper.Label(total.Currency);
+        CountText = $"{total.ContractCount} sözleşme";
     }
 
+    public string AmountText { get; }
     public string Label { get; }
-    public string NavKey { get; }
+    public string CountText { get; }
+}
+
+// Tür dağılımındaki bir satır. Çubuk genişliği en yüksek değere göre oranlanır.
+public class TypeBreakdownRowViewModel
+{
+    public TypeBreakdownRowViewModel(TypeCount item, int maxCount)
+    {
+        Type = item.Type;
+        CountText = item.Count.ToString();
+        // 0'a bölünmeyi önlemek için en az 1; oran 0..1 aralığında tutulur.
+        BarRatio = maxCount <= 0 ? 0 : (double)item.Count / maxCount;
+    }
+
+    public string Type { get; }
+    public string CountText { get; }
+    public double BarRatio { get; }
 }
 
 public partial class DashboardViewModel : ViewModelBase
@@ -69,14 +101,99 @@ public partial class DashboardViewModel : ViewModelBase
     [ObservableProperty]
     public partial ObservableCollection<AuditLogRowViewModel> RecentActivity { get; set; } = new();
 
+    // --- Sizi bekleyen işler ---
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPendingWork))]
+    public partial ObservableCollection<PendingWorkRowViewModel> PendingWork { get; set; } = new();
+
+    public bool HasPendingWork => PendingWork.Count > 0;
+
+    // --- Toplam sözleşme değeri (para birimi başına) ---
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveValue))]
+    public partial ObservableCollection<CurrencyTotalRowViewModel> ActiveValue { get; set; } = new();
+
+    public bool HasActiveValue => ActiveValue.Count > 0;
+
+    // --- Bu ay ---
+    [ObservableProperty]
+    public partial string MonthLabel { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial int MonthNewRequests { get; set; }
+
+    [ObservableProperty]
+    public partial int MonthActivated { get; set; }
+
+    [ObservableProperty]
+    public partial int MonthTerminated { get; set; }
+
+    // --- Bitiş takvimi ---
+    [ObservableProperty]
+    public partial int Ending30 { get; set; }
+
+    [ObservableProperty]
+    public partial int Ending60 { get; set; }
+
+    [ObservableProperty]
+    public partial int Ending90 { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEndings))]
+    public partial int EndingTotal { get; set; }
+
+    public bool HasEndings => EndingTotal > 0;
+
+    // --- Tür dağılımı ---
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTypeBreakdown))]
+    public partial ObservableCollection<TypeBreakdownRowViewModel> TypeBreakdown { get; set; } = new();
+
+    public bool HasTypeBreakdown => TypeBreakdown.Count > 0;
+
+    // --- Karşılama başlığı ---
+    // Günün saatine göre selam; küçük bir dokunuş ama panelin "kişisel" hissini veriyor.
+    public string GreetingText
+    {
+        get
+        {
+            // Ad soyad tam olarak yazılıyor. "Bey/Hanım" hitabı kullanılmıyor: sistemde
+            // cinsiyet bilgisi yok, tahmin etmek yanlış hitaba yol açardı.
+            var fullName = (_currentUser.FullName ?? string.Empty).Trim();
+            var greeting = GreetingForHour(DateTime.Now.Hour);
+            return string.IsNullOrWhiteSpace(fullName) ? greeting : $"{greeting}, {fullName}";
+        }
+    }
+
+    // Türkçedeki yaygın kullanım:
+    //   05:00 – 10:59  Günaydın      (sabah)
+    //   11:00 – 16:59  İyi günler    (gündüz)
+    //   17:00 – 21:59  İyi akşamlar  (akşam)
+    //   22:00 – 04:59  İyi geceler   (gece)
+    // "Tünaydın" bilinçli olarak kullanılmadı: öğleden sonraya karşılık gelse de
+    // günlük dilde neredeyse terk edilmiş, kurumsal bir arayüzde tuhaf duruyor.
+    private static string GreetingForHour(int hour) => hour switch
+    {
+        >= 5 and < 11 => "Günaydın",
+        >= 11 and < 17 => "İyi günler",
+        >= 17 and < 22 => "İyi akşamlar",
+        _ => "İyi geceler"
+    };
+
+    public string TodayText => DateTime.Now.ToString("d MMMM yyyy, dddd",
+        System.Globalization.CultureInfo.GetCultureInfo("tr-TR"));
+
+    // Değer ve istatistik kutuları yalnızca genel görünürlüğü olan rollerde anlamlı;
+    // Personel yalnızca kendi taleplerini gördüğü için "toplam portföy" bilgisi
+    // onun için yanıltıcı olurdu.
+    public bool ShowPortfolioStats => _currentUser.Role is UserRole.SYB or UserRole.Mudur;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowRecentActivity))]
     public partial bool IsLoading { get; set; } = true;
 
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
-
-    public ObservableCollection<DashboardQuickActionItem> QuickActions { get; }
 
     // Müdür rolünde "Sözleşmeler" gibi genel bir liste ekranı olmadığından, Aktif/Uyarı/İhlal
     // kartları Müdür için tıklanabilir değildir — yalnızca "Onay Bekliyor" kartı, zaten var olan
@@ -107,52 +224,49 @@ public partial class DashboardViewModel : ViewModelBase
     {
         _contractService = contractService;
         _currentUser = currentUser;
-        QuickActions = new ObservableCollection<DashboardQuickActionItem>(BuildQuickActions(currentUser.Role));
         _ = LoadAsync();
     }
 
-    private static List<DashboardQuickActionItem> BuildQuickActions(UserRole role) => role switch
-    {
-        UserRole.Personel => new List<DashboardQuickActionItem>
-        {
-            new("+ Yeni Sözleşme Talebi", "yeniTalep"),
-        },
-        UserRole.SYB => new List<DashboardQuickActionItem>
-        {
-            new("+ Sözleşme Yarat", "sozlesmeYarat"),
-            new("Son Kontrol (SYB)", "sozlesmeKontrol"),
-        },
-        UserRole.Mudur => new List<DashboardQuickActionItem>
-        {
-            new("Onay Bekleyenler", "onayBekleyen"),
-        },
-        _ => new List<DashboardQuickActionItem>()
-    };
 
     private async Task LoadAsync()
     {
         try
         {
-            var statsTask = _contractService.GetDashboardStatsAsync(_currentUser);
-            var upcomingTask = _contractService.GetUpcomingEndingsAsync(_currentUser);
-            // Yalnızca Müdür'e gösterileceği için, diğer rollerde gereksiz sorgu atılmasın.
-            var activityTask = _currentUser.Role == UserRole.Mudur
-                ? _contractService.GetRecentActivityAsync(_currentUser)
-                : Task.FromResult(new List<AuditLog>());
+            // Panelin tamamı tek servis çağrısıyla doluyor; kutu başına ayrı sorgu
+            // atmak ekranın parça parça dolmasına yol açardı.
+            var summary = await _contractService.GetDashboardSummaryAsync(_currentUser);
 
-            await Task.WhenAll(statsTask, upcomingTask, activityTask);
+            Aktif = summary.Aktif;
+            OnayBekliyor = summary.OnayBekliyor;
+            Uyari = summary.Uyari;
+            Ihlal = summary.Ihlal;
 
-            var stats = statsTask.Result;
-            Aktif = stats.Aktif;
-            OnayBekliyor = stats.OnayBekliyor;
-            Uyari = stats.Uyari;
-            Ihlal = stats.Ihlal;
+            PendingWork = new ObservableCollection<PendingWorkRowViewModel>(
+                summary.PendingWork.Select(p => new PendingWorkRowViewModel(p)));
+
+            ActiveValue = new ObservableCollection<CurrencyTotalRowViewModel>(
+                summary.ActiveValue.Select(v => new CurrencyTotalRowViewModel(v)));
+
+            MonthLabel = DateTime.Now.ToString("MMMM yyyy",
+                System.Globalization.CultureInfo.GetCultureInfo("tr-TR"));
+            MonthNewRequests = summary.ThisMonth.NewRequests;
+            MonthActivated = summary.ThisMonth.Activated;
+            MonthTerminated = summary.ThisMonth.Terminated;
+
+            Ending30 = summary.Endings.Within30;
+            Ending60 = summary.Endings.Within60;
+            Ending90 = summary.Endings.Within90;
+            EndingTotal = summary.Endings.Total;
+
+            var maxTypeCount = summary.TypeBreakdown.Count == 0 ? 0 : summary.TypeBreakdown.Max(x => x.Count);
+            TypeBreakdown = new ObservableCollection<TypeBreakdownRowViewModel>(
+                summary.TypeBreakdown.Take(6).Select(x => new TypeBreakdownRowViewModel(x, maxTypeCount)));
 
             UpcomingEndings = new ObservableCollection<DashboardUpcomingRowViewModel>(
-                upcomingTask.Result.Select(c => new DashboardUpcomingRowViewModel(c)));
+                summary.UpcomingEndings.Select(c => new DashboardUpcomingRowViewModel(c)));
 
             RecentActivity = new ObservableCollection<AuditLogRowViewModel>(
-                activityTask.Result.Select(a => new AuditLogRowViewModel(a)));
+                summary.RecentActivity.Select(a => new AuditLogRowViewModel(a)));
         }
         catch (Exception ex)
         {
@@ -172,4 +286,9 @@ public partial class DashboardViewModel : ViewModelBase
 
     [RelayCommand]
     private void OpenUpcoming(DashboardUpcomingRowViewModel row) => UpcomingContractClicked?.Invoke(row.RawContract);
+
+    // Bekleyen iş satırına tıklandığında ilgili ekrana götürür; hızlı aksiyonlarla
+    // aynı yönlendirme mekanizmasını kullanır.
+    [RelayCommand]
+    private void OpenPendingWork(PendingWorkRowViewModel row) => QuickActionClicked?.Invoke(row.NavKey);
 }

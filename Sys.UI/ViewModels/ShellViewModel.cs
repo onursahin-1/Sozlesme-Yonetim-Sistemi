@@ -386,7 +386,10 @@ public partial class ShellViewModel : ViewModelBase
 
     private void UpdateCurrentPage(NavItem? value)
     {
-        CurrentPageTitle = value?.Label ?? string.Empty;
+        // Gösterge panelinde başlık gizlenir: ekranın kendi karşılama satırı
+        // ("Günaydın, ...") zaten başlığın işlevini görüyor, ikisi birlikte
+        // gereksiz tekrar oluşturuyordu.
+        CurrentPageTitle = value?.Key == "dashboard" ? string.Empty : (value?.Label ?? string.Empty);
         _ = RefreshPendingApprovalCountAsync();
         _ = RefreshUnreadNotificationCountAsync();
 

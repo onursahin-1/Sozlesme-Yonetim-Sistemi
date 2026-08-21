@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 using Sys.Domain;
 namespace Sys.Services;
 
-public class DashboardStats
-{
-    public int Aktif { get; set; }
-    public int OnayBekliyor { get; set; }
-    public int Uyari { get; set; }
-    public int Ihlal { get; set; }
-}
 public class ContractService
 {
     private readonly IContractRepository _contracts;
@@ -107,23 +100,98 @@ public class ContractService
         };
         await _contracts.AddAuditLogAsync(log);
     }
-    public async Task<DashboardStats> GetDashboardStatsAsync(User currentUser)
-    {
-        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
-        var counts = await _contracts.GetStatusCountsAsync(userId);
-        return new DashboardStats
-        {
-            Aktif = counts.GetValueOrDefault(ContractStatus.Aktif),
-            OnayBekliyor = counts.GetValueOrDefault(ContractStatus.OnayBekliyor),
-            Uyari = counts.GetValueOrDefault(ContractStatus.Uyari),
-            Ihlal = counts.GetValueOrDefault(ContractStatus.Ihlal),
-        };
-    }
     public async Task<List<Contract>> GetContractsAsync(User currentUser)
     {
         return currentUser.Role == UserRole.Personel
             ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
             : await _contracts.GetAllAsync();
+    }
+
+    // Gösterge panelinin tamamını tek çağrıda doldurur. Kutu başına ayrı servis
+    // çağrısı yapmak hem yavaş olur hem de ekran parça parça dolardı.
+    public async Task<DashboardSummary> GetDashboardSummaryAsync(User currentUser)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        var today = DateTime.Today;
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var monthEnd = monthStart.AddMonths(1);
+
+        var countsTask = _contracts.GetStatusCountsAsync(userId);
+        var valueTask = _contracts.GetActiveValueByCurrencyAsync(userId);
+        var monthlyTask = _contracts.GetMonthlyStatsAsync(userId, monthStart, monthEnd);
+        var endingsTask = _contracts.GetEndingCalendarAsync(userId, today);
+        var typesTask = _contracts.GetTypeBreakdownAsync(userId);
+        var upcomingTask = GetUpcomingEndingsAsync(currentUser);
+        var activityTask = GetRecentActivityAsync(currentUser);
+        var pendingTask = BuildPendingWorkAsync(currentUser, userId);
+
+        await Task.WhenAll(countsTask, valueTask, monthlyTask, endingsTask,
+                           typesTask, upcomingTask, activityTask, pendingTask);
+
+        var counts = countsTask.Result;
+
+        return new DashboardSummary
+        {
+            Aktif = counts.GetValueOrDefault(ContractStatus.Aktif),
+            OnayBekliyor = counts.GetValueOrDefault(ContractStatus.OnayBekliyor),
+            Uyari = counts.GetValueOrDefault(ContractStatus.Uyari),
+            Ihlal = counts.GetValueOrDefault(ContractStatus.Ihlal),
+
+            ActiveValue = valueTask.Result,
+            ThisMonth = monthlyTask.Result,
+            Endings = endingsTask.Result,
+            TypeBreakdown = typesTask.Result,
+            UpcomingEndings = upcomingTask.Result,
+            RecentActivity = activityTask.Result,
+            PendingWork = pendingTask.Result,
+        };
+    }
+
+    // "Sizi bekleyen işler": kullanıcının KENDİ aksiyonunu bekleyen işler.
+    // Panelin en önemli kutusu — kullanıcı "onay bekliyor: 7" gördüğünde bunun
+    // kaçının kendisini beklediğini bilmiyordu.
+    private async Task<List<PendingWorkItem>> BuildPendingWorkAsync(User currentUser, int? userId)
+    {
+        var items = new List<PendingWorkItem>();
+
+        switch (currentUser.Role)
+        {
+            case UserRole.SYB:
+                var yaratilacak = await _contracts.CountByStatusesAsync(null, ContractStatus.Talep);
+                if (yaratilacak > 0)
+                    items.Add(new PendingWorkItem(
+                        "Sözleşmeye dönüştürülecek talepler",
+                        "Onaylanmış talepler sözleşme oluşturulmayı bekliyor",
+                        yaratilacak, "sozlesmeYarat", "#7C3AED"));
+
+                var sonKontrol = await _contracts.CountByStageAsync(1);
+                if (sonKontrol > 0)
+                    items.Add(new PendingWorkItem(
+                        "Son kontrolünüzde bekleyenler",
+                        "SYB onayı verilmemiş sözleşmeler",
+                        sonKontrol, "sozlesmeKontrol", "#B06A00"));
+                break;
+
+            case UserRole.Mudur:
+                var mudurOnay = await _contracts.CountByStageAsync(2);
+                if (mudurOnay > 0)
+                    items.Add(new PendingWorkItem(
+                        "Onayınızda bekleyenler",
+                        "Yönetim onayı verilmemiş sözleşmeler",
+                        mudurOnay, "onayBekleyen", "#2D6EA8"));
+                break;
+
+            case UserRole.Personel:
+                var reddedilen = await _contracts.CountRejectedRequestsAsync(userId);
+                if (reddedilen > 0)
+                    items.Add(new PendingWorkItem(
+                        "Düzeltme bekleyen talepleriniz",
+                        "Reddedilmiş, yeniden gönderilmesi gereken talepler",
+                        reddedilen, "talepList", "#A32D2D"));
+                break;
+        }
+
+        return items;
     }
 
     // Sözleşme listesi ekranı için sunucu taraflı filtre + arama + sayfalama.

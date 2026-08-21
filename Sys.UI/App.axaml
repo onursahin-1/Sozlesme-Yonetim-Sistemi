@@ -115,6 +115,42 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!--
+          Durum kartı butonu: içeriği tamamen kendi Border'ından gelir, buton gövdesi
+          şeffaftır. "flat" ile aynı mantık; farkı, devre dışıyken de okunur kalması —
+          Müdür rolünde bazı kartlar tıklanamaz ama sayıyı yine göstermeleri gerekiyor.
+        -->
+        <Style Selector="Button.statCard">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.statCard /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="Button.statCard:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.statCard:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.statCard:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.statCard:pointerover">
+            <Setter Property="Opacity" Value="0.88"/>
+        </Style>
+        <!-- Tıklanamayan kart soluklaşmaz: sayı hâlâ okunmalı, sadece imleç değişmez. -->
+        <Style Selector="Button.statCard:disabled">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+
         <!-- Alan bazlı form doğrulama mesajlarının ortak görünümü -->
         <Style Selector="TextBlock.fieldError">
             <Setter Property="Foreground" Value="#D14343"/>
