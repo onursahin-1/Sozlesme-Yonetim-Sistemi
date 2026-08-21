@@ -149,6 +149,11 @@ public class ContractStepViewModel
             case ContractStatus.Feshedildi:
                 return new ContractStepViewModel("Feshedildi", ContractStepState.Rejected);
 
+            // Talep hiç sözleşmeye dönüşmeden kapatıldı; süreç burada bitiyor.
+            case ContractStatus.Reddedildi:
+                return new ContractStepViewModel("Talep reddedildi — kapatıldı",
+                    ContractStepState.Rejected, contract.LastRejectedAt, contract.LastRejectionNote);
+
             default:
                 return new ContractStepViewModel(contract.Status.ToString(), ContractStepState.Current);
         }

@@ -29,41 +29,61 @@
 				<Image Grid.Column="0" Source="avares://Sys.UI/Assets/fakir-logo-white.png"
 					   Height="34" Stretch="Uniform" HorizontalAlignment="Left"
 					   VerticalAlignment="Center" Margin="8,0,0,0"/>
-				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
-					<TextBlock Text="{Binding RoleLabel}" Foreground="#CADCFC" VerticalAlignment="Center"/>
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
 
-					<!-- Bildirim zili: okunmamış sayısı sağ üstte kırmızı rozet olarak görünür -->
+					<!--
+					  Bildirim zili. Emoji yerine vektör çizim kullanılıyor: emoji gösterimi
+					  sisteme göre değişiyor ve çubuğun geri kalanıyla uyumsuz duruyordu.
+					  Path her ortamda aynı çiziliyor ve rengi kontrol edilebiliyor.
+					-->
 					<Button Classes="flat" VerticalAlignment="Center"
                             IsVisible="{Binding ShowNotificationBell}"
                             Command="{Binding ToggleNotificationPanelCommand}"
                             ToolTip.Tip="Bildirimler">
-						<!-- Background="Transparent": zilin sadece glif alanına değil, tüm
-						     kutusuna tıklanabilsin diye hit-test yüzeyi oluşturur. -->
-						<Panel Width="30" Height="26" Background="Transparent">
-							<TextBlock Text="🔔" FontSize="17" Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-							<Border Background="#DC2626" CornerRadius="9" MinWidth="18" Height="16" Padding="4,0"
-                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+						<!-- Background="Transparent": tüm kutu hit-test edilebilir olsun diye -->
+						<Panel Width="38" Height="38" Background="Transparent">
+							<Border Background="#1FFFFFFF" CornerRadius="8" Width="34" Height="34"/>
+							<Path Fill="#E8EFF9" Width="17" Height="17" Stretch="Uniform"
+								  HorizontalAlignment="Center" VerticalAlignment="Center"
+								  Data="M12 2a6 6 0 0 0-6 6v3.6L4.2 14.4A1 1 0 0 0 5 16h14a1 1 0 0 0 .8-1.6L18 11.6V8a6 6 0 0 0-6-6zm0 19a2.6 2.6 0 0 0 2.5-2h-5a2.6 2.6 0 0 0 2.5 2z"/>
+							<Border Background="#E5484D" CornerRadius="8" MinWidth="16" Height="16" Padding="4,0"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0"
                                     IsVisible="{Binding HasUnreadNotifications}">
-								<TextBlock Text="{Binding UnreadCountText}" Foreground="White" FontSize="10" FontWeight="Bold"
+								<TextBlock Text="{Binding UnreadCountText}" Foreground="White" FontSize="9.5" FontWeight="Bold"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 						</Panel>
 					</Button>
 
+					<!-- İnce ayırıcı: zil ile kullanıcı bloğunu görsel olarak ayırır -->
+					<Border Width="1" Height="22" Background="#33FFFFFF" Margin="4,0,8,0"
+							VerticalAlignment="Center"/>
+
 					<!--
-					  Kullanıcı menüsü: ada tıklayınca şifre değiştirme ve çıkış seçenekleri
-					  açılır. Bunlar birer "bölüm" olmadığı için sol menüde yer almıyorlar.
+					  Kullanıcı bloğu: baş harf avatarı + ad + rol tek bir düğmede toplandı.
+					  Rol eskiden çubukta ayrı bir metindi; kullanıcıyla ilişkili olduğu belli
+					  değildi ve sağ tarafı üç ayrı parçaya bölüyordu.
 					-->
 					<Button Classes="flat" VerticalAlignment="Center"
 							Command="{Binding ToggleUserMenuCommand}">
-						<Border Background="#22FFFFFF" BorderBrush="#55FFFFFF" BorderThickness="1"
-								CornerRadius="4" Padding="12,5">
-							<StackPanel Orientation="Horizontal" Spacing="8">
-								<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White"
-										   FontSize="12" VerticalAlignment="Center"/>
-								<TextBlock Text="⌄" Foreground="#CADCFC" FontSize="12"
-										   VerticalAlignment="Center" Margin="0,-4,0,0"/>
+						<Border Background="#1FFFFFFF" BorderBrush="#38FFFFFF" BorderThickness="1"
+								CornerRadius="8" Padding="7,5,12,5">
+							<StackPanel Orientation="Horizontal" Spacing="10">
+								<Border Width="30" Height="30" CornerRadius="15" Background="#3D6FA8">
+									<TextBlock Text="{Binding UserInitials}" Foreground="White"
+											   FontSize="11.5" FontWeight="Bold" LetterSpacing="0.3"
+											   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+								</Border>
+								<StackPanel VerticalAlignment="Center" Spacing="1">
+									<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White"
+											   FontSize="12.5" FontWeight="SemiBold"/>
+									<TextBlock Text="{Binding RoleLabel}" Foreground="#9DB6D6" FontSize="10.5"/>
+								</StackPanel>
+								<Path Stroke="#9DB6D6" StrokeThickness="2"
+									  StrokeLineCap="Round" StrokeJoin="Round"
+									  Width="10" Height="6" Stretch="Uniform"
+									  VerticalAlignment="Center" Margin="2,2,0,0"
+									  Data="M6 9L12 15L18 9"/>
 							</StackPanel>
 						</Border>
 					</Button>
@@ -139,7 +159,7 @@
 	<!-- Kullanıcı menüsü: adın altında, sağ üstte açılır -->
 	<Border IsVisible="{Binding IsUserMenuOpen}"
 			HorizontalAlignment="Right" VerticalAlignment="Top"
-			Margin="0,52,16,0" MinWidth="200"
+			Margin="0,68,24,0" MinWidth="210"
 			Background="White" BorderBrush="#B9C6D8" BorderThickness="1" CornerRadius="8"
 			BoxShadow="0 6 20 0 #33000000">
 		<StackPanel Margin="6">
@@ -172,7 +192,7 @@
 	<!-- Bildirim paneli: zilin altında, sağ üstte açılır -->
 	<Border IsVisible="{Binding IsNotificationPanelOpen}"
             HorizontalAlignment="Right" VerticalAlignment="Top"
-            Margin="0,52,16,0" Width="380" MaxHeight="460"
+            Margin="0,68,24,0" Width="380" MaxHeight="460"
             Background="White" BorderBrush="#B9C6D8" BorderThickness="1" CornerRadius="8"
             BoxShadow="0 6 20 0 #33000000">
 		<DockPanel>

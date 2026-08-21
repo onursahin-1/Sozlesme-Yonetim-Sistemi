@@ -1,4 +1,5 @@
-﻿using Sys.Domain;
+﻿using System;
+using Sys.Domain;
 using Sys.Services;
 using Xunit;
 
@@ -62,6 +63,36 @@ public class ContractServiceApprovalTests
 
         Assert.Equal(1, contract.Stage);
         Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
+
+        // Red izi sözleşmenin üzerinde kalmalı: SYB kuyruğunda bunun bir TEKRAR
+        // inceleme olduğunu ve gerekçesini görebilsin.
+        Assert.True(contract.WasRejected);
+        Assert.Equal("tutarsız bedel", contract.LastRejectionNote);
+        Assert.NotNull(contract.LastRejectedAt);
+    }
+
+    // Zincirde ileri gidildiğinde red izi temizlenir; aksi halde "daha önce reddedildi"
+    // uyarısı sözleşme yürürlüğe girdikten sonra da ekranda kalırdı.
+    [Fact]
+    public async Task Approval_ClearsPreviousRejectionMark()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Stage = 1,
+            Status = ContractStatus.OnayBekliyor,
+            WasRejected = true,
+            LastRejectionNote = "tutarsız bedel",
+            LastRejectedAt = DateTime.Now
+        };
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.DecideApprovalAsync(contract, syb, ApprovalDecision.Onay, null);
+
+        Assert.Equal(2, contract.Stage);
+        Assert.False(contract.WasRejected);
+        Assert.Null(contract.LastRejectionNote);
+        Assert.Null(contract.LastRejectedAt);
     }
 
     [Fact]

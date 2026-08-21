@@ -231,4 +231,147 @@ public class ContractServiceAuthorizationTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.AddAttachmentAsync(new Attachment { ContractId = 123 }, personel));
     }
+
+    // --- Talep reddi (Stage 0) ---
+
+    [Theory]
+    [InlineData(UserRole.Personel)]
+    [InlineData(UserRole.Mudur)]
+    [InlineData(UserRole.Admin)]
+    public async Task RejectRequestAsync_NonSyb_ThrowsException(UserRole role)
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = ContractStatus.Talep };
+        var user = new User { Id = 5, Role = role };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.RejectRequestAsync(contract, user, "gerekçe", true));
+    }
+
+    [Fact]
+    public async Task RejectRequestAsync_EmptyNote_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = ContractStatus.Talep };
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.RejectRequestAsync(contract, syb, "   ", true));
+    }
+
+    // Onay zincirine girmiş bir sözleşme bu yoldan kapatılamamalı; kararı
+    // DecideApprovalAsync vermeli.
+    [Fact]
+    public async Task RejectRequestAsync_AlreadyContract_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = ContractStatus.OnayBekliyor, Stage = 1 };
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.RejectRequestAsync(contract, syb, "gerekçe", false));
+    }
+
+    // İade: talep sahibine geri döner, düzeltilip yeniden gönderilebilir.
+    [Fact]
+    public async Task RejectRequestAsync_AllowResubmit_KeepsRequestOpen()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Id = 1, Status = ContractStatus.Talep, Title = "Test" };
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.RejectRequestAsync(contract, syb, "eksik bilgi", allowResubmit: true);
+
+        Assert.Equal(ContractStatus.Talep, contract.Status);
+        Assert.Equal(0, contract.Stage);
+        Assert.True(contract.WasRejected);
+        Assert.Equal("eksik bilgi", contract.LastRejectionNote);
+    }
+
+    // Kapatma: talep nihai olarak reddedilir.
+    [Fact]
+    public async Task RejectRequestAsync_WithoutResubmit_ClosesRequest()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Id = 1, Status = ContractStatus.Talep, Title = "Test" };
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.RejectRequestAsync(contract, syb, "mükerrer talep", allowResubmit: false);
+
+        Assert.Equal(ContractStatus.Reddedildi, contract.Status);
+        Assert.Equal(0, contract.Stage);
+        Assert.True(contract.WasRejected);
+    }
+
+    // --- Yürürlük kontrolü (düzenleme / fesih / ihlal) ---
+
+    // Onay zincirinin ortasındaki sözleşme düzenlemeye açılamamalı: gerçek veride bu
+    // yüzden "Onay Bekliyor / Stage 3" gibi hiçbir kuyrukta görünmeyen kayıt oluştu.
+    [Theory]
+    [InlineData(ContractStatus.Talep)]
+    [InlineData(ContractStatus.OnayBekliyor)]
+    [InlineData(ContractStatus.Tamamlandi)]
+    [InlineData(ContractStatus.Feshedildi)]
+    [InlineData(ContractStatus.Reddedildi)]
+    public async Task EditContractAsync_NotLiveContract_ThrowsException(ContractStatus status)
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = status };
+        var syb = new User { Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.EditContractAsync(contract, syb, "Bedel Değişikliği", "gerekçe", null, null));
+    }
+
+    // Arşivdeki bir sözleşmeye ihlal bildirilirse Status = Ihlal atanıp kayıt
+    // yürürlükteymiş gibi listeye geri dönüyordu.
+    [Theory]
+    [InlineData(ContractStatus.Tamamlandi)]
+    [InlineData(ContractStatus.Feshedildi)]
+    public async Task ReportViolationAsync_ArchivedContract_ThrowsException(ContractStatus status)
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = status };
+        var syb = new User { Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ReportViolationAsync(contract, syb, "Gecikme", DateTime.Today, "açıklama"));
+    }
+
+    [Fact]
+    public async Task RequestTerminationAsync_AlreadyTerminated_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = ContractStatus.Feshedildi };
+        var syb = new User { Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.RequestTerminationAsync(contract, syb, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
+    }
+
+    // Devam eden bir düzenleme varken ikinci bir işlem başlatılamaz: geri dönüş
+    // noktasını tutan PreviousStatusBeforeEdit tek değer olduğu için ikincisi
+    // birincinin kaydını eziyordu.
+    [Fact]
+    public async Task RequestTerminationAsync_PendingEdit_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = ContractStatus.Aktif, PendingEdit = true };
+        var syb = new User { Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.RequestTerminationAsync(contract, syb, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
+    }
+
+    // Kapatılmış bir talep sözleşmeye dönüştürülememeli.
+    [Fact]
+    public async Task FinalizeContractAsync_RejectedRequest_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract { Status = ContractStatus.Reddedildi };
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), syb));
+    }
 }

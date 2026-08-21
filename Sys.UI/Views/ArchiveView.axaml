@@ -1,34 +1,149 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:conv="using:Sys.UI.Converters"
              x:Class="Sys.UI.Views.ArchiveView"
              x:DataType="vm:ArchiveViewModel">
 
+	<UserControl.Styles>
+		<!-- Kart zaten görsel birim; ListBoxItem'ın kendi dolgusu/vurgusu kaldırılıyor. -->
+		<Style Selector="ListBox">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+		<Style Selector="ListBoxItem">
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Margin" Value="0"/>
+		</Style>
+		<Style Selector="ListBoxItem /template/ ContentPresenter">
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="CornerRadius" Value="8"/>
+		</Style>
+	</UserControl.Styles>
+
 	<!-- Renkli butonlar Classes="flat" kullanır; stil tanımı App.axaml içindedir. -->
-	<Grid ColumnDefinitions="320,*" Margin="24">
+	<Grid ColumnDefinitions="340,*" Margin="24">
 
 		<!--
-		  Sol: arşivlenmiş sözleşmeler.
+		  Sol: arşivlenmiş kayıtlar.
 		  DockPanel kullanılıyor (eskiden StackPanel'di): StackPanel çocuklarına sınırsız
 		  yükseklik verdiği için ListBox tüm kayıtlar kadar uzuyor ve kendi kaydırma
-		  çubuğu devreye girmiyordu. Arşiv zamanla sürekli büyüyen bir liste olduğundan
-		  bu er geç sorun çıkaracaktı.
+		  çubuğu devreye girmiyordu.
 		-->
 		<DockPanel Grid.Column="0" Margin="0,0,16,0">
+
 			<!-- Başlık burada tekrar yazılmıyor; kabuk (ShellView) zaten üstte gösteriyor. -->
 			<TextBlock DockPanel.Dock="Top"
-					   Text="Sona eren ve feshedilen sözleşmeler — salt okunur"
-					   FontSize="12" Foreground="Gray" Margin="0,0,0,12" TextWrapping="Wrap"/>
-			<TextBlock DockPanel.Dock="Top" Text="Henüz arşivlenmiş sözleşme yok."
-					   IsVisible="{Binding !AvailableContracts.Count}" Foreground="Gray"/>
+					   Text="Süresi dolan, feshedilen ve reddedilen kayıtlar — salt okunur"
+					   FontSize="12" Foreground="#8A94A6" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+			<Border DockPanel.Dock="Top" Background="White" BorderBrush="#DDE3EC" BorderThickness="1"
+					CornerRadius="8" Margin="0,0,0,10">
+				<Grid ColumnDefinitions="Auto,*">
+					<Path Grid.Column="0" Stroke="#A3ABB8" StrokeThickness="2" Fill="Transparent"
+						  Width="13" Height="13" Stretch="Uniform" Margin="11,0,0,0"
+						  VerticalAlignment="Center"
+						  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
+					<TextBox Grid.Column="1" Text="{Binding SearchText}"
+							 PlaceholderText="Başlık, firma veya no ile ara..."
+							 Background="Transparent" BorderThickness="0"
+							 Padding="9,8" FontSize="12"/>
+				</Grid>
+			</Border>
+
+			<!-- Arşivde neyin neden bulunduğunu ayırt edebilmek için durum filtreleri -->
+			<WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+				<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="tumu"
+						Margin="0,0,6,6">
+					<Border CornerRadius="14" Padding="12,5"
+							Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=tumu}">
+						<TextBlock Text="Tümü" FontSize="11.5" FontWeight="SemiBold"
+								   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tumu}"/>
+					</Border>
+				</Button>
+				<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="tamamlandi"
+						Margin="0,0,6,6">
+					<Border CornerRadius="14" Padding="12,5"
+							Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=tamamlandi}">
+						<TextBlock Text="Süresi Doldu" FontSize="11.5" FontWeight="SemiBold"
+								   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tamamlandi}"/>
+					</Border>
+				</Button>
+				<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="feshedildi"
+						Margin="0,0,6,6">
+					<Border CornerRadius="14" Padding="12,5"
+							Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=feshedildi}">
+						<TextBlock Text="Feshedildi" FontSize="11.5" FontWeight="SemiBold"
+								   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=feshedildi}"/>
+					</Border>
+				</Button>
+				<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="reddedildi"
+						Margin="0,0,6,6">
+					<Border CornerRadius="14" Padding="12,5"
+							Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=reddedildi}">
+						<TextBlock Text="Reddedildi" FontSize="11.5" FontWeight="SemiBold"
+								   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=reddedildi}"/>
+					</Border>
+				</Button>
+			</WrapPanel>
+
+			<!-- Sayfalama: arşiv sürekli büyüdüğü için liste 10'arlı sayfalanır -->
+			<Border DockPanel.Dock="Bottom" IsVisible="{Binding ShowPager}" Margin="0,10,0,0">
+				<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+					<Button Classes="flat" IsEnabled="{Binding CanGoPrevious}" Command="{Binding PreviousPageCommand}">
+						<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+								CornerRadius="6" Padding="10,5">
+							<TextBlock Text="‹" Foreground="#3D4654" FontSize="12"/>
+						</Border>
+					</Button>
+					<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center"
+							   FontSize="11.5" Foreground="#8A94A6"/>
+					<Button Classes="flat" IsEnabled="{Binding CanGoNext}" Command="{Binding NextPageCommand}">
+						<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+								CornerRadius="6" Padding="10,5">
+							<TextBlock Text="›" Foreground="#3D4654" FontSize="12"/>
+						</Border>
+					</Button>
+				</StackPanel>
+			</Border>
+
+			<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,20,0,0" IsVisible="{Binding IsEmpty}">
+				<TextBlock Text="Bu filtrelerle eşleşen arşiv kaydı yok." Foreground="#8A94A6"
+						   FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+				<Button Classes="flat" HorizontalAlignment="Center" Command="{Binding ClearFiltersCommand}"
+						IsVisible="{Binding HasActiveFilters}">
+					<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+							CornerRadius="6" Padding="12,6">
+						<TextBlock Text="Filtreleri temizle" Foreground="#3D4654" FontSize="11.5"/>
+					</Border>
+				</Button>
+			</StackPanel>
+
 			<ListBox ItemsSource="{Binding AvailableContracts}"
                      SelectedItem="{Binding SelectedContract}">
 				<ListBox.ItemTemplate>
-					<DataTemplate>
-						<StackPanel Spacing="2" Margin="0,4">
-							<TextBlock Text="{Binding Title}" FontWeight="Bold"/>
-							<TextBlock Text="{Binding CompanyName}" FontSize="11" Foreground="Gray"/>
-						</StackPanel>
+					<DataTemplate x:DataType="vm:ContractCardViewModel">
+						<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+								CornerRadius="8" Padding="12,10" Margin="0,0,0,6">
+							<StackPanel Spacing="6">
+								<TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5"
+										   Foreground="#1A2E4A" TextWrapping="Wrap"/>
+								<TextBlock Text="{Binding CompanyName}" FontSize="11" Foreground="#8A94A6"
+										   TextWrapping="Wrap"/>
+								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+									<!-- Rozet: kaydın arşive neden düştüğünü tek bakışta gösterir -->
+									<Border Grid.Column="0" Background="{Binding StatusBgHex}"
+											CornerRadius="9" Padding="8,2" VerticalAlignment="Center">
+										<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}"
+												   FontSize="10" FontWeight="Bold"/>
+									</Border>
+									<TextBlock Grid.Column="1" Text="{Binding ArchiveDateText}" FontSize="10.5"
+											   Foreground="#A3ABB8" VerticalAlignment="Center"
+											   HorizontalAlignment="Right"/>
+								</Grid>
+							</StackPanel>
+						</Border>
 					</DataTemplate>
 				</ListBox.ItemTemplate>
 			</ListBox>
@@ -132,6 +247,16 @@
 					<StackPanel Spacing="6">
 						<TextBlock Text="FESİH BİLGİSİ" FontSize="10" FontWeight="Bold" Foreground="#A32D2D"/>
 						<TextBlock Text="{Binding TerminationInfo}" Foreground="#1A2E4A" FontSize="12.5" TextWrapping="Wrap"/>
+					</StackPanel>
+				</Border>
+
+				<!-- Fesih bilgisi kutusunun karşılığı: reddedilerek kapatılan talepler için -->
+				<Border IsVisible="{Binding HasRejectionInfo}"
+						Background="#FBE4E4" BorderBrush="#A32D2D" BorderThickness="1"
+						CornerRadius="10" Padding="20">
+					<StackPanel Spacing="6">
+						<TextBlock Text="RED BİLGİSİ" FontSize="10" FontWeight="Bold" Foreground="#A32D2D"/>
+						<TextBlock Text="{Binding RejectionInfo}" Foreground="#1A2E4A" FontSize="12.5" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
 

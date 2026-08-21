@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -118,6 +119,23 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     public ObservableCollection<WizardFileItem> EkFileNames { get; } = new();
     public ObservableCollection<WizardFileItem> TeminatFileNames { get; } = new();
 
+    // Talebe DAHA ÖNCE yüklenmiş dosyalar. Bu ekran aynı talep için ikinci kez
+    // çalıştırılabildiğinden (Son Kontrol reddi sonrası), SYB'nin hangi dosyaların
+    // zaten ekli olduğunu görmesi gerekir; aksi halde aynı dosyayı tekrar yükleyip
+    // sözleşmeye iki kopya ekliyordu.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasExistingAttachments))]
+    public partial ObservableCollection<Attachment> ExistingAttachments { get; set; } = new();
+
+    public bool HasExistingAttachments => ExistingAttachments.Count > 0;
+
+    // Bu talep için daha önce bir sözleşme oluşturulmuş mu? (Reddedilip geri dönmüş.)
+    [ObservableProperty]
+    public partial bool IsRecreate { get; set; }
+
+    [ObservableProperty]
+    public partial string RecreateNotice { get; set; } = string.Empty;
+
     // Para birimi seçenekleri ve seçili değer. Talep aşamasında belirlenen para birimi
     // buraya taşınır (OnSelectedRequestChanged), SYB isterse değiştirebilir.
     public string[] CurrencyOptions { get; } = CurrencyHelper.Options;
@@ -194,9 +212,19 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     }
 
     [RelayCommand]
-    private void AddItem()
+    private void AddItem() => AddItem(null, null, null, null);
+
+    // Boş satır eklemek ve kayıtlı bir kalemi forma geri yüklemek aynı yolu kullanır;
+    // böylece LineTotal aboneliği (toplam hesabı) her iki durumda da kurulmuş olur.
+    private void AddItem(string? description, int? quantity, string? unit, decimal? unitPrice)
     {
         var row = new ContractItemRowViewModel(RemoveItemRow);
+
+        if (description is not null) row.Description = description;
+        if (quantity is not null) row.QuantityText = quantity.Value.ToString(CultureInfo.CurrentCulture);
+        if (!string.IsNullOrWhiteSpace(unit)) row.Unit = unit!;
+        if (unitPrice is not null) row.UnitPriceText = unitPrice.Value.ToString(CultureInfo.CurrentCulture);
+
         row.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(ContractItemRowViewModel.LineTotal))
@@ -244,12 +272,80 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     [RelayCommand]
     private void RemoveTeminatFile(WizardFileItem item) => TeminatFileNames.Remove(item);
 
+    // Art arda talep değiştirildiğinde geç dönen eski bir sorgunun yeni seçimin
+    // verisini ezmesini engelleyen istek sayacı (diğer ekranlardaki desenle aynı).
+    private int _requestLoadToken;
+
     partial void OnSelectedRequestChanged(Contract? value)
     {
         RequestError = string.Empty;
         SelectedCurrency = string.IsNullOrWhiteSpace(value?.Currency) ? "TRY" : value!.Currency;
         SapCariKodu = value?.SapCariKodu ?? string.Empty;
         SelectedCompanyType = value?.CompanyType ?? string.Empty;
+
+        IsRecreate = false;
+        RecreateNotice = string.Empty;
+        ExistingAttachments = new ObservableCollection<Attachment>();
+
+        var token = ++_requestLoadToken;
+        _ = LoadExistingContractDataAsync(value, token);
+    }
+
+    // Reddedilip geri dönmüş bir talepte, önceki denemede girilen kalemler/tarihler
+    // veritabanında duruyor. Form eskiden bomboş açılıyordu: SYB her şeyi yeniden
+    // yazıyor, kaydettiğinde de kalemler eskilerin üzerine ekleniyordu. Artık önceki
+    // veri forma geri yükleniyor ve kayıt sırasında kalemler değiştiriliyor —
+    // ekranda görülen ile veritabanındaki aynı oluyor.
+    private async Task LoadExistingContractDataAsync(Contract? request, int token)
+    {
+        if (request is null)
+        {
+            EnsureAtLeastOneItemRow();
+            return;
+        }
+
+        try
+        {
+            var full = await _contractService.GetContractDetailAsync(request.Id, _currentUser);
+            if (token != _requestLoadToken) return; // daha yeni bir seçim yapıldı
+
+            if (full is null)
+            {
+                EnsureAtLeastOneItemRow();
+                return;
+            }
+
+            if (full.StartDate is { } start) StartDate = new DateTimeOffset(start);
+            if (full.EndDate is { } end) EndDate = new DateTimeOffset(end);
+            if (!string.IsNullOrWhiteSpace(full.PaymentPeriod)) SelectedPaymentPeriod = full.PaymentPeriod!;
+
+            Items.Clear();
+            foreach (var item in full.Items)
+                AddItem(item.Description, item.Quantity, item.Unit, item.UnitPrice);
+
+            EnsureAtLeastOneItemRow();
+
+            ExistingAttachments = new ObservableCollection<Attachment>(full.Attachments);
+
+            IsRecreate = full.Items.Count > 0 || full.Attachments.Count > 0;
+            if (IsRecreate)
+            {
+                RecreateNotice =
+                    "Bu talep için daha önce sözleşme oluşturulmuş. Önceki kalemler ve tarihler " +
+                    "forma yüklendi; kaydettiğinizde kalemler bu listeyle DEĞİŞTİRİLİR.";
+            }
+        }
+        catch (Exception ex)
+        {
+            if (token != _requestLoadToken) return;
+            ErrorMessage = "Talebin önceki verileri yüklenemedi: " + ex.Message;
+            EnsureAtLeastOneItemRow();
+        }
+    }
+
+    private void EnsureAtLeastOneItemRow()
+    {
+        if (Items.Count == 0) AddItem();
     }
 
     [RelayCommand]

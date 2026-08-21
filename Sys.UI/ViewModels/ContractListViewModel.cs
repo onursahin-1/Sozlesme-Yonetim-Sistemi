@@ -55,6 +55,11 @@ public partial class ContractListViewModel : ViewModelBase
     [ObservableProperty]
     public partial ContractCardViewModel? SelectedContract { get; set; }
 
+    // Red işlemi sürerken ikinci bir diyaloğun açılmasını engeller; aksi halde aynı
+    // talep iki kez reddedilmeye çalışılır ve ikincisi eşzamanlılık hatası verirdi.
+    [ObservableProperty]
+    public partial bool IsBusy { get; set; }
+
     // --- Sayfalama durumu ---
 
     [ObservableProperty]
@@ -120,6 +125,34 @@ public partial class ContractListViewModel : ViewModelBase
     private void RequestSonKontrol(ContractCardViewModel card)
     {
         SonKontrolRequested?.Invoke(card.RawContract);
+    }
+
+    // Talep reddi. Gerekçe ve "yeniden gönderilebilir mi" bilgisi diyalogdan geldiği
+    // için bu metot bir RelayCommand değil; görünüm kod-arkası diyaloğu açıp çağırır.
+    public async Task<bool> RejectRequestAsync(ContractCardViewModel card, string note, bool allowResubmit)
+    {
+        if (IsBusy) return false;
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            await _contractService.RejectRequestAsync(card.RawContract, _currentUser, note, allowResubmit);
+
+            // Kart durum değiştirdiği için (Talep → İade/Reddedildi) liste yeniden çekilir;
+            // kapatılan talep varsayılan "Tümü" filtresinde artık görünmez.
+            await LoadAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Talep reddedilirken bir hata oluştu: " + ex.Message;
+            return false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     // Ekran açıkken başka bir kullanıcının eklediği/güncellediği sözleşmeleri

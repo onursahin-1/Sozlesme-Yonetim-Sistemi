@@ -214,7 +214,14 @@ public class ContractService
         "uyari" => (new[] { ContractStatus.Uyari }, null),
         "ihlal" => (new[] { ContractStatus.Ihlal }, null),
         "tamamlandi" => (new[] { ContractStatus.Tamamlandi }, null),
-        _ => (null, new[] { ContractStatus.Tamamlandi, ContractStatus.Feshedildi })
+
+        // Kapatılmış talepler "Tümü" listesinde görünmez (devam eden bir iş değiller);
+        // kendi filtreleriyle burada, tam künyeleriyle de Arşiv ekranında bulunurlar.
+        "reddedildi" => (new[] { ContractStatus.Reddedildi }, null),
+
+        // "Tümü" = devam eden işler. Hariç tutulan küme Arşiv'in kapsadığı kümeyle
+        // aynı olmalı; tek yerden (ArchivedStatuses) beslenerek ikisi senkron tutuluyor.
+        _ => (null, ArchivedStatuses)
     };
 
     // Gösterge panelindeki "Yaklaşan Bitişler" kutusu için: belirtilen gün içinde
@@ -249,6 +256,39 @@ public class ContractService
     {
         if (actingUser.Role is not (UserRole.Personel or UserRole.SYB))
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+    }
+
+    // "Yürürlükte" sayılan durumlar: sözleşme onay zincirini tamamlamış ve henüz
+    // kapanmamış. Düzenleme, fesih ve ihlal işlemleri yalnızca bu kümede anlamlıdır.
+    private static readonly ContractStatus[] LiveStatuses =
+    {
+        ContractStatus.Aktif,
+        ContractStatus.Uyari,
+        ContractStatus.Ihlal
+    };
+
+    // Bu kontrol eskiden HİÇ yoktu; yalnızca rol bakılıyordu. Sonucu gerçek veride
+    // görüldü: onay zincirinin ortasındaki (Status = OnayBekliyor, Stage = 2) bir
+    // sözleşme düzenlemeye açıldı, düzenleme reddedilince kod sözleşmenin yürürlükte
+    // olduğunu varsayıp Stage = 3 atadı ve kayıt "Onay Bekliyor / Stage 3" gibi
+    // hiçbir onay kuyruğunda görünmeyen bir durumda kalıcı olarak takıldı.
+    //
+    // Zaten devam eden bir düzenleme/fesih varken ikincisinin başlatılması da burada
+    // engelleniyor: PreviousStatusBeforeEdit/BeforeTermination tek değer tuttuğu için
+    // ikinci istek birincinin geri dönüş noktasını eziyordu.
+    private static void EnsureContractIsLive(Contract contract, string islem)
+    {
+        if (!LiveStatuses.Contains(contract.Status))
+            throw new InvalidOperationException(
+                $"Bu sözleşme için {islem} işlemi yapılamaz: sözleşme yürürlükte değil.");
+
+        if (contract.PendingEdit)
+            throw new InvalidOperationException(
+                "Bu sözleşmede onay bekleyen bir düzenleme talebi var; sonuçlanmadan yeni işlem yapılamaz.");
+
+        if (contract.PendingTermination)
+            throw new InvalidOperationException(
+                "Bu sözleşmede onay bekleyen bir fesih talebi var; sonuçlanmadan yeni işlem yapılamaz.");
     }
 
     public async Task<Contract> CreateRequestAsync(Contract contract, User actingUser)
@@ -287,6 +327,10 @@ public class ContractService
         var existing = await GetContractDetailAsync(contract.Id, actingUser);
         if (existing is null)
             throw new InvalidOperationException("Bu talebi düzenleme yetkiniz yok.");
+        // Reddedilip kapatılan talep, iade edilenden farklı olarak yeniden gönderilemez —
+        // kullanıcının nedenini anlaması için ayrı bir mesaj veriliyor.
+        if (existing.Status == ContractStatus.Reddedildi)
+            throw new InvalidOperationException("Bu talep reddedilerek kapatılmıştır, yeniden gönderilemez. Gerekiyorsa yeni bir talep oluşturun.");
         if (existing.Status != ContractStatus.Talep)
             throw new InvalidOperationException("Bu talep artık düzenlenemez, işlem görmüş.");
         await _contracts.UpdateRequestAsync(contract);
@@ -298,6 +342,71 @@ public class ContractService
         await NotifyAsync(sybIds, contract.Id, NotificationType.SozlesmeOlayi,
             "Talep güncellendi", $"\"{contract.Title}\" talebi düzenlenip yeniden gönderildi.");
     }
+    // Henüz sözleşmeye dönüşmemiş bir talebin (Status = Talep, Stage = 0) SYB tarafından
+    // reddedilmesi. DecideApprovalAsync yalnızca Stage 1-2 için çalıştığı için bu aşamada
+    // hiçbir red yolu yoktu: SYB'nin geçersiz bir talebi reddedebilmesi için önce kalemleri
+    // ve tarihleri girip sözleşmeyi YARATMASI, ardından Son Kontrol'de kendi yarattığı
+    // kaydı reddetmesi gerekiyordu — bu sırada boşuna bir sözleşme numarası da yakılıyordu.
+    //
+    // allowResubmit:
+    //   true  → İade. Talep sahibine geri döner, düzeltip yeniden gönderebilir.
+    //           Durum Talep olarak kalır, mevcut WasRejected mekanizması kullanılır.
+    //   false → Kapatma. Durum Reddedildi olur; UpdateRequestAsync artık bu talebi
+    //           düzenlemeye izin vermez, süreç nihai olarak biter.
+    public async Task RejectRequestAsync(Contract contract, User actingUser, string? note, bool allowResubmit)
+    {
+        if (actingUser.Role != UserRole.SYB)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        // Sözleşmeye dönüşmüş kayıtlar bu yoldan reddedilemez; onların yeri onay
+        // zinciridir (DecideApprovalAsync). Aksi halde onay aşamasındaki bir sözleşme
+        // zincir atlanarak kapatılabilirdi.
+        if (contract.Status != ContractStatus.Talep)
+            throw new InvalidOperationException("Yalnızca henüz sözleşmeye dönüşmemiş talepler reddedilebilir.");
+
+        if (string.IsNullOrWhiteSpace(note))
+            throw new InvalidOperationException("Reddetme işlemi için bir gerekçe girilmelidir.");
+
+        contract.Stage = 0;
+        contract.Status = allowResubmit ? ContractStatus.Talep : ContractStatus.Reddedildi;
+        contract.WasRejected = true;
+        contract.LastRejectionNote = note;
+        contract.LastRejectedAt = DateTime.Now;
+
+        // Karar, sözleşme detayındaki zaman çizelgesinde de görünsün diye ApprovalLog
+        // olarak yazılır. StepNumber 0 = onay zinciri öncesi talep incelemesi.
+        var log = new ApprovalLog
+        {
+            StepNumber = 0,
+            StepName = allowResubmit ? "Talep İncelemesi (İade)" : "Talep İncelemesi (Kapatıldı)",
+            ActingUserId = actingUser.Id,
+            Decision = ApprovalDecision.Red,
+            Note = note,
+            ActionDate = DateTime.Now
+        };
+
+        var auditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = allowResubmit ? "TalepİadeEdildi" : "TalepReddedildi",
+            ActingUserId = actingUser.Id,
+            Detail = $"{contract.Title} talebi " + (allowResubmit ? "düzeltilmek üzere iade edildi" : "reddedilip kapatıldı") + $" - Not: {note}",
+            ActionDate = DateTime.Now,
+        };
+
+        await _contracts.ApplyDecisionAsync(contract, log, auditLog);
+
+        var (baslik, mesaj) = allowResubmit
+            ? ("Talebiniz iade edildi",
+               $"\"{contract.Title}\" talebi düzeltilmek üzere iade edildi. Gerekçe: {note}")
+            : ("Talebiniz reddedildi",
+               $"\"{contract.Title}\" talebi reddedildi ve kapatıldı. Gerekçe: {note}");
+
+        await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id,
+            NotificationType.TalepSonucu, baslik, mesaj);
+    }
+
     public async Task AddAttachmentAsync(Attachment attachment, User actingUser)
     {
         if (actingUser.Role == UserRole.Admin)
@@ -370,9 +479,24 @@ public class ContractService
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        // Yalnızca bekleyen bir talep sözleşmeye dönüştürülebilir. Bu kontrol olmadan
+        // reddedilip kapatılmış bir talep (ya da hâlihazırda yürürlükteki bir sözleşme)
+        // yeniden onay zincirinin başına gönderilebilirdi.
+        if (contract.Status != ContractStatus.Talep)
+            throw new InvalidOperationException("Bu talep sözleşmeye dönüştürülemez; artık bekleyen bir talep değil.");
+
         contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
         contract.Status = ContractStatus.OnayBekliyor;
         contract.Stage = 1;
+
+        // Talep aşamasındaki red işareti burada temizlenir: talep artık sözleşmeye
+        // dönüştü. Aksi halde talep reddinin gerekçesi, Son Kontrol'deki yeni
+        // sözleşmenin altında alakasız bir uyarı olarak görünmeye devam ederdi.
+        // (Red kaydının kendisi ApprovalLog'da kalır, detaydaki zaman çizelgesinde görünür.)
+        contract.WasRejected = false;
+        contract.LastRejectionNote = null;
+        contract.LastRejectedAt = null;
         var auditLog = new AuditLog
         {
             EntityName = "Contract",
@@ -495,6 +619,12 @@ public class ContractService
         {
             if (decision == ApprovalDecision.Onay)
             {
+                // Zincirde ileri gidildiği an "reddedilmişti" işareti temizlenir; aksi
+                // halde red notu sözleşme yürürlüğe girdikten sonra da ekranda kalırdı.
+                contract.WasRejected = false;
+                contract.LastRejectionNote = null;
+                contract.LastRejectedAt = null;
+
                 if (contract.Stage == 1)
                 {
                     contract.Stage = 2;
@@ -507,13 +637,19 @@ public class ContractService
             }
             else
             {
+                // Her iki red yönü de aynı alanlara yazılır. Eskiden yalnızca Stage 1
+                // reddi (talebe geri dönüş) işaretleniyordu; Müdür Stage 2'de reddedip
+                // sözleşmeyi SYB'ye geri gönderdiğinde hiçbir iz kalmıyordu. SYB kaydı
+                // onay kuyruğunda sanki ilk kez inceliyormuş gibi görüyor, red gerekçesini
+                // ancak detay ekranındaki zaman çizelgesinden bulabiliyordu.
+                contract.WasRejected = true;
+                contract.LastRejectionNote = note;
+                contract.LastRejectedAt = DateTime.Now;
+
                 if (contract.Stage == 1)
                 {
                     contract.Stage = 0;
                     contract.Status = ContractStatus.Talep;
-                    contract.WasRejected = true;
-                    contract.LastRejectionNote = note;
-                    contract.LastRejectedAt = DateTime.Now;
                 }
                 else
                 {
@@ -575,6 +711,9 @@ public class ContractService
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        EnsureContractIsLive(contract, "düzenleme");
+
         var revision = new ContractRevision
         {
             ChangeType = changeType,
@@ -623,6 +762,12 @@ public class ContractService
     {
         if (reporter.Role == UserRole.Mudur)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        // Kontrol olmadan, süresi dolmuş ya da feshedilmiş bir sözleşmeye ihlal
+        // bildirildiğinde Status = Ihlal atanıyor ve arşivdeki kayıt yeniden
+        // yürürlükteymiş gibi listeye geri dönüyordu.
+        EnsureContractIsLive(contract, "ihlal bildirimi");
+
         var violation = new Violation
         {
             ContractId = contract.Id,
@@ -655,11 +800,34 @@ public class ContractService
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
         return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari);
     }
-    public async Task<List<Contract>> GetArchivedContractsAsync(User currentUser)
+    // Arşiv, sözleşmenin/talebin ARTIK İŞLEM GÖRMEYECEĞİ tüm son durumları kapsar:
+    // süresi dolanlar, feshedilenler ve sözleşmeye hiç dönüşmeden kapatılan talepler.
+    // Reddedilen talepler eskiden hiçbir listede görünmüyordu — ne aktif listede
+    // (kapanmış oldukları için) ne de arşivde (kapsam dışı oldukları için).
+    public static readonly ContractStatus[] ArchivedStatuses =
+    {
+        ContractStatus.Tamamlandi,
+        ContractStatus.Feshedildi,
+        ContractStatus.Reddedildi
+    };
+
+    // Arşiv zamanla sürekli büyüyen bir liste; tamamını belleğe çekmek yerine
+    // sözleşme listesiyle aynı sayfalama/arama altyapısı kullanılıyor.
+    public async Task<(List<Contract> Items, int TotalCount)> GetArchivedContractsPagedAsync(
+        User currentUser, string filterKey, string? searchText, int page, int pageSize)
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
-        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Tamamlandi, ContractStatus.Feshedildi);
+        var include = MapArchiveFilter(filterKey);
+        return await _contracts.GetContractsPagedAsync(userId, include, null, searchText, page, pageSize);
     }
+
+    private static ContractStatus[] MapArchiveFilter(string filterKey) => filterKey switch
+    {
+        "tamamlandi" => new[] { ContractStatus.Tamamlandi },
+        "feshedildi" => new[] { ContractStatus.Feshedildi },
+        "reddedildi" => new[] { ContractStatus.Reddedildi },
+        _ => ArchivedStatuses
+    };
     public async Task<int> ReconcileContractStatusesAsync()
     {
         var today = DateTime.Today;
@@ -670,6 +838,9 @@ public class ContractService
     {
         if (actingUser.Role != UserRole.SYB)
             throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        EnsureContractIsLive(contract, "fesih");
+
         var termination = new ContractTermination
         {
             ContractId = contract.Id,

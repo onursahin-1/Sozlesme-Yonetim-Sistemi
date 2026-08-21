@@ -21,6 +21,11 @@ public class ContractCardViewModel
     // SYB rolündeki kullanıcı için: bu kart "Sözleşme Yarat" işlemini mi bekliyor?
     public bool NeedsContractCreation => _isSyb && Status == ContractStatus.Talep;
 
+    // Sözleşmeye dönüşmemiş bir talep, SYB tarafından doğrudan reddedilebilir.
+    // Eskiden tek yol talebi önce sözleşmeye çevirip Son Kontrol'de reddetmekti;
+    // bu hem gereksiz veri girişi hem de boşa yanan bir sözleşme numarası demekti.
+    public bool CanRejectRequest => _isSyb && Status == ContractStatus.Talep;
+
     // SYB rolündeki kullanıcı için: bu kart "Son Kontrol" (aşama 1 onayı) işlemini mi bekliyor?
     public bool NeedsSybSonKontrol => _isSyb && Status == ContractStatus.OnayBekliyor && Stage == 1;
 
@@ -34,8 +39,8 @@ public class ContractCardViewModel
 
     public int Stage => _contract.Stage;
 
-    public string StatusLabel => Status == ContractStatus.Talep && _contract.WasRejected
-        ? "Reddedildi"
+    public string StatusLabel => IsReturned
+        ? "İade Edildi"
         : Status switch
         {
             ContractStatus.Talep => "Talep",
@@ -45,14 +50,42 @@ public class ContractCardViewModel
             ContractStatus.Ihlal => "İhlal Mevcut",
             ContractStatus.Tamamlandi => "Tamamlandı",
             ContractStatus.Feshedildi => "Feshedildi",
+            ContractStatus.Reddedildi => "Reddedildi",
             _ => Status.ToString()
         };
 
-    public bool IsRejected => Status == ContractStatus.Talep && _contract.WasRejected;
+    // İade: talep sahibine geri döndü, düzeltilip yeniden gönderilebilir.
+    public bool IsReturned => Status == ContractStatus.Talep && _contract.WasRejected;
 
-    public string RejectionNoteText => string.IsNullOrEmpty(_contract.LastRejectionNote)
-        ? "Red gerekçesi belirtilmemiş."
-        : "Red gerekçesi: " + _contract.LastRejectionNote;
+    // Kapatma: talep nihai olarak reddedildi, yeniden gönderilemez.
+    public bool IsClosedRejected => Status == ContractStatus.Reddedildi;
+
+    // Müdür (YK) reddi: sözleşme onay zincirinden çıkmadı, SYB Son Kontrol'e geri
+    // döndü. Kart durumu "Onay Bekliyor" olarak kalır ama SYB'nin bunun ikinci bir
+    // inceleme olduğunu ve neden geri geldiğini görmesi gerekir.
+    public bool IsSentBackToSyb =>
+        Status == ContractStatus.OnayBekliyor && Stage == 1 && _contract.WasRejected;
+
+    // Gerekçe kutusu üç durumda da gösterilir.
+    public bool IsRejected => IsReturned || IsClosedRejected || IsSentBackToSyb;
+
+    public string RejectionNoteText
+    {
+        get
+        {
+            var note = string.IsNullOrWhiteSpace(_contract.LastRejectionNote)
+                ? "belirtilmemiş"
+                : _contract.LastRejectionNote;
+
+            if (IsClosedRejected)
+                return $"Talep reddedildi ve kapatıldı. Gerekçe: {note}";
+
+            if (IsSentBackToSyb)
+                return $"Yönetim onayından döndü — Son Kontrol tekrar yapılmalı. Gerekçe: {note}";
+
+            return $"Düzeltilmek üzere iade edildi. Gerekçe: {note}";
+        }
+    }
 
     private string StageDetail
     {
@@ -79,6 +112,7 @@ public class ContractCardViewModel
         ContractStatus.Ihlal => "#A32D2D",
         ContractStatus.Tamamlandi => "#888888",
         ContractStatus.Feshedildi => "#A32D2D",
+        ContractStatus.Reddedildi => "#A32D2D",
         _ => "#555555"
     };
 
@@ -90,10 +124,29 @@ public class ContractCardViewModel
         ContractStatus.Ihlal => "#FDECEA",
         ContractStatus.Tamamlandi => "#EAECF0",
         ContractStatus.Feshedildi => "#FDECEA",
+        ContractStatus.Reddedildi => "#FDECEA",
         _ => "#EAECF0"
     };
 
     public string BedelText => CurrencyHelper.Format(_contract.TotalAmount, _contract.Currency);
+
+    // Arşiv listesinde her kaydın YANINDA hangi tarihte kapandığı yazsın diye:
+    // sona eren/feshedilen sözleşmede bitiş tarihi, reddedilen talepte red tarihi
+    // anlamlı olan bilgidir (reddedilen talebin bitiş tarihi genelde hiç girilmemiştir).
+    public string ArchiveDateText
+    {
+        get
+        {
+            if (Status == ContractStatus.Reddedildi)
+                return _contract.LastRejectedAt is { } rejectedAt
+                    ? "Reddedildi: " + rejectedAt.ToString("dd.MM.yyyy")
+                    : "Reddedildi";
+
+            return _contract.EndDate is { } endDate
+                ? "Bitiş: " + endDate.ToString("dd.MM.yyyy")
+                : "Tarih girilmemiş";
+        }
+    }
 
     public string GunKalanText
     {

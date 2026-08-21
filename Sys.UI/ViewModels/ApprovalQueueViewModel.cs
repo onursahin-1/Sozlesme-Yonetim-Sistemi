@@ -60,6 +60,14 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     public partial bool HasRevisionHistory { get; set; }
     [ObservableProperty]
     public partial string RevisionInfo { get; set; } = string.Empty;
+
+    // Bu sözleşme daha önce reddedilip bu kuyruğa GERİ mi döndü? Eskiden bunun hiçbir
+    // izi yoktu: Müdür reddedip SYB'ye geri gönderdiğinde ekran ilk incelemeden
+    // ayırt edilemiyordu, gerekçe yalnızca detaydaki zaman çizelgesinden bulunabiliyordu.
+    [ObservableProperty]
+    public partial bool HasPreviousRejection { get; set; }
+    [ObservableProperty]
+    public partial string PreviousRejectionInfo { get; set; } = string.Empty;
     [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
     [ObservableProperty]
@@ -150,6 +158,8 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         TerminationInfo = string.Empty;
         HasRevisionHistory = false;
         RevisionInfo = string.Empty;
+        HasPreviousRejection = false;
+        PreviousRejectionInfo = string.Empty;
 
         var requestId = ++_loadRequestId;
         _ = LoadDetailAsync(value, requestId);
@@ -168,6 +178,32 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 return;
             }
             Detail = full;
+
+            // WasRejected, sözleşme zincirde ileri gittiği anda temizleniyor; hâlâ true
+            // ise bu inceleme bir REDDEN SONRAKİ tekrar incelemedir. Gerekçe metni
+            // ApprovalLog'dan okunur: adım adı ve tarihi de orada duruyor.
+            if (full.WasRejected)
+            {
+                var lastRejection = full.ApprovalLogs
+                    .Where(l => l.Decision == ApprovalDecision.Red)
+                    .OrderByDescending(l => l.ActionDate)
+                    .ThenByDescending(l => l.Id)
+                    .FirstOrDefault();
+
+                if (lastRejection is not null)
+                {
+                    HasPreviousRejection = true;
+                    var gerekce = string.IsNullOrWhiteSpace(lastRejection.Note)
+                        ? string.IsNullOrWhiteSpace(full.LastRejectionNote) ? "belirtilmemiş" : full.LastRejectionNote!
+                        : lastRejection.Note!;
+
+                    PreviousRejectionInfo =
+                        $"Reddeden adım: {lastRejection.StepName}\n" +
+                        $"Tarih: {lastRejection.ActionDate:dd.MM.yyyy HH:mm}\n" +
+                        $"Gerekçe: {gerekce}";
+                }
+            }
+
             if (full.Stage == 1)
             {
                 var labels = new[]

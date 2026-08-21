@@ -83,6 +83,20 @@
 
 			<!-- ADIM 2 -->
 			<StackPanel IsVisible="{Binding IsStep2}" Spacing="10">
+
+				<!--
+				  Reddedilip geri dönmüş bir talep ikinci kez sözleşmeye dönüştürülürken
+				  form eskiden boş açılıyordu; kaydedilince kalemler eskilerin üzerine
+				  ekleniyor ve bu ekranda hiç görünmüyordu. Artık önceki kalemler forma
+				  yükleniyor ve durum burada açıkça yazıyor.
+				-->
+				<Border IsVisible="{Binding IsRecreate}"
+						Background="#FFF7E6" BorderBrush="#E8C989" BorderThickness="1"
+						CornerRadius="8" Padding="12,10">
+					<TextBlock Text="{Binding RecreateNotice}" FontSize="12"
+							   Foreground="#7A5C10" TextWrapping="Wrap"/>
+				</Border>
+
 				<TextBlock Text="Bedel kalemlerini girin:"/>
 
 				<ItemsControl ItemsSource="{Binding Items}">
@@ -118,6 +132,30 @@
 
 			<!-- ADIM 3 -->
 			<StackPanel IsVisible="{Binding IsStep3}" Spacing="14">
+
+				<!--
+				  Talebe daha önce yüklenmiş dosyalar. Kalemlerin aksine bunlar silinmiyor
+				  (fiziksel dosyalar diskte duruyor), yalnızca gösteriliyor — SYB'nin aynı
+				  dosyayı ikinci kez yükleyip sözleşmeye kopya eklememesi için.
+				-->
+				<Border IsVisible="{Binding HasExistingAttachments}"
+						Background="#F7F9FC" BorderBrush="#DDE3EC" BorderThickness="1"
+						CornerRadius="8" Padding="12,10">
+					<StackPanel Spacing="6">
+						<TextBlock Text="ZATEN EKLİ DOSYALAR" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
+						<TextBlock Text="Bu dosyalar önceki denemede yüklendi ve sözleşmede kalmaya devam edecek. Aynı dosyayı tekrar eklemeyin."
+								   FontSize="11" Foreground="#8A94A6" TextWrapping="Wrap"/>
+						<ItemsControl ItemsSource="{Binding ExistingAttachments}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="domain:Attachment">
+									<TextBlock Text="{Binding FileName}" FontSize="12"
+											   Foreground="#3D4654" Margin="0,2"/>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</Border>
+
 				<StackPanel Spacing="6">
 					<TextBlock Text="Sözleşme Dosyası"/>
 					<Button Content="📎 Dosya Ekle" Click="OnPickSozlesmeFileClick"/>

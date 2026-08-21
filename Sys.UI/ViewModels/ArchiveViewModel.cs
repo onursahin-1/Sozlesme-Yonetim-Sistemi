@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,11 +16,61 @@ public partial class ArchiveViewModel : ViewModelBase
     private readonly ContractService _contractService;
     private readonly User _currentUser;
 
+    // Sayfa başına kayıt sayısı diğer sayfalanan ekranlarla aynı merkezden gelir.
+    private const int PageSize = PagingDefaults.PageSize;
+
+    // Arama kutusuna her harfte sorgu atmamak için kısa bekleme (sözleşme listesiyle
+    // aynı desen) ve geç dönen eski sorguların yenisini ezmesini engelleyen sayaç.
+    private CancellationTokenSource? _searchDebounceCts;
+    private int _loadToken;
+
+    // Liste artık ham Contract değil kart görünüm modeli tutuyor: arşivde hangi kaydın
+    // neden orada olduğu (süresi doldu / feshedildi / reddedildi) rozetten okunabilmeli.
     [ObservableProperty]
-    public partial ObservableCollection<Contract> AvailableContracts { get; set; } = new();
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
+    public partial ObservableCollection<ContractCardViewModel> AvailableContracts { get; set; } = new();
 
     [ObservableProperty]
-    public partial Contract? SelectedContract { get; set; }
+    public partial ContractCardViewModel? SelectedContract { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SelectedFilter { get; set; } = "tumu";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    partial void OnSearchTextChanged(string value) => DebouncedReloadFirstPage();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
+    public partial bool IsLoading { get; set; } = true;
+
+    // --- Sayfalama durumu ---
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    [NotifyPropertyChangedFor(nameof(CanGoPrevious))]
+    [NotifyPropertyChangedFor(nameof(CanGoNext))]
+    public partial int CurrentPage { get; set; } = 1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    [NotifyPropertyChangedFor(nameof(CanGoPrevious))]
+    [NotifyPropertyChangedFor(nameof(CanGoNext))]
+    [NotifyPropertyChangedFor(nameof(ShowPager))]
+    [NotifyPropertyChangedFor(nameof(TotalPages))]
+    public partial int TotalCount { get; set; }
+
+    public int TotalPages => TotalCount == 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public bool CanGoPrevious => CurrentPage > 1;
+    public bool CanGoNext => CurrentPage < TotalPages;
+    public bool ShowPager => TotalCount > PageSize;
+    public string PageInfoText => $"{CurrentPage} / {TotalPages}  ·  {TotalCount} kayıt";
+
+    public bool IsEmpty => !IsLoading && AvailableContracts.Count == 0;
+    public bool HasActiveFilters => SelectedFilter != "tumu" || !string.IsNullOrWhiteSpace(SearchText);
 
     [ObservableProperty]
     public partial Contract? Detail { get; set; }
@@ -78,6 +129,14 @@ public partial class ArchiveViewModel : ViewModelBase
     [ObservableProperty]
     public partial string TerminationInfo { get; set; } = string.Empty;
 
+    // Feshedilen sözleşmenin fesih bilgisi kutusunun karşılığı: reddedilerek kapatılan
+    // talebin neden kapandığı da arşivde okunabilmeli.
+    [ObservableProperty]
+    public partial bool HasRejectionInfo { get; set; }
+
+    [ObservableProperty]
+    public partial string RejectionInfo { get; set; } = string.Empty;
+
     [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
 
@@ -104,16 +163,95 @@ public partial class ArchiveViewModel : ViewModelBase
 
     private async Task LoadListAsync()
     {
+        var token = ++_loadToken;
+        IsLoading = true;
         ErrorMessage = string.Empty;
         try
         {
-            var contracts = await _contractService.GetArchivedContractsAsync(_currentUser);
-            AvailableContracts = new ObservableCollection<Contract>(contracts);
+            var (contracts, totalCount) = await _contractService.GetArchivedContractsPagedAsync(
+                _currentUser, SelectedFilter, SearchText, CurrentPage, PageSize);
+
+            if (token != _loadToken) return; // daha yeni bir sorgu başlatıldı
+
+            TotalCount = totalCount;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+
+            AvailableContracts = new ObservableCollection<ContractCardViewModel>(
+                contracts.Select(c => new ContractCardViewModel(c)));
         }
         catch (Exception ex)
         {
+            if (token != _loadToken) return;
             ErrorMessage = "Arşiv yüklenirken bir hata oluştu: " + ex.Message;
         }
+        finally
+        {
+            if (token == _loadToken) IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SetFilter(string filter)
+    {
+        SelectedFilter = filter;
+        CurrentPage = 1;
+        await LoadListAsync();
+    }
+
+    [RelayCommand]
+    private async Task ClearFilters()
+    {
+        // SearchText ataması OnSearchTextChanged üzerinden ikinci bir yükleme
+        // tetiklemesin diye bekleyen debounce önce iptal edilir.
+        _searchDebounceCts?.Cancel();
+        SelectedFilter = "tumu";
+        SearchText = string.Empty;
+        _searchDebounceCts?.Cancel();
+        CurrentPage = 1;
+        await LoadListAsync();
+    }
+
+    [RelayCommand]
+    private async Task Refresh() => await LoadListAsync();
+
+    [RelayCommand]
+    private async Task NextPage()
+    {
+        if (!CanGoNext) return;
+        CurrentPage++;
+        await LoadListAsync();
+    }
+
+    [RelayCommand]
+    private async Task PreviousPage()
+    {
+        if (!CanGoPrevious) return;
+        CurrentPage--;
+        await LoadListAsync();
+    }
+
+    private void DebouncedReloadFirstPage()
+    {
+        _searchDebounceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+        _ = DelayThenReloadAsync(cts.Token);
+    }
+
+    private async Task DelayThenReloadAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(350, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return; // kullanıcı yazmaya devam etti
+        }
+
+        if (token.IsCancellationRequested) return;
+        CurrentPage = 1;
+        await LoadListAsync();
     }
 
     // Kullanıcı listede hızlıca birden fazla sözleşmeye art arda tıklarsa, eski bir
@@ -121,7 +259,7 @@ public partial class ArchiveViewModel : ViewModelBase
     // Diğer ekranlarda kullanılan istek sayacı deseni burada da uygulanıyor.
     private int _loadRequestId;
 
-    partial void OnSelectedContractChanged(Contract? value)
+    partial void OnSelectedContractChanged(ContractCardViewModel? value)
     {
         ErrorMessage = string.Empty;
         Items = new ObservableCollection<ContractItem>();
@@ -130,9 +268,11 @@ public partial class ArchiveViewModel : ViewModelBase
         Detail = null;
         HasTerminationInfo = false;
         TerminationInfo = string.Empty;
+        HasRejectionInfo = false;
+        RejectionInfo = string.Empty;
 
         var requestId = ++_loadRequestId;
-        _ = LoadDetailAsync(value, requestId);
+        _ = LoadDetailAsync(value?.RawContract, requestId);
     }
 
     private async Task LoadDetailAsync(Contract? summary, int requestId)
@@ -186,6 +326,19 @@ public partial class ArchiveViewModel : ViewModelBase
                         $"Fesih Tarihi: {term.TerminationDate.ToString("dd.MM.yyyy", tr)}\n" +
                         $"Gerekçe: {term.Reason}";
                 }
+            }
+            else if (full.Status == ContractStatus.Reddedildi)
+            {
+                HasRejectionInfo = true;
+                var tarih = full.LastRejectedAt?.ToString("dd.MM.yyyy HH:mm", tr) ?? "-";
+                var gerekce = string.IsNullOrWhiteSpace(full.LastRejectionNote)
+                    ? "belirtilmemiş"
+                    : full.LastRejectionNote!;
+
+                RejectionInfo =
+                    $"Red Tarihi: {tarih}\n" +
+                    $"Gerekçe: {gerekce}\n" +
+                    "Bu talep sözleşmeye dönüşmeden kapatılmıştır.";
             }
         }
         catch (Exception ex)

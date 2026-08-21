@@ -31,6 +31,12 @@
 						<StackPanel Spacing="2" Margin="0,4">
 							<TextBlock Text="{Binding Title}" FontWeight="Bold"/>
 							<TextBlock Text="{Binding CompanyName}" FontSize="11" Foreground="Gray"/>
+							<!-- Tekrar inceleme olduğu, kayda tıklamadan önce de görünmeli -->
+							<Border IsVisible="{Binding WasRejected}" Background="#FDECEA"
+									CornerRadius="8" Padding="7,2" HorizontalAlignment="Left" Margin="0,2,0,0">
+								<TextBlock Text="⟲ Daha önce reddedildi" Foreground="#A32D2D"
+										   FontSize="10" FontWeight="Bold"/>
+							</Border>
 						</StackPanel>
 					</DataTemplate>
 				</ListBox.ItemTemplate>
@@ -100,6 +106,18 @@
 							</StackPanel>
 						</Grid>
 
+					</StackPanel>
+				</Border>
+
+				<!--
+				  Bu sözleşme daha önce reddedilip buraya geri döndüyse, gerekçe kararı
+				  verecek kişinin ilk gördüğü şey olmalı; en üstte duruyor.
+				-->
+				<Border IsVisible="{Binding HasPreviousRejection}"
+						Background="#FDECEA" BorderBrush="#A32D2D" BorderThickness="1" CornerRadius="8" Padding="16">
+					<StackPanel Spacing="4">
+						<TextBlock Text="⟲ BU SÖZLEŞME DAHA ÖNCE REDDEDİLDİ" FontWeight="Bold" Foreground="#A32D2D"/>
+						<TextBlock Text="{Binding PreviousRejectionInfo}" Foreground="Black" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
 

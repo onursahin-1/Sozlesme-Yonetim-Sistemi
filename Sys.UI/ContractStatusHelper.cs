@@ -13,6 +13,7 @@ public static class ContractStatusHelper
         ContractStatus.Ihlal => "İhlal Mevcut",
         ContractStatus.Tamamlandi => "Tamamlandı",
         ContractStatus.Feshedildi => "Feshedildi",
+        ContractStatus.Reddedildi => "Reddedildi",
         _ => status.ToString()
     };
 }

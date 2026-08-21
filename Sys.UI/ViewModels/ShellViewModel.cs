@@ -48,6 +48,25 @@ public partial class ShellViewModel : ViewModelBase
         _ => CurrentUser.Role.ToString()
     };
 
+    // Üst çubuktaki avatar dairesi için baş harfler: "Emin Ramazanoğlu" → "ER".
+    // Tek kelimelik adlarda ilk iki harf alınır ("Admin" → "AD").
+    public string UserInitials
+    {
+        get
+        {
+            var parts = (CurrentUser.FullName ?? string.Empty)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length == 0) return "?";
+            if (parts.Length == 1)
+                return parts[0].Length >= 2
+                    ? parts[0][..2].ToUpperInvariant()
+                    : parts[0].ToUpperInvariant();
+
+            return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+        }
+    }
+
     public ObservableCollection<NavItem> NavItems { get; }
 
     [ObservableProperty]

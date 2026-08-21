@@ -62,5 +62,11 @@ public enum ContractStatus
     Uyari,
     Ihlal,
     Tamamlandi,
-    Feshedildi
+    Feshedildi,
+
+    // Sözleşmeye hiç dönüşmeden SYB tarafından kapatılan talep. Enum değerleri
+    // veritabanına int olarak yazıldığı için yeni değer MUTLAKA sonuna eklenir;
+    // araya sokulursa mevcut kayıtların durumu kayar. Şema değişmediğinden bu
+    // ekleme için migration gerekmez.
+    Reddedildi
 }

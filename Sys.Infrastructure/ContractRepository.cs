@@ -146,8 +146,22 @@ public class ContractRepository : IContractRepository
             tracked.ContractNo = prefix + next.ToString("D4");
         }
 
+        // Kalemler EKLENMİYOR, DEĞİŞTİRİLİYOR. Bu adım aynı talep için birden fazla kez
+        // çalışabiliyor: sözleşme Son Kontrol'de reddedilince talep tekrar Talep durumuna
+        // düşüyor ve SYB "Sözleşme Yarat"ı yeniden çalıştırıyor. Eskiden yeni kalemler
+        // eskilerin ÜZERİNE ekleniyordu; sonuçta sözleşme iki kat kalem içeriyor ama
+        // TotalAmount yalnızca son girilen kalemlerin toplamı oluyordu. İki değer birbirini
+        // tutmadığı için tutarsızlık ekranda fark edilmiyordu.
+        var existingItems = await db.ContractItems
+            .Where(i => i.ContractId == contract.Id)
+            .ToListAsync();
+
+        if (existingItems.Count > 0)
+            db.ContractItems.RemoveRange(existingItems);
+
         foreach (var item in items)
         {
+            item.Id = 0;
             item.ContractId = contract.Id;
             db.ContractItems.Add(item);
         }
@@ -396,19 +410,39 @@ public class ContractRepository : IContractRepository
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
+        // İhlal durumu da adaylara dahil: eskiden yalnızca Aktif/Uyarı taranıyordu,
+        // dolayısıyla hakkında ihlal bildirilmiş bir sözleşme süresi dolsa bile
+        // sonsuza kadar "İhlal Mevcut" olarak kalıyor ve arşive hiç düşmüyordu.
         var candidates = await db.Contracts
-            .Where(c => c.Status == ContractStatus.Aktif || c.Status == ContractStatus.Uyari)
+            .Where(c => c.Status == ContractStatus.Aktif
+                     || c.Status == ContractStatus.Uyari
+                     || c.Status == ContractStatus.Ihlal)
             .Where(c => c.EndDate != null)
             .ToListAsync();
 
         int updated = 0;
         foreach (var c in candidates)
         {
-            var newStatus = c.EndDate!.Value.Date < today
-                ? ContractStatus.Tamamlandi
-                : c.EndDate.Value.Date <= warningThreshold
+            ContractStatus newStatus;
+
+            if (c.EndDate!.Value.Date < today)
+            {
+                // Süre dolduysa sözleşme her hâlükârda tamamlanmıştır — ihlal kaydı
+                // geçmişte durmaya devam eder, sözleşmenin kendisi arşive gider.
+                newStatus = ContractStatus.Tamamlandi;
+            }
+            else if (c.Status == ContractStatus.Ihlal)
+            {
+                // Süresi dolmamış ihlalli sözleşme Aktif/Uyarı'ya geri çekilmez;
+                // ihlal bilgisi bakım işi tarafından silinmemeli.
+                continue;
+            }
+            else
+            {
+                newStatus = c.EndDate.Value.Date <= warningThreshold
                     ? ContractStatus.Uyari
                     : ContractStatus.Aktif;
+            }
 
             if (newStatus != c.Status)
             {

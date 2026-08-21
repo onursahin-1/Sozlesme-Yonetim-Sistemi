@@ -1,10 +1,10 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="500"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
              x:Class="Sys.UI.Views.ContractListView"
              x:DataType="vm:ContractListViewModel">
 
@@ -12,122 +12,272 @@
 		<vm:ContractListViewModel />
 	</Design.DataContext>
 
-	<!--
-	  Classes="flat": butonun kendi gövdesi tamamen şeffaf/çerçevesiz olur, renk ve yazı
-	  butonun İÇİNDEKİ Border/TextBlock'a verilir. Fluent teması :pointerover durumunda
-	  ContentPresenter'ın Background/Foreground'unu ezdiği için doğrudan butona renk vermek
-	  hover'da butonu görünmez kılıyordu; bu yapı temayla hiç çakışmaz.
-	-->
+	<UserControl.Styles>
+		<!--
+		  ListBox'ın kendi öğe kabı (ListBoxItem) varsayılan olarak dolgu, kenarlık ve
+		  seçim vurgusu çiziyor; kartların etrafında ikinci bir çerçeve gibi duruyordu.
+		  Kart zaten görsel birim olduğu için kap tamamen şeffaf ve dolgusuz yapılıyor.
+		-->
+		<Style Selector="ListBox">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Padding" Value="0"/>
+		</Style>
+		<Style Selector="ListBoxItem">
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Margin" Value="0"/>
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="ListBoxItem /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="CornerRadius" Value="10"/>
+		</Style>
+		<Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+
+		<!-- Kart içindeki küçük ölçü etiketleri (TÜR / BEDEL / KALAN) -->
+		<Style Selector="TextBlock.metricLabel">
+			<Setter Property="FontSize" Value="9.5"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#A3ABB8"/>
+			<Setter Property="LetterSpacing" Value="0.6"/>
+		</Style>
+		<Style Selector="TextBlock.metricValue">
+			<Setter Property="FontSize" Value="12.5"/>
+			<Setter Property="Foreground" Value="#3D4654"/>
+		</Style>
+	</UserControl.Styles>
+
 	<DockPanel>
-		<!-- Arama kutusu + Yenile butonu -->
-		<Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto" HorizontalAlignment="Left" Margin="0,0,0,10">
-			<TextBox Grid.Column="0" Text="{Binding SearchText}" PlaceholderText="Başlık veya firma adına göre ara..." Width="320"/>
-			<Button Classes="flat" Grid.Column="1" Margin="10,0,0,0" Command="{Binding RefreshCommand}">
-				<Border Background="#4B5563" CornerRadius="4" Padding="10,4">
-					<TextBlock Text="⟳ Yenile" Foreground="White" FontSize="12"/>
+
+		<!-- Araç çubuğu: arama solda esner, yenile sağda sabit -->
+		<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,0,0,12">
+			<Border Grid.Column="0" Background="White" BorderBrush="#DDE3EC" BorderThickness="1"
+					CornerRadius="8" MaxWidth="460" HorizontalAlignment="Left">
+				<Grid ColumnDefinitions="Auto,*">
+					<!-- Arama ikonu: vektör, her ortamda aynı çizilir -->
+					<Path Grid.Column="0" Stroke="#A3ABB8" StrokeThickness="2" Fill="Transparent"
+						  Width="14" Height="14" Stretch="Uniform" Margin="12,0,0,0"
+						  VerticalAlignment="Center"
+						  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
+					<TextBox Grid.Column="1" Text="{Binding SearchText}"
+							 PlaceholderText="Başlık, firma veya sözleşme numarasına göre ara..."
+							 Background="Transparent" BorderThickness="0"
+							 Padding="10,9" FontSize="12.5"/>
+				</Grid>
+			</Border>
+
+			<Button Grid.Column="1" Classes="flat" Command="{Binding RefreshCommand}"
+					ToolTip.Tip="Listeyi yenile" VerticalAlignment="Center">
+				<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+						CornerRadius="8" Padding="12,9">
+					<StackPanel Orientation="Horizontal" Spacing="7">
+						<Path Stroke="#4B5563" StrokeThickness="1.8" Fill="Transparent"
+							  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
+							  Data="M20 11a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>
+						<TextBlock Text="Yenile" Foreground="#3D4654" FontSize="12.5" VerticalAlignment="Center"/>
+					</StackPanel>
 				</Border>
 			</Button>
 		</Grid>
 
-		<!-- Filtre butonları: seçili olan, koyu mavi arka planla vurgulanıyor -->
-		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,12">
-			<Button Content="Tümü" Command="{Binding SetFilterCommand}" CommandParameter="tumu"
-                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=tumu}"
-                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tumu}"/>
-			<Button Content="Aktif" Command="{Binding SetFilterCommand}" CommandParameter="aktif"
-                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=aktif}"
-                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=aktif}"/>
-			<Button Content="Onay Bekliyor" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor"
-                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=onay_bekliyor}"
-                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=onay_bekliyor}"/>
-			<Button Content="Uyarı" Command="{Binding SetFilterCommand}" CommandParameter="uyari"
-                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=uyari}"
-                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=uyari}"/>
-			<Button Content="İhlal" Command="{Binding SetFilterCommand}" CommandParameter="ihlal"
-                    Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=ihlal}"
-                    Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=ihlal}"/>
-			<Button Content="Filtreleri Temizle" FontSize="11" Command="{Binding ClearFiltersCommand}"
-                    IsVisible="{Binding HasActiveFilters}"
-                    Background="Transparent" Foreground="#4B5563"/>
+		<!-- Filtre hapları: seçili olan koyu mavi zeminle vurgulanır -->
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,14">
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="tumu">
+				<Border CornerRadius="16" Padding="15,7"
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=tumu}">
+					<TextBlock Text="Tümü" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tumu}"/>
+				</Border>
+			</Button>
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="aktif">
+				<Border CornerRadius="16" Padding="15,7"
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=aktif}">
+					<TextBlock Text="Aktif" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=aktif}"/>
+				</Border>
+			</Button>
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor">
+				<Border CornerRadius="16" Padding="15,7"
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=onay_bekliyor}">
+					<TextBlock Text="Onay Bekliyor" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=onay_bekliyor}"/>
+				</Border>
+			</Button>
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="uyari">
+				<Border CornerRadius="16" Padding="15,7"
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=uyari}">
+					<TextBlock Text="Uyarı" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=uyari}"/>
+				</Border>
+			</Button>
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="ihlal">
+				<Border CornerRadius="16" Padding="15,7"
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=ihlal}">
+					<TextBlock Text="İhlal" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=ihlal}"/>
+				</Border>
+			</Button>
+
+			<!-- Kapatılmış talepler "Tümü"de gizli; yalnızca bu filtreyle görünürler. -->
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="reddedildi">
+				<Border CornerRadius="16" Padding="15,7"
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=reddedildi}">
+					<TextBlock Text="Reddedilen" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=reddedildi}"/>
+				</Border>
+			</Button>
+
+			<Button Classes="flat" Command="{Binding ClearFiltersCommand}"
+					IsVisible="{Binding HasActiveFilters}" Margin="4,0,0,0">
+				<TextBlock Text="Filtreleri temizle" FontSize="11.5" Foreground="#8A94A6"
+						   VerticalAlignment="Center"/>
+			</Button>
 		</StackPanel>
 
-		<TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
-		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red"
+		<TextBlock DockPanel.Dock="Top" Text="Yükleniyor..." Foreground="Gray" IsVisible="{Binding IsLoading}"/>
+		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-		<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,24,0,0" IsVisible="{Binding IsEmpty}">
-			<TextBlock Text="Bu filtrelerle eşleşen sözleşme bulunamadı." Foreground="Gray" HorizontalAlignment="Center"/>
-			<Button Content="Filtreleri Temizle" HorizontalAlignment="Center" Command="{Binding ClearFiltersCommand}"
-                    IsVisible="{Binding HasActiveFilters}"
-                    Background="#4B5563" Foreground="White" Padding="10,4" CornerRadius="4"/>
+		<StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,40,0,0" IsVisible="{Binding IsEmpty}">
+			<TextBlock Text="Bu filtrelerle eşleşen sözleşme bulunamadı." Foreground="#8A94A6"
+					   FontSize="13" HorizontalAlignment="Center"/>
+			<Button Classes="flat" HorizontalAlignment="Center" Command="{Binding ClearFiltersCommand}"
+					IsVisible="{Binding HasActiveFilters}">
+				<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+						CornerRadius="8" Padding="14,7">
+					<TextBlock Text="Filtreleri temizle" Foreground="#3D4654" FontSize="12"/>
+				</Border>
+			</Button>
 		</StackPanel>
 
 		<!-- Sayfalama çubuğu: yalnızca tek sayfaya sığmayan sonuçlarda görünür -->
-		<Border DockPanel.Dock="Bottom" IsVisible="{Binding ShowPager}" Margin="0,10,0,0">
-			<StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+		<Border DockPanel.Dock="Bottom" IsVisible="{Binding ShowPager}" Margin="0,14,0,0">
+			<StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
 				<Button Classes="flat" IsEnabled="{Binding CanGoPrevious}" Command="{Binding PreviousPageCommand}">
-					<Border Background="#4B5563" CornerRadius="4" Padding="12,5">
-						<TextBlock Text="‹ Önceki" Foreground="White" FontSize="12"/>
+					<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+							CornerRadius="8" Padding="14,7">
+						<TextBlock Text="‹ Önceki" Foreground="#3D4654" FontSize="12"/>
 					</Border>
 				</Button>
-				<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center" FontSize="12" Foreground="#888"/>
+				<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center"
+						   FontSize="12" Foreground="#8A94A6"/>
 				<Button Classes="flat" IsEnabled="{Binding CanGoNext}" Command="{Binding NextPageCommand}">
-					<Border Background="#4B5563" CornerRadius="4" Padding="12,5">
-						<TextBlock Text="Sonraki ›" Foreground="White" FontSize="12"/>
+					<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+							CornerRadius="8" Padding="14,7">
+						<TextBlock Text="Sonraki ›" Foreground="#3D4654" FontSize="12"/>
 					</Border>
 				</Button>
 			</StackPanel>
 		</Border>
 
+		<!--
+		  Kart düzeni üç bölgeye ayrıldı: solda kimlik (başlık/no/firma), ortada ölçüler
+		  (tür, bedel, kalan gün), sağda durum ve aksiyonlar. Eskiden her şey sola
+		  yığılıyor, geniş ekranda kartın sağı bomboş kalıyordu; ölçüler de etiketsiz
+		  yan yana durduğu için hangi sayının ne olduğu belli olmuyordu.
+		-->
 		<ListBox ItemsSource="{Binding FilteredContracts}"
                  SelectedItem="{Binding SelectedContract}"
                  IsVisible="{Binding !IsLoading}">
 			<ListBox.ItemTemplate>
 				<DataTemplate x:DataType="vm:ContractCardViewModel">
-					<Border Background="White" BorderBrush="#D0D8E4" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8">
-						<StackPanel Spacing="4">
-							<Grid ColumnDefinitions="*,Auto">
-								<StackPanel Grid.Column="0">
-									<TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14" Foreground="Black"/>
-									<TextBlock FontSize="11" Foreground="#888">
+					<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="10" Padding="16,14" Margin="0,0,0,8">
+						<StackPanel Spacing="0">
+							<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="20">
+
+								<!-- Kimlik -->
+								<StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+									<TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13.5"
+											   Foreground="#1A2E4A" TextWrapping="Wrap"/>
+									<TextBlock FontSize="11.5" Foreground="#8A94A6">
 										<Run Text="{Binding RefNoText}"/>
-										<Run Text=" · "/>
+										<Run Text="  ·  "/>
 										<Run Text="{Binding CompanyName}"/>
 									</TextBlock>
 								</StackPanel>
-								<Border Grid.Column="1" Background="{Binding StatusBgHex}" CornerRadius="10" Padding="8,3">
-									<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}" FontSize="11" FontWeight="Bold"/>
-								</Border>
+
+								<!-- Ölçüler -->
+								<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="26"
+											VerticalAlignment="Center">
+									<StackPanel Spacing="2">
+										<TextBlock Classes="metricLabel" Text="TÜR"/>
+										<TextBlock Classes="metricValue" Text="{Binding Type}"/>
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<TextBlock Classes="metricLabel" Text="BEDEL"/>
+										<TextBlock Classes="metricValue" Text="{Binding BedelText}"
+												   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+									</StackPanel>
+									<StackPanel Spacing="2">
+										<TextBlock Classes="metricLabel" Text="KALAN"/>
+										<TextBlock Classes="metricValue" Text="{Binding GunKalanText}"/>
+									</StackPanel>
+								</StackPanel>
+
+								<!-- Durum + aksiyonlar -->
+								<StackPanel Grid.Column="2" Spacing="10" HorizontalAlignment="Right"
+											VerticalAlignment="Center">
+									<Border Background="{Binding StatusBgHex}" CornerRadius="10" Padding="10,3"
+											HorizontalAlignment="Right">
+										<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}"
+												   FontSize="10.5" FontWeight="Bold"/>
+									</Border>
+
+									<StackPanel Orientation="Horizontal" Spacing="7" HorizontalAlignment="Right">
+										<Button Classes="flat"
+												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).ViewDetailsCommand}"
+												CommandParameter="{Binding}">
+											<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+													CornerRadius="6" Padding="12,5">
+												<TextBlock Text="Detay" Foreground="#3D4654" FontSize="11.5"/>
+											</Border>
+										</Button>
+										<Button Classes="flat" IsVisible="{Binding IsEditable}"
+												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}"
+												CommandParameter="{Binding}">
+											<Border Background="#2D6EA8" CornerRadius="6" Padding="12,5">
+												<TextBlock Text="Düzenle" Foreground="White" FontSize="11.5"/>
+											</Border>
+										</Button>
+										<Button Classes="flat" IsVisible="{Binding CanRejectRequest}"
+												Click="OnRejectRequestClick">
+											<Border Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+													CornerRadius="6" Padding="12,5">
+												<TextBlock Text="Talebi Reddet" Foreground="#A32D2D" FontSize="11.5"/>
+											</Border>
+										</Button>
+										<Button Classes="flat" IsVisible="{Binding NeedsContractCreation}"
+												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestContractCreationCommand}"
+												CommandParameter="{Binding}">
+											<Border Background="#7C3AED" CornerRadius="6" Padding="12,5">
+												<TextBlock Text="Sözleşme Yarat" Foreground="White" FontSize="11.5"/>
+											</Border>
+										</Button>
+										<Button Classes="flat" IsVisible="{Binding NeedsSybSonKontrol}"
+												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestSonKontrolCommand}"
+												CommandParameter="{Binding}">
+											<Border Background="#B06A00" CornerRadius="6" Padding="12,5">
+												<TextBlock Text="Son Kontrol'e Git" Foreground="White" FontSize="11.5"/>
+											</Border>
+										</Button>
+									</StackPanel>
+								</StackPanel>
 							</Grid>
-							<StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,0,0">
-								<TextBlock Text="{Binding Type}" FontSize="11" Foreground="#555"/>
-								<TextBlock Text="{Binding BedelText}" FontSize="11" Foreground="#555"/>
-								<TextBlock Text="{Binding GunKalanText}" FontSize="11" Foreground="#555"/>
-							</StackPanel>
-							<TextBlock Text="{Binding RejectionNoteText}" FontSize="11" Foreground="#A32D2D" FontStyle="Italic"
-                                       TextWrapping="Wrap" Margin="0,4,0,0" IsVisible="{Binding IsRejected}"/>
-							<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
-								<Button Classes="flat" HorizontalAlignment="Left" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).ViewDetailsCommand}" CommandParameter="{Binding}">
-									<Border Background="#4B5563" CornerRadius="4" Padding="10,4">
-										<TextBlock Text="Detay" Foreground="White" FontSize="11"/>
-									</Border>
-								</Button>
-								<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding IsEditable}" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}" CommandParameter="{Binding}">
-									<Border Background="#2D6EA8" CornerRadius="4" Padding="10,4">
-										<TextBlock Text="Düzenle" Foreground="White" FontSize="11"/>
-									</Border>
-								</Button>
-								<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding NeedsContractCreation}" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestContractCreationCommand}" CommandParameter="{Binding}">
-									<Border Background="#7C3AED" CornerRadius="4" Padding="10,4">
-										<TextBlock Text="Sözleşme Yarat" Foreground="White" FontSize="11"/>
-									</Border>
-								</Button>
-								<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding NeedsSybSonKontrol}" Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestSonKontrolCommand}" CommandParameter="{Binding}">
-									<Border Background="#B06A00" CornerRadius="4" Padding="10,4">
-										<TextBlock Text="Son Kontrol'e Git" Foreground="White" FontSize="11"/>
-									</Border>
-								</Button>
-							</StackPanel>
+
+							<!-- Red gerekçesi yalnızca reddedilmiş taleplerde görünür -->
+							<Border IsVisible="{Binding IsRejected}" Margin="0,12,0,0"
+									Background="#FDF2F0" BorderBrush="#F0C9C1" BorderThickness="1"
+									CornerRadius="6" Padding="11,8">
+								<TextBlock Text="{Binding RejectionNoteText}" FontSize="11.5"
+										   Foreground="#9B3B25" TextWrapping="Wrap"/>
+							</Border>
 						</StackPanel>
 					</Border>
 				</DataTemplate>
