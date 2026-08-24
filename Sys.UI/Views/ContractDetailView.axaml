@@ -1,135 +1,411 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:domain="using:Sys.Domain"
              x:Class="Sys.UI.Views.ContractDetailView"
              x:DataType="vm:ContractDetailViewModel">
 
+	<UserControl.Styles>
+		<Style Selector="ComboBox">
+			<Setter Property="Padding" Value="11,8"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="TextBlock.tableHead">
+			<Setter Property="FontSize" Value="10"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="LetterSpacing" Value="0.5"/>
+		</Style>
+		<Style Selector="TextBlock.summaryLabel">
+			<Setter Property="FontSize" Value="9.5"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="LetterSpacing" Value="0.6"/>
+		</Style>
+	</UserControl.Styles>
+
 	<!-- Renkli butonlar Classes="flat" kullanır; stil tanımı App.axaml içindedir. -->
-	<Grid RowDefinitions="Auto,Auto,*" Margin="24">
+	<Grid RowDefinitions="Auto,*" Margin="0,0,20,0">
 
-		<StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
-			<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding ShowBackButton}" Command="{Binding BackCommand}">
-				<Border Background="#6B7280" CornerRadius="4" Padding="10,4">
-					<TextBlock Text="← Geri" Foreground="White" FontSize="12"/>
-				</Border>
-			</Button>
-			<TextBlock Text="Sözleşme Görüntüle" FontSize="22" FontWeight="Bold"/>
-		</StackPanel>
+		<!-- ==================== ÜST: SEÇİM ÇUBUĞU ==================== -->
+		<!-- Başlık burada tekrar yazılmıyor; kabuk (ShellView) zaten üstte gösteriyor. -->
+		<Border Grid.Row="0" Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+				CornerRadius="12" Padding="18,14" Margin="0,0,0,16">
+			<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
 
-		<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
-			<TextBlock Text="Sözleşme Seç:" VerticalAlignment="Center"/>
-			<ComboBox Width="360"
-                      ItemsSource="{Binding AvailableContracts}"
-                      SelectedItem="{Binding SelectedContract}"
-                      DisplayMemberBinding="{Binding Title}"/>
-
-			<!-- PDF üretip sistemin görüntüleyicisinde açar; yazdırma oradan yapılır -->
-			<Button Classes="flat" VerticalAlignment="Center"
-                    IsVisible="{Binding CanPrint}"
-                    Click="OnPrintClick"
-                    ToolTip.Tip="Sözleşme künyesini PDF olarak kaydeder ve açar">
-				<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
-					<TextBlock Text="🖨 Yazdır" Foreground="White" FontSize="12"/>
-				</Border>
-			</Button>
-		</StackPanel>
-
-		<ScrollViewer Grid.Row="2">
-			<StackPanel Spacing="16">
-
-				<TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
-                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+				<Button Grid.Column="0" Classes="flat" VerticalAlignment="Center"
+						IsVisible="{Binding ShowBackButton}" Command="{Binding BackCommand}">
+					<Border Background="#EEF1F6" BorderBrush="#DFE5EE" BorderThickness="1"
+							CornerRadius="7" Padding="12,7">
+						<TextBlock Text="← Geri" Foreground="#5B6472" FontSize="11.5"/>
+					</Border>
+				</Button>
 
 				<!--
-				  Künye kartı: başlık + sözleşme no + durum rozeti, altında iki sütunlu
-				  etiket/değer ızgarası. Etiketler küçük, gri ve büyük harf; değerler
-				  koyu. Böylece göz önce değerleri tarıyor, etiket sadece bağlam veriyor.
+				  Seçici tam genişliğe yayılıyor: sabit genişlikte kaldığında geniş
+				  ekranda çubuğun ortasında küçücük duruyor ve uzun sözleşme adları
+				  kırpılıyordu. Yazı boyutu da çubuğun ana öğesi olduğu için büyütüldü.
 				-->
-				<Border IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"
-						Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-						CornerRadius="10" Padding="20">
-					<StackPanel Spacing="14">
-
-						<Grid ColumnDefinitions="*,Auto">
-							<StackPanel Grid.Column="0" Spacing="3">
-								<TextBlock Text="{Binding DetailTitle}" FontSize="19" FontWeight="Bold"
-										   Foreground="#1A2E4A" TextWrapping="Wrap"/>
-								<TextBlock Text="{Binding DetailNo}" FontSize="12" Foreground="#8A94A6"/>
-							</StackPanel>
-							<Border Grid.Column="1" VerticalAlignment="Top" Margin="12,2,0,0"
-									Background="{Binding DetailStatusBgHex}" CornerRadius="10" Padding="10,4">
-								<TextBlock Text="{Binding DetailStatus}" Foreground="{Binding DetailStatusColorHex}"
-										   FontSize="11" FontWeight="Bold"/>
-							</Border>
-						</Grid>
-
-						<Border Background="#EDF1F6" Height="1"/>
-
-						<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-							  ColumnSpacing="24" RowSpacing="14">
-
-							<StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="FİRMA"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailCompany}"/>
-							</StackPanel>
-							<StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="SAP CARİ"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailSapCariKodu}"/>
-							</StackPanel>
-
-							<StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="VERGİ NO"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailTaxNo}"/>
-							</StackPanel>
-							<StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="TÜR"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailType}"/>
-							</StackPanel>
-
-							<StackPanel Grid.Row="2" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="BEDEL"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailTotal}"/>
-							</StackPanel>
-							<StackPanel Grid.Row="2" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="KALAN GÜN"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailRemainingDays}"/>
-							</StackPanel>
-
-							<StackPanel Grid.Row="3" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="BAŞLANGIÇ"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailStart}"/>
-							</StackPanel>
-							<StackPanel Grid.Row="3" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="BİTİŞ"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailEnd}"/>
-							</StackPanel>
-
-							<StackPanel Grid.Row="4" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="TALEP EDEN"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailRequester}"/>
-							</StackPanel>
-							<StackPanel Grid.Row="4" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="DEPARTMAN"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailDepartment}"/>
-							</StackPanel>
-
-							<StackPanel Grid.Row="5" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="ÖDEME PERİYODU"/>
-								<TextBlock Classes="fieldValue" Text="{Binding DetailPeriod}"/>
-							</StackPanel>
-						</Grid>
-
-					</StackPanel>
-				</Border>
+				<StackPanel Grid.Column="1" Spacing="6">
+					<TextBlock Classes="summaryLabel" Text="GÖRÜNTÜLENEN SÖZLEŞME"/>
+					<ComboBox HorizontalAlignment="Stretch" FontSize="14" Padding="14,11"
+							  ItemsSource="{Binding AvailableContracts}"
+							  SelectedItem="{Binding SelectedContract}"
+							  PlaceholderText="Listeden bir sözleşme seçin...">
+						<ComboBox.ItemTemplate>
+							<DataTemplate x:DataType="domain:Contract">
+								<TextBlock TextTrimming="CharacterEllipsis" FontSize="14">
+									<Run Text="{Binding Title}"/>
+									<Run Text="  ·  " Foreground="#A3ABB8"/>
+									<Run Text="{Binding CompanyName}" Foreground="#8A94A6"/>
+								</TextBlock>
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
+				</StackPanel>
 
 				<!--
-				  İki sütunlu yerleşim: süreç adımları dar bir içerik olduğu için tam genişlikte
-				  kartta yanı boş kalıyordu. Solda sabit genişlikte zaman çizelgesi, sağda
-				  kalemler/dosyalar/geçmiş bölümleri. Böylece dikey kaydırma da azalıyor.
+				  İki ayrı işlem: "Yazdır" belgeyi doğrudan yazıcıya gönderir,
+				  "PDF Kaydet" ise dosya olarak diske yazar. Eskiden tek bir "Yazdır"
+				  butonu vardı ve aslında yalnızca kaydedip görüntüleyicide açıyordu.
 				-->
-				<Grid ColumnDefinitions="330,*" ColumnSpacing="16">
+				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+							VerticalAlignment="Bottom" IsVisible="{Binding CanPrint}">
 
-					<StackPanel Grid.Column="0" VerticalAlignment="Top">
+					<Button Classes="flat" Command="{Binding PrintCommand}"
+							ToolTip.Tip="Sözleşme künyesini varsayılan yazıcıya gönderir">
+						<Border Background="#2D6EA8" CornerRadius="8" Padding="16,11">
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<Path Stroke="White" StrokeThickness="1.7" Fill="Transparent"
+									  Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center"
+									  Data="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>
+								<TextBlock Text="Yazdır" Foreground="White" FontSize="13"
+										   FontWeight="SemiBold" VerticalAlignment="Center"/>
+							</StackPanel>
+						</Border>
+					</Button>
+
+					<Button Classes="flat" Click="OnExportPdfClick"
+							ToolTip.Tip="Sözleşme künyesini PDF dosyası olarak kaydeder">
+						<Border Background="White" BorderBrush="#C9D3E0" BorderThickness="1"
+								CornerRadius="8" Padding="16,10">
+							<TextBlock Text="PDF Kaydet" Foreground="#3D4654" FontSize="13"
+									   VerticalAlignment="Center"/>
+						</Border>
+					</Button>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<!-- ==================== GÖVDE ==================== -->
+		<Grid Grid.Row="1" ColumnSpacing="20">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" MinWidth="520"/>
+				<ColumnDefinition Width="310"/>
+			</Grid.ColumnDefinitions>
+
+			<!-- ========== SOL: KÜNYE VE BÖLÜMLER ========== -->
+			<ScrollViewer Grid.Column="0">
+				<StackPanel Spacing="16" Margin="0,0,4,24">
+
+					<Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+							Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+							CornerRadius="10" Padding="14,11">
+						<TextBlock Text="{Binding ErrorMessage}" Foreground="#9B3B25"
+								   FontSize="12.5" TextWrapping="Wrap"/>
+					</Border>
+
+					<TextBlock Text="Görüntülemek istediğiniz sözleşmeyi yukarıdan seçin."
+							   Foreground="#A3ABB8" FontSize="13" Margin="2,20,0,0"
+							   IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+					<!--
+					  Künye kartı: başlık + sözleşme no + durum rozeti, altında iki sütunlu
+					  etiket/değer ızgarası. Etiketler küçük, gri ve büyük harf; değerler
+					  koyu. Böylece göz önce değerleri tarıyor, etiket sadece bağlam veriyor.
+					-->
+					<Border IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="18">
+
+							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+								<StackPanel Grid.Column="0" Spacing="3">
+									<TextBlock Classes="display" Text="{Binding DetailTitle}" FontSize="20"
+											   FontWeight="Bold" Foreground="#1A2E4A" TextWrapping="Wrap"/>
+									<TextBlock FontSize="12" Foreground="#8A94A6">
+										<Run Text="{Binding DetailNo}"/>
+										<Run Text="  ·  "/>
+										<Run Text="{Binding DetailCompany}"/>
+									</TextBlock>
+								</StackPanel>
+								<Border Grid.Column="1" VerticalAlignment="Top" Margin="0,3,0,0"
+										Background="{Binding DetailStatusBgHex}" CornerRadius="10" Padding="11,4">
+									<TextBlock Text="{Binding DetailStatus}" Foreground="{Binding DetailStatusColorHex}"
+											   FontSize="11" FontWeight="Bold"/>
+								</Border>
+							</Grid>
+
+							<Border Background="#EDF1F6" Height="1"/>
+
+							<Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto"
+								  ColumnSpacing="20" RowSpacing="16">
+
+								<StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="TÜR"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailType}"/>
+								</StackPanel>
+								<StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="VERGİ NO"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailTaxNo}"/>
+								</StackPanel>
+								<StackPanel Grid.Row="0" Grid.Column="2" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="SAP CARİ"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailSapCariKodu}"/>
+								</StackPanel>
+
+								<StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="BAŞLANGIÇ"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailStart}"/>
+								</StackPanel>
+								<StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="BİTİŞ"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailEnd}"/>
+								</StackPanel>
+								<StackPanel Grid.Row="1" Grid.Column="2" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="ÖDEME PERİYODU"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailPeriod}"/>
+								</StackPanel>
+
+								<StackPanel Grid.Row="2" Grid.Column="0" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="TALEP EDEN"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailRequester}"/>
+								</StackPanel>
+								<StackPanel Grid.Row="2" Grid.Column="1" Spacing="2">
+									<TextBlock Classes="fieldLabel" Text="DEPARTMAN"/>
+									<TextBlock Classes="fieldValue" Text="{Binding DetailDepartment}"/>
+								</StackPanel>
+							</Grid>
+						</StackPanel>
+					</Border>
+
+					<!-- ========== KALEMLER ========== -->
+					<Border IsVisible="{Binding Items.Count}"
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="display" Text="Kalemler" FontSize="15.5"
+									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+
+							<Grid ColumnDefinitions="2*,90,*,*" ColumnSpacing="12">
+								<TextBlock Grid.Column="0" Classes="tableHead" Text="AÇIKLAMA"/>
+								<TextBlock Grid.Column="1" Classes="tableHead" Text="MİKTAR" TextAlignment="Right"/>
+								<TextBlock Grid.Column="2" Classes="tableHead" Text="BİRİM FİYAT" TextAlignment="Right"/>
+								<TextBlock Grid.Column="3" Classes="tableHead" Text="TUTAR" TextAlignment="Right"/>
+							</Grid>
+							<Border Background="#EDF1F6" Height="1"/>
+
+							<ItemsControl ItemsSource="{Binding Items}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="domain:ContractItem">
+										<Border BorderBrush="#F1F4F8" BorderThickness="0,0,0,1" Padding="0,9">
+											<Grid ColumnDefinitions="2*,90,*,*" ColumnSpacing="12">
+												<TextBlock Grid.Column="0" Text="{Binding Description}" FontSize="12.5"
+														   Foreground="#1A2E4A" TextWrapping="Wrap"/>
+												<TextBlock Grid.Column="1" FontSize="12.5" Foreground="#5B6472"
+														   TextAlignment="Right">
+													<Run Text="{Binding Quantity}"/>
+													<Run Text=" "/>
+													<Run Text="{Binding Unit}"/>
+												</TextBlock>
+												<TextBlock Grid.Column="2" Text="{Binding UnitPrice, StringFormat={}{0:N2}}"
+														   FontSize="12.5" Foreground="#5B6472" TextAlignment="Right"/>
+												<TextBlock Grid.Column="3" Text="{Binding LineTotal, StringFormat={}{0:N2}}"
+														   FontSize="12.5" Foreground="#1A2E4A" FontWeight="SemiBold"
+														   TextAlignment="Right"/>
+											</Grid>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</Border>
+
+					<!-- ========== DOSYALAR ========== -->
+					<Border IsVisible="{Binding Attachments.Count}"
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="display" Text="Dosyalar" FontSize="15.5"
+									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<ItemsControl ItemsSource="{Binding Attachments}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="domain:Attachment">
+										<Border Background="#F7F9FC" BorderBrush="#E3E7EE" BorderThickness="1"
+												CornerRadius="9" Padding="13,10" Margin="0,0,0,7">
+											<Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="9">
+												<Path Grid.Column="0" Stroke="#2D6EA8" StrokeThickness="1.7"
+													  Fill="Transparent" Width="16" Height="16" Stretch="Uniform"
+													  VerticalAlignment="Center"
+													  Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>
+												<TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12.5"
+														   Foreground="#1A2E4A" VerticalAlignment="Center"
+														   TextTrimming="CharacterEllipsis"/>
+												<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
+														Command="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).OpenAttachmentCommand}"
+														CommandParameter="{Binding}">
+													<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+															CornerRadius="6" Padding="11,5">
+														<TextBlock Text="Aç" Foreground="#3D4654" FontSize="11.5"/>
+													</Border>
+												</Button>
+												<Button Grid.Column="3" Classes="flat" VerticalAlignment="Center"
+														Click="OnDownloadAttachmentClick">
+													<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+															CornerRadius="6" Padding="11,5">
+														<TextBlock Text="İndir" Foreground="#3D4654" FontSize="11.5"/>
+													</Border>
+												</Button>
+												<Button Grid.Column="4" Classes="flat" VerticalAlignment="Center"
+														IsVisible="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CanDeleteAttachments}"
+														Click="OnDeleteAttachmentClick">
+													<Border Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+															CornerRadius="6" Padding="11,5">
+														<TextBlock Text="Sil" Foreground="#A32D2D" FontSize="11.5"/>
+													</Border>
+												</Button>
+											</Grid>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</Border>
+
+					<!-- ========== REVİZYON GEÇMİŞİ ========== -->
+					<Border IsVisible="{Binding Revisions.Count}"
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="display" Text="Revizyon Geçmişi" FontSize="15.5"
+									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<ItemsControl ItemsSource="{Binding Revisions}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="domain:ContractRevision">
+										<Border Background="#FBFCFE" BorderBrush="#E9EEF5" BorderThickness="1"
+												CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
+											<StackPanel Spacing="5">
+												<Grid ColumnDefinitions="*,Auto">
+													<TextBlock Grid.Column="0" Text="{Binding ChangeType}" FontSize="12.5"
+															   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+													<TextBlock Grid.Column="1"
+															   Text="{Binding ChangedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
+															   FontSize="10.5" Foreground="#A3ABB8" VerticalAlignment="Center"/>
+												</Grid>
+												<TextBlock Text="{Binding Reason}" FontSize="12" Foreground="#5B6472"
+														   TextWrapping="Wrap"/>
+												<StackPanel Orientation="Horizontal" Spacing="16">
+													<TextBlock FontSize="11" Foreground="#8A94A6">
+														<Run Text="Önceki bedel: "/>
+														<Run Text="{Binding PreviousTotalAmount, StringFormat={}{0:N2}}"/>
+														<Run Text="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CurrencySuffix}"/>
+													</TextBlock>
+													<TextBlock FontSize="11" Foreground="#8A94A6"
+															   Text="{Binding PreviousEndDate, StringFormat='Önceki bitiş: {0:dd.MM.yyyy}'}"
+															   IsVisible="{Binding PreviousEndDate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+												</StackPanel>
+											</StackPanel>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</Border>
+
+					<!-- ========== FESİH GEÇMİŞİ ========== -->
+					<Border IsVisible="{Binding Terminations.Count}"
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="display" Text="Fesih Geçmişi" FontSize="15.5"
+									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<ItemsControl ItemsSource="{Binding Terminations}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="domain:ContractTermination">
+										<Border Background="#FDF6F5" BorderBrush="#F2DAD5" BorderThickness="1"
+												CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
+											<StackPanel Spacing="5">
+												<Grid ColumnDefinitions="*,Auto">
+													<TextBlock Grid.Column="0" Text="{Binding TerminationType}" FontSize="12.5"
+															   FontWeight="SemiBold" Foreground="#8C3220"/>
+													<TextBlock Grid.Column="1"
+															   Text="{Binding RequestedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
+															   FontSize="10.5" Foreground="#B79086" VerticalAlignment="Center"/>
+												</Grid>
+												<TextBlock Text="{Binding Reason}" FontSize="12" Foreground="#5B6472"
+														   TextWrapping="Wrap"/>
+												<StackPanel Orientation="Horizontal" Spacing="16">
+													<TextBlock FontSize="11" Foreground="#8A94A6"
+															   Text="{Binding TerminationDate, StringFormat='Fesih tarihi: {0:dd.MM.yyyy}'}"/>
+													<TextBlock FontSize="11" Foreground="#8A94A6"
+															   IsVisible="{Binding CompensationAmount, Converter={x:Static ObjectConverters.IsNotNull}}">
+														<Run Text="Tazminat: "/>
+														<Run Text="{Binding CompensationAmount, StringFormat={}{0:N2}}"/>
+														<Run Text=" TL — "/>
+														<Run Text="{Binding CompensationDirection}"/>
+													</TextBlock>
+												</StackPanel>
+											</StackPanel>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</Border>
+
+				</StackPanel>
+			</ScrollViewer>
+
+			<!-- ========== SAĞ: ÖZET VE SÜREÇ ========== -->
+			<!--
+			  Sağ panel kendi ScrollViewer'ında: zaman çizelgesi uzun sözleşmelerde
+			  ekrandan taşabiliyor, ama sol içerikle birlikte kaymaması gerekiyor.
+			-->
+			<ScrollViewer Grid.Column="1"
+						  IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}">
+				<StackPanel Spacing="14" Margin="0,0,0,24">
+
+					<!-- Sözleşmenin sayısal künyesi: en çok bakılan üç değer -->
+					<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="18,16">
+						<StackPanel Spacing="14">
+							<TextBlock Classes="sectionLabel" Text="ÖZET"/>
+
+							<StackPanel Spacing="3">
+								<TextBlock Classes="summaryLabel" Text="BEDEL"/>
+								<TextBlock Classes="display" Text="{Binding DetailTotal}" FontSize="21"
+										   FontWeight="Bold" Foreground="#1A2E4A"/>
+							</StackPanel>
+
+							<Border Background="#EDF1F6" Height="1"/>
+
+							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+								<StackPanel Grid.Column="0" Spacing="3">
+									<TextBlock Classes="summaryLabel" Text="KALAN GÜN"/>
+									<TextBlock Text="{Binding DetailRemainingDays}" FontSize="13"
+											   Foreground="#1A2E4A" TextWrapping="Wrap"/>
+								</StackPanel>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="summaryLabel" Text="BİTİŞ"/>
+									<TextBlock Text="{Binding DetailEnd}" FontSize="13" Foreground="#1A2E4A"/>
+								</StackPanel>
+							</Grid>
+						</StackPanel>
+					</Border>
+
 					<!--
 					  Süreç adımları: sözleşmenin akıştaki yerini tek bakışta gösterir.
 					  Bu bölüm eskiden ayrı duran "Aşama Geçmişi" listesinin yerini aldı;
@@ -138,10 +414,10 @@
 					  onaylar yeşil, redler kırmızı, en altta sözleşmenin bugünkü durumu.
 					-->
 					<Border IsVisible="{Binding Steps.Count}"
-							Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-							CornerRadius="10" Padding="20">
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="18,16">
 						<StackPanel Spacing="12">
-							<TextBlock Text="SÜREÇ ADIMLARI" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
+							<TextBlock Classes="sectionLabel" Text="SÜREÇ ADIMLARI"/>
 
 							<ItemsControl ItemsSource="{Binding Steps}">
 								<ItemsControl.ItemTemplate>
@@ -168,8 +444,8 @@
 														   Foreground="{Binding LabelColorHex}"
 														   FontWeight="{Binding LabelWeight}"
 														   TextWrapping="Wrap"/>
-												<TextBlock Text="{Binding DateText}" FontSize="10.5" Foreground="#9CA3AF"
-													   IsVisible="{Binding HasDate}"/>
+												<TextBlock Text="{Binding DateText}" FontSize="10.5" Foreground="#A3ABB8"
+														   IsVisible="{Binding HasDate}"/>
 												<TextBlock Text="{Binding Note}" FontSize="11" Foreground="#7A5C10"
 														   FontStyle="Italic" TextWrapping="Wrap"
 														   IsVisible="{Binding HasNote}"/>
@@ -180,141 +456,9 @@
 							</ItemsControl>
 						</StackPanel>
 					</Border>
-					</StackPanel>
 
-					<StackPanel Grid.Column="1" Spacing="16">
-					<Border IsVisible="{Binding Items.Count}"
-							Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-							CornerRadius="10" Padding="20">
-						<StackPanel Spacing="10">
-							<TextBlock Text="KALEMLER" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
-
-							<!-- Sütun başlıkları: rakamların neyi ifade ettiği belli olsun -->
-							<Grid ColumnDefinitions="2*,Auto,*,*" ColumnSpacing="12">
-								<TextBlock Grid.Column="0" Text="Açıklama" FontSize="11" FontWeight="Bold" Foreground="#8A94A6"/>
-								<TextBlock Grid.Column="1" Text="Miktar" FontSize="11" FontWeight="Bold" Foreground="#8A94A6" Width="70" TextAlignment="Right"/>
-								<TextBlock Grid.Column="2" Text="Birim Fiyat" FontSize="11" FontWeight="Bold" Foreground="#8A94A6" TextAlignment="Right"/>
-								<TextBlock Grid.Column="3" Text="Tutar" FontSize="11" FontWeight="Bold" Foreground="#8A94A6" TextAlignment="Right"/>
-							</Grid>
-							<Border Background="#EDF1F6" Height="1"/>
-
-							<ItemsControl ItemsSource="{Binding Items}">
-								<ItemsControl.ItemTemplate>
-									<DataTemplate>
-										<Border BorderBrush="#EDF1F6" BorderThickness="0,0,0,1" Padding="0,7">
-											<Grid ColumnDefinitions="2*,Auto,*,*" ColumnSpacing="12">
-												<TextBlock Grid.Column="0" Text="{Binding Description}" FontSize="12.5"
-														   Foreground="#1A2E4A" TextWrapping="Wrap"/>
-												<TextBlock Grid.Column="1" FontSize="12.5" Foreground="#4B5563"
-														   Width="70" TextAlignment="Right">
-													<Run Text="{Binding Quantity}"/>
-													<Run Text=" "/>
-													<Run Text="{Binding Unit}"/>
-												</TextBlock>
-												<TextBlock Grid.Column="2" Text="{Binding UnitPrice, StringFormat={}{0:N2}}"
-														   FontSize="12.5" Foreground="#4B5563" TextAlignment="Right"/>
-												<TextBlock Grid.Column="3" Text="{Binding LineTotal, StringFormat={}{0:N2}}"
-														   FontSize="12.5" Foreground="#1A2E4A" FontWeight="Bold" TextAlignment="Right"/>
-											</Grid>
-										</Border>
-									</DataTemplate>
-								</ItemsControl.ItemTemplate>
-							</ItemsControl>
-						</StackPanel>
-					</Border>
-
-					<Border IsVisible="{Binding Attachments.Count}"
-							Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-							CornerRadius="10" Padding="20">
-						<StackPanel Spacing="10">
-						<TextBlock Text="DOSYALAR" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
-						<ItemsControl ItemsSource="{Binding Attachments}">
-							<ItemsControl.ItemTemplate>
-								<DataTemplate>
-									<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
-										<Grid ColumnDefinitions="*,Auto,Auto,Auto">
-											<TextBlock Grid.Column="0" Text="{Binding FileName}" VerticalAlignment="Center"/>
-											<Button Grid.Column="1" Content="Aç" Margin="0,0,4,0"
-	                                                Command="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).OpenAttachmentCommand}"
-	                                                CommandParameter="{Binding}"/>
-											<Button Grid.Column="2" Content="İndir" Margin="0,0,4,0"
-	                                                Click="OnDownloadAttachmentClick"/>
-											<Button Classes="flat" Grid.Column="3" IsVisible="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CanDeleteAttachments}" Click="OnDeleteAttachmentClick">
-												<Border Background="#A32D2D" CornerRadius="4" Padding="12,6">
-													<TextBlock Text="Sil" Foreground="White"/>
-												</Border>
-											</Button>
-										</Grid>
-									</Border>
-								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
-						</StackPanel>
-					</Border>
-
-					<Border IsVisible="{Binding Revisions.Count}"
-							Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-							CornerRadius="10" Padding="20">
-						<StackPanel Spacing="10">
-						<TextBlock Text="REVİZYON GEÇMİŞİ" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
-						<ItemsControl ItemsSource="{Binding Revisions}">
-							<ItemsControl.ItemTemplate>
-								<DataTemplate>
-									<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
-										<StackPanel Spacing="2">
-											<TextBlock FontWeight="Bold" Text="{Binding ChangeType}"/>
-											<TextBlock Text="{Binding Reason}" TextWrapping="Wrap"/>
-											<TextBlock Foreground="#555555">
-												<Run Text="Önceki Bedel: "/>
-												<Run Text="{Binding PreviousTotalAmount, StringFormat={}{0:N2}}"/>
-												<Run Text="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CurrencySuffix}"/>
-											</TextBlock>
-											<TextBlock Text="{Binding PreviousEndDate, StringFormat='Önceki Bitiş: {0:dd.MM.yyyy}'}"
-	                                                   Foreground="#555555"
-	                                                   IsVisible="{Binding PreviousEndDate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-											<TextBlock Text="{Binding ChangedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="Gray"/>
-										</StackPanel>
-									</Border>
-								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
-						</StackPanel>
-					</Border>
-
-					<Border IsVisible="{Binding Terminations.Count}"
-							Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
-							CornerRadius="10" Padding="20">
-						<StackPanel Spacing="10">
-						<TextBlock Text="FESİH GEÇMİŞİ" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
-						<ItemsControl ItemsSource="{Binding Terminations}">
-							<ItemsControl.ItemTemplate>
-								<DataTemplate>
-									<Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4">
-										<StackPanel Spacing="2">
-											<TextBlock FontWeight="Bold" Text="{Binding TerminationType}"/>
-											<TextBlock Text="{Binding Reason}" TextWrapping="Wrap"/>
-											<TextBlock Text="{Binding TerminationDate, StringFormat='Fesih Tarihi: {0:dd.MM.yyyy}'}" Foreground="#555555"/>
-											<TextBlock Foreground="#555555"
-	                                                   IsVisible="{Binding CompensationAmount, Converter={x:Static ObjectConverters.IsNotNull}}">
-												<Run Text="Tazminat: "/>
-												<Run Text="{Binding CompensationAmount, StringFormat={}{0:N2}}"/>
-												<Run Text=" TL — "/>
-												<Run Text="{Binding CompensationDirection}"/>
-											</TextBlock>
-											<TextBlock Text="{Binding RequestedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="11" Foreground="Gray"/>
-										</StackPanel>
-									</Border>
-								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
-						</StackPanel>
-					</Border>
-					</StackPanel>
-
-				</Grid>
-
-			</StackPanel>
-		</ScrollViewer>
-
+				</StackPanel>
+			</ScrollViewer>
+		</Grid>
 	</Grid>
 </UserControl>

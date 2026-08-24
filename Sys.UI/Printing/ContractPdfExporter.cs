@@ -9,11 +9,12 @@ using Sys.Domain;
 
 namespace Sys.UI.Printing;
 
-// Sözleşme künyesini A4 PDF olarak üretir.
+// Sözleşme künyesini A4 PDF olarak üretir — "PDF Kaydet" işleminin çıktısı.
 //
-// Neden PDF? Avalonia'nın yerleşik bir yazdırma desteği yok. Yaygın çözüm, içeriği PDF'e
-// dönüştürüp işletim sisteminin varsayılan görüntüleyicisinde açmak; kullanıcı oradan
-// yazdırıyor. Yan faydası: çıktı aynı zamanda arşivlenebilir/paylaşılabilir bir dosya.
+// Ekrandan yazdırma artık buradan geçmiyor: Windows'un varsayılan PDF uygulaması
+// (çoğunlukla Edge) kabuk "print" fiilini kaydetmediği için PDF üzerinden yazdırma
+// başlatılamıyordu. Yazdırma yolu ContractPrintDocument (HTML + window.print()).
+// Bu sınıf arşivlenebilir/paylaşılabilir dosya üretmeye devam ediyor.
 public static class ContractPdfExporter
 {
     private static readonly CultureInfo Tr = CultureInfo.GetCultureInfo("tr-TR");
@@ -25,14 +26,46 @@ public static class ContractPdfExporter
     private const double MarginBottom = 50;
 
     private static bool _fontsInitialized;
+    private static string? _family;
 
     private static void EnsureFonts()
     {
         if (_fontsInitialized) return;
         // PDFsharp'ın Core sürümü varsayılan olarak sistem fontlarını kullanmaz.
-        // Bu ayar olmadan "Arial" çözümlenemez ve font hatası alınır.
+        // Bu ayar olmadan font adı çözümlenemez ve hata alınır.
         GlobalFontSettings.UseWindowsFontsUnderWindows = true;
         _fontsInitialized = true;
+    }
+
+    // Belge yazı tipi. Arial yerine uygulamanın arayüzüyle aynı aileyi kullanıyoruz;
+    // Segoe UI'ın harf yüksekliği ve boşlukları basılı metinde belirgin şekilde daha
+    // okunaklı. Sistemde yoksa sırayla Calibri ve Arial'a düşülür — Arial her Windows
+    // kurulumunda bulunduğu için zincir garanti sonlanır.
+    private static string FontFamily
+    {
+        get
+        {
+            if (_family is not null) return _family;
+
+            foreach (var candidate in new[] { "Segoe UI", "Calibri", "Arial" })
+            {
+                try
+                {
+                    // XFont oluşturmak tipografiyi çözümlemeye zorlar; bulunamazsa
+                    // burada hata verir ve sıradaki adaya geçilir.
+                    _ = new XFont(candidate, 10);
+                    _family = candidate;
+                    return _family;
+                }
+                catch
+                {
+                    // sıradaki adayı dene
+                }
+            }
+
+            _family = "Arial";
+            return _family;
+        }
     }
 
     public static void Export(Contract contract, string filePath)
@@ -67,15 +100,27 @@ public static class ContractPdfExporter
         private XGraphics _gfx = null!;
         private double _y;
 
-        private readonly XFont _fontTitle = new("Arial", 16, XFontStyleEx.Bold);
-        private readonly XFont _fontHeading = new("Arial", 11, XFontStyleEx.Bold);
-        private readonly XFont _fontLabel = new("Arial", 9, XFontStyleEx.Bold);
-        private readonly XFont _fontBody = new("Arial", 9, XFontStyleEx.Regular);
-        private readonly XFont _fontSmall = new("Arial", 7.5, XFontStyleEx.Regular);
+        // Puntolar bir tık büyütüldü ve satır aralıkları açıldı: 9 punto Arial ekranda
+        // idare ediyordu ama A4 çıktıda sıkışık ve soluk duruyordu.
+        private readonly XFont _fontTitle = new(FontFamily, 19, XFontStyleEx.Bold);
+        private readonly XFont _fontDocTitle = new(FontFamily, 13, XFontStyleEx.Bold);
+        private readonly XFont _fontHeading = new(FontFamily, 10.5, XFontStyleEx.Bold);
+        private readonly XFont _fontLabel = new(FontFamily, 9.5, XFontStyleEx.Bold);
+        private readonly XFont _fontKey = new(FontFamily, 9.5, XFontStyleEx.Regular);
+        private readonly XFont _fontBody = new(FontFamily, 9.5, XFontStyleEx.Regular);
+        private readonly XFont _fontSmall = new(FontFamily, 8, XFontStyleEx.Regular);
 
-        private static readonly XSolidBrush BrushMuted = new(XColor.FromArgb(110, 120, 135));
-        private static readonly XSolidBrush BrushAccent = new(XColor.FromArgb(26, 46, 74));
-        private static readonly XPen PenLine = new(XColor.FromArgb(205, 214, 226), 0.7);
+        // Satır yüksekliği tek yerden: gövde punto 9,5 için 13 rahat bir aralık verir.
+        private const double LineHeight = 13;
+
+        private static readonly XSolidBrush BrushMuted = new(XColor.FromArgb(107, 118, 134));
+        private static readonly XSolidBrush BrushAccent = new(XColor.FromArgb(45, 110, 168));
+        private static readonly XSolidBrush BrushInk = new(XColor.FromArgb(22, 35, 58));
+        private static readonly XSolidBrush BrushBand = new(XColor.FromArgb(244, 247, 251));
+        private static readonly XSolidBrush BrushZebra = new(XColor.FromArgb(250, 251, 253));
+        private static readonly XPen PenLine = new(XColor.FromArgb(216, 223, 233), 0.7);
+        private static readonly XPen PenHair = new(XColor.FromArgb(238, 242, 247), 0.5);
+        private static readonly XPen PenAccent = new(XColor.FromArgb(45, 110, 168), 1.6);
 
         private readonly List<PdfPage> _pages = new();
 
@@ -110,18 +155,31 @@ public static class ContractPdfExporter
         public void DrawDocumentHeader(Contract contract)
         {
             _gfx.DrawString("SÖZLEŞME KÜNYESİ", _fontTitle, BrushAccent,
-                new XRect(MarginLeft, _y, ContentWidth, 22), XStringFormats.TopLeft);
-            _y += 22;
+                new XRect(MarginLeft, _y, ContentWidth, 25), XStringFormats.TopLeft);
+            _y += 24;
 
             _gfx.DrawString($"Oluşturma: {DateTime.Now.ToString("dd.MM.yyyy HH:mm", Tr)}", _fontSmall, BrushMuted,
                 new XRect(MarginLeft, _y, ContentWidth, 12), XStringFormats.TopLeft);
+            _y += 18;
+
+            // Sözleşmenin başlığı ve kimliği: belgenin en üstünde, künye tablosunu
+            // taramadan da hangi sözleşme olduğu anlaşılsın.
+            var titleHeight = DrawWrapped(contract.Title, _fontDocTitle, BrushInk, MarginLeft, ContentWidth, 16);
+            _y += titleHeight + 3;
+
+            var no = string.IsNullOrWhiteSpace(contract.ContractNo) ? contract.RequestRefNo : contract.ContractNo!;
+            _gfx.DrawString($"{no}   ·   {contract.CompanyName}", _fontBody, BrushMuted,
+                new XRect(MarginLeft, _y, ContentWidth, 13), XStringFormats.TopLeft);
             _y += 16;
 
-            _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
-            _y += 14;
+            _gfx.DrawString(ContractStatusHelper.ToLabel(contract.Status), _fontLabel, BrushAccent,
+                new XRect(MarginLeft, _y, ContentWidth, 13), XStringFormats.TopLeft);
+            _y += 18;
 
-            var titleHeight = DrawWrapped(contract.Title, _fontHeading, XBrushes.Black, MarginLeft, ContentWidth, 14);
-            _y += titleHeight + 10;
+            // İnce çizgi yerine vurgu rengiyle kalın bir ayraç: başlık bloğunu gövdeden
+            // net biçimde ayırıyor.
+            _gfx.DrawLine(PenAccent, MarginLeft, _y, MarginLeft + ContentWidth, _y);
+            _y += 16;
         }
 
         public void DrawInfoSection(Contract contract)
@@ -144,20 +202,27 @@ public static class ContractPdfExporter
                 ("Toplam Bedel", CurrencyHelper.Format(contract.TotalAmount, contract.Currency)),
             };
 
-            const double labelWidth = 130;
+            // Etiket gri ve normal, değer koyu ve yarı kalın: göz önce değerleri tarıyor.
+            // Her satırın altında saç teli inceliğinde bir ayraç var; eski sürümde
+            // satırlar birbirine yapışık, kalın siyah etiketlerle daha gürültülüydü.
+            const double labelWidth = 150;
             foreach (var (label, value) in rows)
             {
-                EnsureSpace(16);
-                _gfx.DrawString(label, _fontLabel, XBrushes.Black,
-                    new XRect(MarginLeft, _y, labelWidth, 13), XStringFormats.TopLeft);
+                var valueHeight = Math.Max(LineHeight, MeasureWrapped(value, _fontBody, ContentWidth - labelWidth, LineHeight));
+                EnsureSpace(valueHeight + 8);
 
-                var valueHeight = DrawWrapped(value, _fontBody, XBrushes.Black,
-                    MarginLeft + labelWidth, ContentWidth - labelWidth, 12);
+                _gfx.DrawString(label, _fontKey, BrushMuted,
+                    new XRect(MarginLeft, _y, labelWidth, LineHeight), XStringFormats.TopLeft);
 
-                _y += Math.Max(13, valueHeight) + 3;
+                DrawWrapped(value, _fontLabel, BrushInk,
+                    MarginLeft + labelWidth, ContentWidth - labelWidth, LineHeight);
+
+                _y += valueHeight + 4;
+                _gfx.DrawLine(PenHair, MarginLeft, _y, MarginLeft + ContentWidth, _y);
+                _y += 4;
             }
 
-            Gap(6);
+            Gap(8);
         }
 
         public void DrawDescription(Contract contract)
@@ -165,8 +230,8 @@ public static class ContractPdfExporter
             if (string.IsNullOrWhiteSpace(contract.Description)) return;
 
             DrawSectionHeading("Kapsam");
-            var height = DrawWrapped(contract.Description, _fontBody, XBrushes.Black, MarginLeft, ContentWidth, 12);
-            _y += height + 10;
+            var height = DrawWrapped(contract.Description, _fontBody, BrushInk, MarginLeft, ContentWidth, LineHeight);
+            _y += height + 12;
         }
 
         public void DrawItems(Contract contract)
@@ -182,6 +247,8 @@ public static class ContractPdfExporter
             DrawItemsHeaderRow(colDesc, colQty, colUnit, colTotal);
 
             decimal grandTotal = 0;
+            var zebra = false;
+
             foreach (var item in contract.Items)
             {
                 var lineTotal = item.LineTotal;
@@ -193,40 +260,55 @@ public static class ContractPdfExporter
                     : $"{item.Quantity.ToString(Tr)} {item.Unit}";
 
                 var aciklama = string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description;
-                var descHeight = MeasureWrapped(aciklama, _fontBody, colDesc - 6, 12);
-                EnsureSpace(descHeight + 8);
+                var descHeight = MeasureWrapped(aciklama, _fontBody, colDesc - 8, LineHeight);
+                var rowHeight = Math.Max(LineHeight, descHeight) + 9;
+                EnsureSpace(rowHeight);
 
                 var rowTop = _y;
-                DrawWrapped(aciklama, _fontBody, XBrushes.Black, MarginLeft, colDesc - 6, 12);
 
-                _y = rowTop;
-                DrawRight(qtyText, _fontBody, MarginLeft + colDesc, colQty - 6);
-                DrawRight(item.UnitPrice.ToString("N2", Tr), _fontBody, MarginLeft + colDesc + colQty, colUnit - 6);
-                DrawRight(lineTotal.ToString("N2", Tr), _fontBody, MarginLeft + colDesc + colQty + colUnit, colTotal - 6);
+                // Zebra: uzun listelerde satırların hangi tutara ait olduğu şaşmasın.
+                if (zebra)
+                    _gfx.DrawRectangle(BrushZebra, MarginLeft, rowTop, ContentWidth, rowHeight);
+                zebra = !zebra;
 
-                _y = rowTop + descHeight + 4;
-                _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
-                _y += 4;
+                _y = rowTop + 4;
+                DrawWrapped(aciklama, _fontBody, BrushInk, MarginLeft + 4, colDesc - 8, LineHeight);
+                DrawRight(qtyText, _fontBody, MarginLeft + colDesc, colQty - 8);
+                DrawRight(item.UnitPrice.ToString("N2", Tr), _fontBody, MarginLeft + colDesc + colQty, colUnit - 8);
+                DrawRight(lineTotal.ToString("N2", Tr), _fontLabel, MarginLeft + colDesc + colQty + colUnit, colTotal - 8);
+
+                _y = rowTop + rowHeight;
+                _gfx.DrawLine(PenHair, MarginLeft, _y, MarginLeft + ContentWidth, _y);
             }
 
-            EnsureSpace(20);
-            _gfx.DrawString("Toplam", _fontLabel, XBrushes.Black,
-                new XRect(MarginLeft + colDesc, _y, colQty + colUnit - 6, 13), XStringFormats.TopRight);
-            DrawRight(CurrencyHelper.Format(grandTotal, contract.Currency), _fontLabel, MarginLeft + colDesc + colQty + colUnit, colTotal - 6);
-            _y += 20;
+            // Toplam satırı: zeminli ve üstünde kalın çizgi — kalemlerden ayrışıyor.
+            EnsureSpace(24);
+            _gfx.DrawRectangle(BrushBand, MarginLeft, _y, ContentWidth, 22);
+            _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
+            _y += 5;
+            _gfx.DrawString("TOPLAM", _fontLabel, BrushInk,
+                new XRect(MarginLeft + colDesc, _y, colQty + colUnit - 8, LineHeight), XStringFormats.TopRight);
+            DrawRight(CurrencyHelper.Format(grandTotal, contract.Currency), _fontLabel,
+                MarginLeft + colDesc + colQty + colUnit, colTotal - 8, BrushInk);
+            _y += 25;
         }
 
         private void DrawItemsHeaderRow(double colDesc, double colQty, double colUnit, double colTotal)
         {
-            EnsureSpace(20);
-            _gfx.DrawString("Açıklama", _fontLabel, BrushMuted,
-                new XRect(MarginLeft, _y, colDesc, 13), XStringFormats.TopLeft);
-            DrawRight("Miktar", _fontLabel, MarginLeft + colDesc, colQty - 6, BrushMuted);
-            DrawRight("Birim Fiyat", _fontLabel, MarginLeft + colDesc + colQty, colUnit - 6, BrushMuted);
-            DrawRight("Tutar", _fontLabel, MarginLeft + colDesc + colQty + colUnit, colTotal - 6, BrushMuted);
+            EnsureSpace(24);
+
+            // Başlık satırı zeminli: tablo sınırları çizgi kalabalığı olmadan belli oluyor.
+            _gfx.DrawRectangle(BrushBand, MarginLeft, _y, ContentWidth, 19);
+            _y += 4;
+
+            _gfx.DrawString("AÇIKLAMA", _fontSmall, BrushMuted,
+                new XRect(MarginLeft + 4, _y, colDesc, LineHeight), XStringFormats.TopLeft);
+            DrawRight("MİKTAR", _fontSmall, MarginLeft + colDesc, colQty - 8, BrushMuted);
+            DrawRight("BİRİM FİYAT", _fontSmall, MarginLeft + colDesc + colQty, colUnit - 8, BrushMuted);
+            DrawRight("TUTAR", _fontSmall, MarginLeft + colDesc + colQty + colUnit, colTotal - 8, BrushMuted);
+
             _y += 15;
             _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
-            _y += 5;
         }
 
         public void DrawApprovalLogs(Contract contract)
@@ -234,13 +316,17 @@ public static class ContractPdfExporter
             if (contract.ApprovalLogs.Count == 0) return;
 
             DrawSectionHeading("Aşama Geçmişi");
-            foreach (var log in contract.ApprovalLogs.OrderBy(l => l.ActionDate))
+            foreach (var log in contract.ApprovalLogs.OrderBy(l => l.ActionDate).ThenBy(l => l.Id))
             {
                 var karar = log.Decision == ApprovalDecision.Onay ? "Onaylandı" : "Reddedildi";
-                DrawEntry(
-                    $"{log.StepNumber}. Adım — {log.StepName} — {karar}",
-                    log.Note,
-                    log.ActionDate.ToString("dd.MM.yyyy HH:mm", Tr));
+
+                // StepNumber 0, onay zinciri öncesi talep incelemesini temsil ediyor;
+                // "0. Adım" diye yazmak anlamsız olurdu.
+                var baslik = log.StepNumber > 0
+                    ? $"{log.StepNumber}. Adım — {log.StepName} — {karar}"
+                    : $"{log.StepName} — {karar}";
+
+                DrawEntry(baslik, log.Note, log.ActionDate.ToString("dd.MM.yyyy HH:mm", Tr));
             }
             Gap(6);
         }
@@ -292,52 +378,70 @@ public static class ContractPdfExporter
             for (int i = 0; i < _pages.Count; i++)
             {
                 using var gfx = XGraphics.FromPdfPage(_pages[i]);
-                var text = $"Sayfa {i + 1} / {_pages.Count}";
                 var width = _pages[i].Width.Point - MarginLeft - MarginRight;
-                gfx.DrawString(text, _fontSmall, BrushMuted,
-                    new XRect(MarginLeft, _pages[i].Height.Point - MarginBottom + 16, width, 12),
-                    XStringFormats.TopRight);
+                var footY = _pages[i].Height.Point - MarginBottom + 14;
+
+                // Alt bilgiyi gövdeden ayıran ince çizgi
+                gfx.DrawLine(PenHair, MarginLeft, footY - 4, MarginLeft + width, footY - 4);
+
+                gfx.DrawString($"Sayfa {i + 1} / {_pages.Count}", _fontSmall, BrushMuted,
+                    new XRect(MarginLeft, footY, width, 12), XStringFormats.TopRight);
                 gfx.DrawString("SYS — Sözleşme Yönetim Sistemi", _fontSmall, BrushMuted,
-                    new XRect(MarginLeft, _pages[i].Height.Point - MarginBottom + 16, width, 12),
-                    XStringFormats.TopLeft);
+                    new XRect(MarginLeft, footY, width, 12), XStringFormats.TopLeft);
             }
         }
 
+        // Bölüm başlığı büyük harfe alındı ve vurgu rengine geçti; altındaki ince çizgi
+        // bölümü açıkça başlatıyor. Başlığın sayfa sonunda tek başına kalmaması için
+        // altında en az bir satırlık yer aranıyor.
         private void DrawSectionHeading(string text)
         {
-            EnsureSpace(28);
-            _gfx.DrawString(text, _fontHeading, BrushAccent,
+            EnsureSpace(46);
+            _gfx.DrawString(text.ToUpper(Tr), _fontHeading, BrushAccent,
                 new XRect(MarginLeft, _y, ContentWidth, 15), XStringFormats.TopLeft);
             _y += 16;
             _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
-            _y += 7;
+            _y += 9;
         }
 
         // Başlık + (opsiyonel) açıklama + tarih üçlüsünden oluşan tek bir geçmiş kaydı.
+        // Solunda dikey bir işaret çizgisi var: kayıtlar birbirinden görsel olarak
+        // ayrılıyor, eskiden hepsi tek bir metin yığını gibi duruyordu.
         private void DrawEntry(string title, string? body, string timestamp)
         {
-            var titleHeight = MeasureWrapped(title, _fontLabel, ContentWidth, 12);
-            var bodyHeight = string.IsNullOrWhiteSpace(body) ? 0 : MeasureWrapped(body!, _fontBody, ContentWidth, 12);
-            EnsureSpace(titleHeight + bodyHeight + 20);
+            const double indent = 12;
+            var width = ContentWidth - indent;
 
-            DrawWrapped(title, _fontLabel, XBrushes.Black, MarginLeft, ContentWidth, 12);
+            var titleHeight = MeasureWrapped(title, _fontLabel, width, LineHeight);
+            var bodyHeight = string.IsNullOrWhiteSpace(body) ? 0 : MeasureWrapped(body!, _fontBody, width, LineHeight);
+            var total = titleHeight + bodyHeight + 14;
+            EnsureSpace(total + 8);
+
+            var top = _y;
+            var x = MarginLeft + indent;
+
+            DrawWrapped(title, _fontLabel, BrushInk, x, width, LineHeight);
             _y += titleHeight;
 
             if (!string.IsNullOrWhiteSpace(body))
             {
-                DrawWrapped(body!, _fontBody, XBrushes.Black, MarginLeft, ContentWidth, 12);
+                DrawWrapped(body!, _fontBody, BrushInk, x, width, LineHeight);
                 _y += bodyHeight;
             }
 
             _gfx.DrawString(timestamp, _fontSmall, BrushMuted,
-                new XRect(MarginLeft, _y, ContentWidth, 11), XStringFormats.TopLeft);
-            _y += 15;
+                new XRect(x, _y, width, 12), XStringFormats.TopLeft);
+            _y += 13;
+
+            // İşaret çizgisi ancak kaydın yüksekliği bilindikten sonra çizilebiliyor.
+            _gfx.DrawLine(PenLine, MarginLeft + 2, top, MarginLeft + 2, _y - 2);
+            _y += 7;
         }
 
         private void DrawRight(string text, XFont font, double x, double width, XBrush? brush = null)
         {
-            _gfx.DrawString(text, font, brush ?? XBrushes.Black,
-                new XRect(x, _y, width, 13), XStringFormats.TopRight);
+            _gfx.DrawString(text, font, brush ?? BrushInk,
+                new XRect(x, _y, width, LineHeight), XStringFormats.TopRight);
         }
 
         // Metni verilen genişliğe göre satırlara böler, çizer ve kapladığı yüksekliği döner.

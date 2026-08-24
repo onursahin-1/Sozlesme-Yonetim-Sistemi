@@ -25,6 +25,37 @@ public class WizardFileItem
     }
 }
 
+// Sağ paneldeki dikey adım göstergesinin tek bir satırı. Renkler hex metin olarak
+// döner (ContractStepViewModel ile aynı desen); böylece üç durumu ayırt etmek için
+// ayrı bir converter yazmak gerekmiyor.
+public class WizardStepViewModel
+{
+    public WizardStepViewModel(int number, string label, string hint, int currentStep)
+    {
+        Number = number;
+        Label = label;
+        Hint = hint;
+        IsDone = currentStep > number;
+        IsCurrent = currentStep == number;
+    }
+
+    public int Number { get; }
+    public string Label { get; }
+    public string Hint { get; }
+    public bool IsDone { get; }
+    public bool IsCurrent { get; }
+
+    public string NumberText => IsDone ? "✓" : Number.ToString();
+    public string CircleBgHex => IsDone ? "#16A34A" : IsCurrent ? "#2D6EA8" : "#FFFFFF";
+    public string CircleBorderHex => IsDone ? "#16A34A" : IsCurrent ? "#2D6EA8" : "#DFE5EE";
+    public string NumberColorHex => IsDone || IsCurrent ? "#FFFFFF" : "#A3ABB8";
+    public string LabelColorHex => IsCurrent ? "#1A2E4A" : IsDone ? "#4B5563" : "#A3ABB8";
+    public string LabelWeight => IsCurrent ? "Bold" : "Normal";
+
+    // İpucu satırı yalnızca içinde bulunulan adımda gösterilir; diğerleri sade kalsın.
+    public bool ShowHint => IsCurrent;
+}
+
 public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 {
     private readonly ContractService _contractService;
@@ -169,6 +200,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         _currentUser = currentUser;
         _attachmentsBasePath = attachmentsBasePath;
         ShowBackButton = initialRequest is not null;
+        BuildSteps();
         _ = InitializeAsync(initialRequest);
         AddItem();
     }
@@ -191,7 +223,19 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         OnPropertyChanged(nameof(IsStep1));
         OnPropertyChanged(nameof(IsStep2));
         OnPropertyChanged(nameof(IsStep3));
+        BuildSteps();
     }
+
+    // Sağ paneldeki dikey adım göstergesi. Adım değiştikçe yeniden kuruluyor.
+    [ObservableProperty]
+    public partial ObservableCollection<WizardStepViewModel> Steps { get; set; } = new();
+
+    private void BuildSteps() => Steps = new ObservableCollection<WizardStepViewModel>
+    {
+        new(1, "Temel Bilgiler", "Talebi seçin, tarihleri ve ödeme koşullarını girin.", CurrentStep),
+        new(2, "Bedel Kalemleri", "Sözleşmenin tutarı kalem kalem burada oluşur.", CurrentStep),
+        new(3, "Belgeler ve Gönder", "Dosyaları ekleyip sözleşmeyi onaya gönderin.", CurrentStep),
+    };
 
     private async Task LoadAsync()
     {
@@ -221,9 +265,12 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         var row = new ContractItemRowViewModel(RemoveItemRow);
 
         if (description is not null) row.Description = description;
-        if (quantity is not null) row.QuantityText = quantity.Value.ToString(CultureInfo.CurrentCulture);
+        if (quantity is not null) row.QuantityText = quantity.Value.ToString(CultureInfo.InvariantCulture);
         if (!string.IsNullOrWhiteSpace(unit)) row.Unit = unit!;
-        if (unitPrice is not null) row.UnitPriceText = unitPrice.Value.ToString(CultureInfo.CurrentCulture);
+
+        // Ekrandaki biçimle aynı olsun diye satırın kendi biçimlendiricisi kullanılıyor;
+        // aksi halde geri yüklenen tutar kutuda farklı görünüp yanlış ayrıştırılabilirdi.
+        if (unitPrice is not null) row.UnitPriceText = ContractItemRowViewModel.FormatAmount(unitPrice.Value);
 
         row.PropertyChanged += (_, e) =>
         {

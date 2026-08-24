@@ -377,13 +377,31 @@ public partial class ArchiveViewModel : ViewModelBase
         {
             Printing.ContractPdfExporter.Export(Detail, destinationPath);
             await _contractService.LogContractPrintedAsync(Detail, _currentUser);
-
-            var psi = new System.Diagnostics.ProcessStartInfo(destinationPath) { UseShellExecute = true };
-            System.Diagnostics.Process.Start(psi);
+            Printing.DocumentPrinter.Open(destinationPath);
         }
         catch (Exception ex)
         {
             ErrorMessage = "PDF oluşturulamadı: " + ex.Message;
+        }
+    }
+
+    // "Yazdır": belgeyi geçici bir dosyaya üretip doğrudan yazıcıya gönderir.
+    // Sözleşme detay ekranıyla aynı davranış.
+    [RelayCommand]
+    private async Task Print()
+    {
+        if (Detail is null) return;
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            var nameBase = string.IsNullOrWhiteSpace(Detail.ContractNo) ? Detail.RequestRefNo : Detail.ContractNo!;
+            Printing.DocumentPrinter.PrintContract(Detail, nameBase);
+            await _contractService.LogContractPrintedAsync(Detail, _currentUser);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Yazdırma başlatılamadı: " + ex.Message;
         }
     }
 

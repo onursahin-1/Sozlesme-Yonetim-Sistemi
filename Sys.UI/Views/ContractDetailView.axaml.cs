@@ -43,7 +43,9 @@ public partial class ContractDetailView : UserControl
         }
     }
 
-    private async void OnPrintClick(object? sender, RoutedEventArgs e)
+    // "PDF Kaydet". Asıl yazdırma artık ViewModel'deki PrintCommand üzerinden,
+    // dosya seçim penceresi olmadan doğrudan yazıcıya gidiyor.
+    private async void OnExportPdfClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not ContractDetailViewModel vm) return;
 

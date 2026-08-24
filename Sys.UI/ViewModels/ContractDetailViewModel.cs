@@ -262,7 +262,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
     }
 
-    // Dosya seçim penceresi yalnızca code-behind'dan açılabildiği için, "Yazdır"
+    // Dosya seçim penceresi yalnızca code-behind'dan açılabildiği için, "PDF Kaydet"
     // butonunun handler'ı kullanıcının seçtiği yolu buraya iletir. PDF üretimi,
     // denetim kaydı ve dosyanın açılması burada tek yerde yapılır.
     public async Task ExportPdfAsync(string destinationPath)
@@ -274,17 +274,40 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         {
             Printing.ContractPdfExporter.Export(Detail, destinationPath);
             await _contractService.LogContractPrintedAsync(Detail, _currentUser);
-
-            // PDF'i sistemin varsayılan görüntüleyicisinde açıyoruz; kullanıcı yazdırma
-            // işlemini oradan yapıyor. Avalonia'nın yerleşik yazdırma desteği yok.
-            var psi = new System.Diagnostics.ProcessStartInfo(destinationPath) { UseShellExecute = true };
-            System.Diagnostics.Process.Start(psi);
+            Printing.DocumentPrinter.Open(destinationPath);
         }
         catch (Exception ex)
         {
             ErrorMessage = "PDF oluşturulamadı: " + ex.Message;
         }
     }
+
+    // "Yazdır": belgeyi geçici bir dosyaya üretip doğrudan yazıcıya gönderir.
+    // Eskiden bu buton yalnızca PDF'i kaydedip görüntüleyicide açıyordu — kullanıcı
+    // yazdırma işlemini oradan elle yapmak zorundaydı, yani buton adını karşılamıyordu.
+    [RelayCommand]
+    private async Task Print()
+    {
+        if (Detail is null) return;
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            Printing.DocumentPrinter.PrintContract(Detail, PrintFileNameBase);
+
+            // Yazdırma da sözleşme verisinin uygulama dışına çıkması demek; kaydediliyor.
+            await _contractService.LogContractPrintedAsync(Detail, _currentUser);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Yazdırma başlatılamadı: " + ex.Message;
+        }
+    }
+
+    // Geçici yazdırma dosyasının adı: sözleşme no varsa o, yoksa talep referansı.
+    private string PrintFileNameBase => Detail is null
+        ? "sozlesme"
+        : (string.IsNullOrWhiteSpace(Detail.ContractNo) ? Detail.RequestRefNo : Detail.ContractNo!);
 
     [RelayCommand]
     private async Task OpenAttachment(Attachment attachment)

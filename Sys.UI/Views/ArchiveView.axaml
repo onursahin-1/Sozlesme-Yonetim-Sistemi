@@ -159,14 +159,33 @@
 				<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
                            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-				<Button Classes="flat" HorizontalAlignment="Left"
-						IsVisible="{Binding CanPrint}"
-						Click="OnPrintClick"
-						ToolTip.Tip="Sözleşme künyesini PDF olarak kaydeder ve açar">
-					<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
-						<TextBlock Text="🖨 Yazdır" Foreground="White" FontSize="12"/>
-					</Border>
-				</Button>
+				<!--
+				  İki ayrı işlem: "Yazdır" belgeyi doğrudan yazıcıya gönderir,
+				  "PDF Kaydet" ise dosya olarak diske yazar. Eskiden tek bir "Yazdır"
+				  butonu vardı ve aslında yalnızca kaydedip görüntüleyicide açıyordu.
+				-->
+				<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left"
+							IsVisible="{Binding CanPrint}">
+					<Button Classes="flat" Command="{Binding PrintCommand}"
+							ToolTip.Tip="Sözleşme künyesini varsayılan yazıcıya gönderir">
+						<Border Background="#2D6EA8" CornerRadius="8" Padding="14,9">
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<Path Stroke="White" StrokeThickness="1.7" Fill="Transparent"
+									  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
+									  Data="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>
+								<TextBlock Text="Yazdır" Foreground="White" FontSize="12.5"
+										   FontWeight="SemiBold" VerticalAlignment="Center"/>
+							</StackPanel>
+						</Border>
+					</Button>
+					<Button Classes="flat" Click="OnExportPdfClick"
+							ToolTip.Tip="Sözleşme künyesini PDF dosyası olarak kaydeder">
+						<Border Background="White" BorderBrush="#C9D3E0" BorderThickness="1"
+								CornerRadius="8" Padding="14,8">
+							<TextBlock Text="PDF Kaydet" Foreground="#3D4654" FontSize="12.5"/>
+						</Border>
+					</Button>
+				</StackPanel>
 
 				<!-- Künye kartı: sözleşme detay ekranıyla aynı düzen ve stiller -->
 				<Border IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"

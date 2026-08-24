@@ -35,9 +35,23 @@ public partial class ContractItemRowViewModel : ViewModelBase
         OnPropertyChanged(nameof(LineTotal));
     }
 
-    public int Quantity => int.TryParse(QuantityText, out var q) ? q : 0;
-    public decimal UnitPrice => decimal.TryParse(UnitPriceText, out var p) ? p : 0;
+    // Birim fiyat kutusuna yazılan metni AmountFormatHelper tr-TR biçimine sokuyor
+    // ("12.348,00"). Ayrıştırma ise makinenin geçerli kültürüne bırakılmıştı: kültür
+    // tr-TR değilse (örn. en-US) nokta binlik değil ONDALIK ayraç sayılıyor ve tutar
+    // sessizce yanlış okunuyordu. Biçimlendirme ile ayrıştırma artık aynı kültürü
+    // kullanıyor.
+    private static readonly CultureInfo AmountCulture = CultureInfo.GetCultureInfo("tr-TR");
+
+    public int Quantity => int.TryParse(QuantityText, NumberStyles.Integer, AmountCulture, out var q) ? q : 0;
+
+    public decimal UnitPrice =>
+        decimal.TryParse(UnitPriceText, NumberStyles.Any, AmountCulture, out var p) ? p : 0;
+
     public decimal LineTotal => Quantity * UnitPrice;
+
+    // Kayıtlı bir kalem forma geri yüklenirken kutuya yazılacak metin. Ekrandaki
+    // biçimle birebir aynı olsun diye burada üretiliyor.
+    public static string FormatAmount(decimal value) => value.ToString("N2", AmountCulture);
 
     public ContractItemRowViewModel(Action<ContractItemRowViewModel> onRemove)
     {
