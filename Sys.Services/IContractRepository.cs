@@ -10,7 +10,13 @@ public interface IContractRepository
     Task UpdateRequestAsync(Contract contract);
     Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog);
     Task<Contract?> GetByIdWithDetailsAsync(int id);
-    Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog);
+    // resolvedRevision / resolvedTermination: karar bir düzenleme ya da fesih talebine
+    // aitse, o talebin sonucu (IsApproved/ResolvedAt) sözleşme ve onay kaydıyla AYNI
+    // transaction içinde yazılsın diye buraya geçirilir. Ayrı bir çağrıyla yazılsaydı
+    // karar kaydedilip sonuç yazılamadığında geçmiş yine tutarsız kalırdı.
+    Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog,
+                            ContractRevision? resolvedRevision = null,
+                            ContractTermination? resolvedTermination = null);
     Task<List<Contract>> GetByStageAsync(int stage);
     Task ApplyEditAsync(Contract contract, ContractRevision revision, AuditLog auditLog);
     Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog);

@@ -525,6 +525,42 @@ public class ContractService
             return null; // başkasının talebini görmesin
         return contract;
     }
+    // Karar bekleyen (sonucu henüz yazılmamış) düzenleme kaydı. Eski kayıtlarda
+    // IsApproved null olduğu için, en yenisinden başlanarak aranıyor.
+    private static ContractRevision? FindPendingRevision(Contract contract)
+        => contract.Revisions
+            .Where(r => r.IsApproved is null)
+            .OrderByDescending(r => r.ChangedAt)
+            .ThenByDescending(r => r.Id)
+            .FirstOrDefault();
+
+    private static ContractTermination? FindPendingTermination(Contract contract)
+        => contract.Terminations
+            .Where(t => t.IsApproved is null)
+            .OrderByDescending(t => t.RequestedAt)
+            .ThenByDescending(t => t.Id)
+            .FirstOrDefault();
+
+    private static ContractRevision? MarkPendingRevision(Contract contract, bool approved)
+    {
+        var revision = FindPendingRevision(contract);
+        if (revision is null) return null;
+
+        revision.IsApproved = approved;
+        revision.ResolvedAt = DateTime.Now;
+        return revision;
+    }
+
+    private static ContractTermination? MarkPendingTermination(Contract contract, bool approved)
+    {
+        var termination = FindPendingTermination(contract);
+        if (termination is null) return null;
+
+        termination.IsApproved = approved;
+        termination.ResolvedAt = DateTime.Now;
+        return termination;
+    }
+
     public async Task DecideApprovalAsync(Contract contract, User actingUser, ApprovalDecision decision, string? note)
     {
         var (stepName, expectedRole) = contract.Stage switch
@@ -551,6 +587,12 @@ public class ContractService
             Note = note,
             ActionDate = DateTime.Now
         };
+        // Karara bağlanan düzenleme/fesih kaydı. Sonuç yalnızca zincir BİTTİĞİNDE
+        // (onay zinciri tamamlandığında ya da red geldiğinde) işaretlenir; Stage 1
+        // onayı talebi bir sonraki aşamaya taşır, henüz sonuçlandırmaz.
+        ContractRevision? resolvedRevision = null;
+        ContractTermination? resolvedTermination = null;
+
         if (contract.PendingTermination)
         {
             if (decision == ApprovalDecision.Onay)
@@ -565,6 +607,7 @@ public class ContractService
                     contract.Status = ContractStatus.Feshedildi;
                     contract.PendingTermination = false;
                     contract.PreviousStatusBeforeTermination = null;
+                    resolvedTermination = MarkPendingTermination(contract, approved: true);
                 }
             }
             else
@@ -574,6 +617,7 @@ public class ContractService
                 contract.Status = contract.PreviousStatusBeforeTermination ?? ContractStatus.Aktif;
                 contract.PendingTermination = false;
                 contract.PreviousStatusBeforeTermination = null;
+                resolvedTermination = MarkPendingTermination(contract, approved: false);
             }
         }
         else if (contract.PendingEdit)
@@ -590,29 +634,32 @@ public class ContractService
                     contract.Status = ContractStatus.Aktif;
                     contract.PendingEdit = false;
                     contract.PreviousStatusBeforeEdit = null;
+                    resolvedRevision = MarkPendingRevision(contract, approved: true);
                 }
             }
             else
             {
                 // Düzenleme talebi reddedildi — sözleşme düzenleme öncesi durumuna döner, Talep'e düşmez.
-                // Bedel ve bitiş tarihi de son revizyondaki eski değerlere geri alınır; aksi halde
-                // onaylanmamış değişiklik sözleşmede kalıcı olarak kalırdı.
-                var lastRevision = contract.Revisions
-                    .OrderByDescending(r => r.ChangedAt)
-                    .FirstOrDefault();
-                if (lastRevision is not null)
+                // Bedel ve bitiş tarihi de bekleyen revizyondaki eski değerlere geri alınır; aksi
+                // halde onaylanmamış değişiklik sözleşmede kalıcı olarak kalırdı.
+                //
+                // Geri alma artık "en son revizyon" yerine BEKLEYEN revizyon üzerinden yapılıyor:
+                // sonuç alanları eklendiği için hangi kaydın karara bağlandığı kesin olarak biliniyor.
+                var pending = FindPendingRevision(contract);
+                if (pending is not null)
                 {
-                    contract.TotalAmount = lastRevision.PreviousTotalAmount;
-                    contract.EndDate = lastRevision.PreviousEndDate;
-                    contract.Description = lastRevision.PreviousDescription;
-                    contract.CompanyName = lastRevision.PreviousCompanyName;
-                    contract.TaxNo = lastRevision.PreviousTaxNo;
-                    contract.PaymentPeriod = lastRevision.PreviousPaymentPeriod;
+                    contract.TotalAmount = pending.PreviousTotalAmount;
+                    contract.EndDate = pending.PreviousEndDate;
+                    contract.Description = pending.PreviousDescription;
+                    contract.CompanyName = pending.PreviousCompanyName;
+                    contract.TaxNo = pending.PreviousTaxNo;
+                    contract.PaymentPeriod = pending.PreviousPaymentPeriod;
                 }
                 contract.Stage = 3;
                 contract.Status = contract.PreviousStatusBeforeEdit ?? ContractStatus.Aktif;
                 contract.PendingEdit = false;
                 contract.PreviousStatusBeforeEdit = null;
+                resolvedRevision = MarkPendingRevision(contract, approved: false);
             }
         }
         else
@@ -668,7 +715,7 @@ public class ContractService
             Detail = $"{stepName} - {contract.Title}" + (string.IsNullOrWhiteSpace(note) ? "" : $" - Not: {note}"),
             ActionDate = DateTime.Now,
         };
-        await _contracts.ApplyDecisionAsync(contract, log, auditLog);
+        await _contracts.ApplyDecisionAsync(contract, log, auditLog, resolvedRevision, resolvedTermination);
 
         // Karar kaydedildikten sonra sözleşmenin ULAŞTIĞI aşamaya göre bildirim üretilir.
         if (contract.Stage is 1 or 2)

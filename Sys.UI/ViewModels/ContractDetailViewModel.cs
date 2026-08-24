@@ -97,10 +97,10 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
     public partial ObservableCollection<ContractStepViewModel> Steps { get; set; } = new();
 
     [ObservableProperty]
-    public partial ObservableCollection<ContractRevision> Revisions { get; set; } = new();
+    public partial ObservableCollection<RevisionRowViewModel> Revisions { get; set; } = new();
 
     [ObservableProperty]
-    public partial ObservableCollection<ContractTermination> Terminations { get; set; } = new();
+    public partial ObservableCollection<TerminationRowViewModel> Terminations { get; set; } = new();
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
@@ -169,8 +169,8 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         Steps = new ObservableCollection<ContractStepViewModel>();
         Items = new ObservableCollection<ContractItem>();
         Attachments = new ObservableCollection<Attachment>();
-        Revisions = new ObservableCollection<ContractRevision>();
-        Terminations = new ObservableCollection<ContractTermination>();
+        Revisions = new ObservableCollection<RevisionRowViewModel>();
+        Terminations = new ObservableCollection<TerminationRowViewModel>();
         Detail = null;
 
         var requestId = ++_loadRequestId;
@@ -221,8 +221,16 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<Attachment>(full.Attachments);
             Steps = new ObservableCollection<ContractStepViewModel>(ContractStepViewModel.Build(full));
-            Revisions = new ObservableCollection<ContractRevision>(full.Revisions);
-            Terminations = new ObservableCollection<ContractTermination>(full.Terminations);
+            // En yeni kayıt üstte: geçmiş listelerinde son durum önce okunmalı.
+            Revisions = new ObservableCollection<RevisionRowViewModel>(
+                full.Revisions
+                    .OrderByDescending(r => r.ChangedAt).ThenByDescending(r => r.Id)
+                    .Select(r => new RevisionRowViewModel(r, CurrencySuffix)));
+
+            Terminations = new ObservableCollection<TerminationRowViewModel>(
+                full.Terminations
+                    .OrderByDescending(t => t.RequestedAt).ThenByDescending(t => t.Id)
+                    .Select(t => new TerminationRowViewModel(t)));
         }
         catch (Exception ex)
         {

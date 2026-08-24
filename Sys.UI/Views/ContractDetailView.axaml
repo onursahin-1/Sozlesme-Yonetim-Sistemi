@@ -292,31 +292,45 @@
 						<StackPanel Spacing="12">
 							<TextBlock Classes="display" Text="Revizyon Geçmişi" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<!--
+							  Sonuç rozeti: bu kayıtlar birer TALEP. Reddedilmiş bir bedel
+							  değişikliği de eskiden gerçekleşmiş gibi listede duruyordu.
+							-->
 							<ItemsControl ItemsSource="{Binding Revisions}">
 								<ItemsControl.ItemTemplate>
-									<DataTemplate x:DataType="domain:ContractRevision">
-										<Border Background="#FBFCFE" BorderBrush="#E9EEF5" BorderThickness="1"
-												CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
-											<StackPanel Spacing="5">
-												<Grid ColumnDefinitions="*,Auto">
+									<DataTemplate x:DataType="vm:RevisionRowViewModel">
+										<Border Background="{Binding CardBgHex}" BorderBrush="{Binding CardBorderHex}"
+												BorderThickness="1" CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
+											<StackPanel Spacing="6">
+												<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
 													<TextBlock Grid.Column="0" Text="{Binding ChangeType}" FontSize="12.5"
-															   FontWeight="SemiBold" Foreground="#1A2E4A"/>
-													<TextBlock Grid.Column="1"
-															   Text="{Binding ChangedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
+															   FontWeight="SemiBold" Foreground="#1A2E4A"
+															   VerticalAlignment="Center" TextWrapping="Wrap"/>
+													<Border Grid.Column="1" Background="{Binding OutcomeBgHex}"
+															CornerRadius="9" Padding="9,2" VerticalAlignment="Center">
+														<TextBlock Text="{Binding OutcomeLabel}" Foreground="{Binding OutcomeColorHex}"
+																   FontSize="10" FontWeight="Bold"/>
+													</Border>
+													<TextBlock Grid.Column="2" Text="{Binding ChangedAtText}"
 															   FontSize="10.5" Foreground="#A3ABB8" VerticalAlignment="Center"/>
 												</Grid>
+
 												<TextBlock Text="{Binding Reason}" FontSize="12" Foreground="#5B6472"
-														   TextWrapping="Wrap"/>
-												<StackPanel Orientation="Horizontal" Spacing="16">
-													<TextBlock FontSize="11" Foreground="#8A94A6">
-														<Run Text="Önceki bedel: "/>
-														<Run Text="{Binding PreviousTotalAmount, StringFormat={}{0:N2}}"/>
-														<Run Text="{Binding $parent[UserControl].((vm:ContractDetailViewModel)DataContext).CurrencySuffix}"/>
-													</TextBlock>
-													<TextBlock FontSize="11" Foreground="#8A94A6"
-															   Text="{Binding PreviousEndDate, StringFormat='Önceki bitiş: {0:dd.MM.yyyy}'}"
-															   IsVisible="{Binding PreviousEndDate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-												</StackPanel>
+														   TextWrapping="Wrap" IsVisible="{Binding HasReason}"/>
+
+												<WrapPanel>
+													<TextBlock Text="{Binding PreviousAmountText}" FontSize="11"
+															   Foreground="#8A94A6" Margin="0,0,16,0"/>
+													<TextBlock Text="{Binding PreviousEndDateText}" FontSize="11"
+															   Foreground="#8A94A6" Margin="0,0,16,0"
+															   IsVisible="{Binding HasPreviousEndDate}"/>
+													<TextBlock Text="{Binding PreviousCompanyText}" FontSize="11"
+															   Foreground="#8A94A6" Margin="0,0,16,0"
+															   IsVisible="{Binding HasPreviousCompany}"/>
+													<TextBlock Text="{Binding PreviousPaymentPeriodText}" FontSize="11"
+															   Foreground="#8A94A6"
+															   IsVisible="{Binding HasPreviousPaymentPeriod}"/>
+												</WrapPanel>
 											</StackPanel>
 										</Border>
 									</DataTemplate>
@@ -332,32 +346,35 @@
 						<StackPanel Spacing="12">
 							<TextBlock Classes="display" Text="Fesih Geçmişi" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<!-- Reddedilmiş bir fesih talebi de sözleşme feshedilmiş gibi duruyordu -->
 							<ItemsControl ItemsSource="{Binding Terminations}">
 								<ItemsControl.ItemTemplate>
-									<DataTemplate x:DataType="domain:ContractTermination">
-										<Border Background="#FDF6F5" BorderBrush="#F2DAD5" BorderThickness="1"
-												CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
-											<StackPanel Spacing="5">
-												<Grid ColumnDefinitions="*,Auto">
+									<DataTemplate x:DataType="vm:TerminationRowViewModel">
+										<Border Background="{Binding CardBgHex}" BorderBrush="{Binding CardBorderHex}"
+												BorderThickness="1" CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
+											<StackPanel Spacing="6">
+												<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
 													<TextBlock Grid.Column="0" Text="{Binding TerminationType}" FontSize="12.5"
-															   FontWeight="SemiBold" Foreground="#8C3220"/>
-													<TextBlock Grid.Column="1"
-															   Text="{Binding RequestedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
-															   FontSize="10.5" Foreground="#B79086" VerticalAlignment="Center"/>
+															   FontWeight="SemiBold" Foreground="#1A2E4A"
+															   VerticalAlignment="Center" TextWrapping="Wrap"/>
+													<Border Grid.Column="1" Background="{Binding OutcomeBgHex}"
+															CornerRadius="9" Padding="9,2" VerticalAlignment="Center">
+														<TextBlock Text="{Binding OutcomeLabel}" Foreground="{Binding OutcomeColorHex}"
+																   FontSize="10" FontWeight="Bold"/>
+													</Border>
+													<TextBlock Grid.Column="2" Text="{Binding RequestedAtText}"
+															   FontSize="10.5" Foreground="#A3ABB8" VerticalAlignment="Center"/>
 												</Grid>
+
 												<TextBlock Text="{Binding Reason}" FontSize="12" Foreground="#5B6472"
-														   TextWrapping="Wrap"/>
-												<StackPanel Orientation="Horizontal" Spacing="16">
-													<TextBlock FontSize="11" Foreground="#8A94A6"
-															   Text="{Binding TerminationDate, StringFormat='Fesih tarihi: {0:dd.MM.yyyy}'}"/>
-													<TextBlock FontSize="11" Foreground="#8A94A6"
-															   IsVisible="{Binding CompensationAmount, Converter={x:Static ObjectConverters.IsNotNull}}">
-														<Run Text="Tazminat: "/>
-														<Run Text="{Binding CompensationAmount, StringFormat={}{0:N2}}"/>
-														<Run Text=" TL — "/>
-														<Run Text="{Binding CompensationDirection}"/>
-													</TextBlock>
-												</StackPanel>
+														   TextWrapping="Wrap" IsVisible="{Binding HasReason}"/>
+
+												<WrapPanel>
+													<TextBlock Text="{Binding TerminationDateText}" FontSize="11"
+															   Foreground="#8A94A6" Margin="0,0,16,0"/>
+													<TextBlock Text="{Binding CompensationText}" FontSize="11"
+															   Foreground="#8A94A6" IsVisible="{Binding HasCompensation}"/>
+												</WrapPanel>
 											</StackPanel>
 										</Border>
 									</DataTemplate>

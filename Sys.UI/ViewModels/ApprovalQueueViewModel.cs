@@ -30,6 +30,149 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     public ObservableCollection<ChecklistItemViewModel> ChecklistItems { get; } = new();
     public bool IsSybFinalCheck => Detail?.Stage == 1;
     public bool AllChecked => !IsSybFinalCheck || ChecklistItems.All(i => i.IsChecked);
+
+    // Kontrol listesinin ne kadarının işaretlendiği. "Onayla" butonu liste bitmeden
+    // pasif kaldığı için, kaç maddenin kaldığı ekranda yazılı olmalı — eskiden buton
+    // sebepsizce tıklanamaz görünüyordu.
+    private int CheckedCount => ChecklistItems.Count(i => i.IsChecked);
+    public string ChecklistProgressText => $"{CheckedCount} / {ChecklistItems.Count} madde";
+    public double ChecklistRatio => ChecklistItems.Count == 0
+        ? 0
+        : (double)CheckedCount / ChecklistItems.Count;
+
+    // "Onayla" neden pasif? Karar panelinde tek satırlık gerekçe.
+    public bool ShowChecklistWarning => IsSybFinalCheck && !AllChecked;
+
+    // Son Kontrol aşamasında (Stage 1) SYB'nin karşısına çıkan liste, ONAYLANAN ŞEYE
+    // göre değişir. Eskiden tek bir sabit liste vardı: fesih talebi onaylanırken de
+    // "Bedel kalemleri ve toplam tutar doğru", "Vergi No ve SAP Cari Kodu doğrulandı"
+    // gibi maddeler soruluyordu. Bunlar fesihte anlamsız (kalem girilmiyor, firma
+    // bilgileri aylar önce doğrulanmıştı); asıl kontrol edilmesi gerekenler ise —
+    // fesih türü, tarihi, tazminatı, bildirim belgesi — hiç sorulmuyordu. Liste
+    // körlemesine işaretlenen bir formaliteye dönüşüyordu.
+    //
+    // Her madde, ekranda GÖRÜLEBİLEN bir bilgiye karşılık gelmelidir.
+    private static string BuildChecklistTitle(Contract contract)
+    {
+        if (contract.PendingTermination) return "FESİH SON KONTROLÜ";
+        if (contract.PendingEdit) return "DEĞİŞİKLİK SON KONTROLÜ";
+        return "SÖZLEŞME SON KONTROLÜ";
+    }
+
+    private static string[] BuildChecklistLabels(Contract contract)
+    {
+        // Fesih: karar sözleşmenin sonlandırılması. Ekrandaki fesih kutusunda tür,
+        // tarih, gerekçe ve tazminat; dosya listesinde "Fesih" kategorili belge var.
+        if (contract.PendingTermination)
+        {
+            return new[]
+            {
+                "Fesih türü ve gerekçesi sözleşme hükümleriyle uyumlu",
+                "Fesih tarihi doğru; kalan süre ve yükümlülükler değerlendirildi",
+                "Tazminat tutarı ve yönü (ödenecek / alınacak) doğru",
+                "Fesih bildirimi veya yazışma belgesi eklendi",
+                "Firmayla açık bakiye ve devam eden ihlal durumu kontrol edildi",
+            };
+        }
+
+        // Düzenleme: karar mevcut sözleşmenin değiştirilmesi. Ekranda revizyon kutusu
+        // (değişiklik türü, gerekçe, önceki bedel) ve güncel künye yan yana duruyor.
+        if (contract.PendingEdit)
+        {
+            return new[]
+            {
+                "Değişiklik türü ve gerekçesi açık ve yeterli",
+                "Yeni değerler, önceki değerlerle karşılaştırıldı",
+                "Bedel değişikliği bütçe açısından uygun",
+                "Yeni tarih / ödeme koşulları sözleşmeyle tutarlı",
+                "Değişikliği destekleyen belge (zeyilname, yazışma) eklendi",
+            };
+        }
+
+        // Yeni sözleşme: ilk kez yürürlüğe girecek.
+        // "Fesih/Revizyon bağlamı gözden geçirildi" maddesi kaldırıldı — bu akışta
+        // öyle bir bağlam yok, madde her zaman boşa işaretleniyordu.
+        return new[]
+        {
+            "Kapsam, talebin konusuyla örtüşüyor",
+            "Bedel kalemleri ve toplam tutar doğru",
+            "Firma bilgileri doğru (Vergi No, SAP Cari Kodu)",
+            "Başlangıç/Bitiş tarihleri ve ödeme periyodu doğru",
+            "Sözleşme dosyası yüklendi; ek ve teminat belgeleri tam",
+        };
+    }
+
+    // Onay/red penceresinin metni de karar neye aitse ona göre yazılır. "Bu sözleşmeyi
+    // onaylamak istediğinizden emin misiniz?" bir fesih talebinde yanıltıcıydı:
+    // onaylanan şey sözleşme değil, sözleşmenin FESHİ. Aynısı düzenleme için de geçerli.
+    public string ApproveConfirmMessage
+    {
+        get
+        {
+            if (Detail is null) return "Bu kararı onaylamak istediğinizden emin misiniz?";
+
+            if (Detail.PendingTermination)
+                return "Bu fesih talebini onaylamak istediğinizden emin misiniz? " +
+                       (IsSybFinalCheck
+                           ? "Talep yönetim onayına gönderilecek."
+                           : "Sözleşme feshedilecek ve arşive alınacak.");
+
+            if (Detail.PendingEdit)
+                return "Bu değişiklik talebini onaylamak istediğinizden emin misiniz? " +
+                       (IsSybFinalCheck
+                           ? "Talep yönetim onayına gönderilecek."
+                           : "Yeni değerler sözleşmede kalıcı olacak.");
+
+            return "Bu sözleşmeyi onaylamak istediğinizden emin misiniz? " +
+                   (IsSybFinalCheck
+                       ? "Sözleşme yönetim onayına gönderilecek."
+                       : "Sözleşme yürürlüğe girecek.");
+        }
+    }
+
+    public string ApproveConfirmButtonText => Detail switch
+    {
+        { PendingTermination: true } => "Evet, Feshi Onayla",
+        { PendingEdit: true } => "Evet, Değişikliği Onayla",
+        _ => "Evet, Onayla"
+    };
+
+    public string RejectConfirmMessage
+    {
+        get
+        {
+            if (Detail is null) return "Bu kararı reddetmek istediğinizden emin misiniz?";
+
+            if (Detail.PendingTermination)
+                return "Bu fesih talebini reddetmek istediğinizden emin misiniz? " +
+                       "Sözleşme feshedilmeyecek, yürürlükte kalmaya devam edecek.";
+
+            if (Detail.PendingEdit)
+                return "Bu değişiklik talebini reddetmek istediğinizden emin misiniz? " +
+                       "Sözleşme değişiklik öncesi değerlerine döndürülecek.";
+
+            // Stage 1 reddi talebi başa döndürür, Stage 2 reddi SYB'ye geri gönderir.
+            return "Bu sözleşmeyi reddetmek istediğinizden emin misiniz? " +
+                   (IsSybFinalCheck
+                       ? "Talep, düzeltilmek üzere sahibine geri gönderilecek."
+                       : "Sözleşme SYB son kontrolüne geri gönderilecek.");
+        }
+    }
+
+    public string RejectConfirmButtonText => Detail switch
+    {
+        { PendingTermination: true } => "Evet, Feshi Reddet",
+        { PendingEdit: true } => "Evet, Değişikliği Reddet",
+        _ => "Evet, Reddet"
+    };
+
+    private void NotifyChecklistChanged()
+    {
+        OnPropertyChanged(nameof(AllChecked));
+        OnPropertyChanged(nameof(ChecklistProgressText));
+        OnPropertyChanged(nameof(ChecklistRatio));
+        OnPropertyChanged(nameof(ShowChecklistWarning));
+    }
     [ObservableProperty]
     public partial Contract? SelectedContract { get; set; }
     [ObservableProperty]
@@ -44,8 +187,28 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     public partial string DetailRequester { get; set; } = string.Empty;
     [ObservableProperty]
     public partial string DetailCompany { get; set; } = string.Empty;
+
+    // Aşağıdaki dört alan Son Kontrol listesindeki maddeleri doğrulayabilmek için
+    // eklendi: "SAP Cari Kodu ve Vergi No doğrulandı" maddesi ekranda bu iki değer
+    // hiç görünmediği için körlemesine işaretleniyordu.
     [ObservableProperty]
-    public partial string DetailStatus { get; set; } = string.Empty;
+    public partial string DetailTaxNo { get; set; } = string.Empty;
+    [ObservableProperty]
+    public partial string DetailSapCariKodu { get; set; } = string.Empty;
+    [ObservableProperty]
+    public partial string DetailType { get; set; } = string.Empty;
+    [ObservableProperty]
+    public partial string DetailCompanyType { get; set; } = string.Empty;
+    [ObservableProperty]
+    public partial string DetailRefNo { get; set; } = string.Empty;
+
+    // Talebin kapsamı: onaycının "ne onaylıyorum" sorusunun cevabı. Ekranda hiç
+    // gösterilmiyordu; sözleşmenin kalemleri vardı ama işin tanımı yoktu.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDescription))]
+    public partial string DetailDescription { get; set; } = string.Empty;
+
+    public bool HasDescription => !string.IsNullOrWhiteSpace(DetailDescription);
     [ObservableProperty]
     public partial string DetailTotal { get; set; } = string.Empty;
     [ObservableProperty]
@@ -64,14 +227,21 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     // Bu sözleşme daha önce reddedilip bu kuyruğa GERİ mi döndü? Eskiden bunun hiçbir
     // izi yoktu: Müdür reddedip SYB'ye geri gönderdiğinde ekran ilk incelemeden
     // ayırt edilemiyordu, gerekçe yalnızca detaydaki zaman çizelgesinden bulunabiliyordu.
+    // Kontrol listesinin başlığı da bağlama göre değişir; SYB neyi onayladığını
+    // listeye bakmadan da görsün.
+    [ObservableProperty]
+    public partial string ChecklistTitle { get; set; } = "SON KONTROL LİSTESİ";
+
     [ObservableProperty]
     public partial bool HasPreviousRejection { get; set; }
     [ObservableProperty]
     public partial string PreviousRejectionInfo { get; set; } = string.Empty;
     [ObservableProperty]
     public partial ObservableCollection<ContractItem> Items { get; set; } = new();
+    // Ekler kategori rozetiyle gösterilebilsin diye ham Attachment yerine satır
+    // görünüm modeli tutuluyor.
     [ObservableProperty]
-    public partial ObservableCollection<Attachment> Attachments { get; set; } = new();
+    public partial ObservableCollection<AttachmentRowViewModel> Attachments { get; set; } = new();
     [ObservableProperty]
     public partial string Note { get; set; } = string.Empty;
     [ObservableProperty]
@@ -151,7 +321,8 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         SuccessMessage = string.Empty;
         Note = string.Empty;
         Items = new ObservableCollection<ContractItem>();
-        Attachments = new ObservableCollection<Attachment>();
+        Attachments = new ObservableCollection<AttachmentRowViewModel>();
+        DetailDescription = string.Empty;
         Detail = null;
         IsPendingTermination = false;
         ChecklistItems.Clear();
@@ -160,6 +331,9 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         RevisionInfo = string.Empty;
         HasPreviousRejection = false;
         PreviousRejectionInfo = string.Empty;
+        ChecklistTitle = "SON KONTROL LİSTESİ";
+        OnPropertyChanged(nameof(IsSybFinalCheck));
+        NotifyChecklistChanged();
 
         var requestId = ++_loadRequestId;
         _ = LoadDetailAsync(value, requestId);
@@ -206,24 +380,16 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
 
             if (full.Stage == 1)
             {
-                var labels = new[]
-                {
-                    "Sözleşme dosyası eksiksiz yüklendi",
-                    "Bedel kalemleri ve toplam tutar doğru",
-                    "SAP Cari Kodu ve Vergi No doğrulandı",
-                    "Başlangıç/Bitiş tarihleri ve ödeme periyodu doğru",
-                    "Ek belgeler (teminat, ek dosya) kontrol edildi",
-                    "Fesih/Revizyon bağlamı gözden geçirildi (varsa yukarıdaki kutuda)",
-                };
-                foreach (var label in labels)
+                ChecklistTitle = BuildChecklistTitle(full);
+                foreach (var label in BuildChecklistLabels(full))
                 {
                     var item = new ChecklistItemViewModel(label);
-                    item.PropertyChanged += (_, __) => OnPropertyChanged(nameof(AllChecked));
+                    item.PropertyChanged += (_, __) => NotifyChecklistChanged();
                     ChecklistItems.Add(item);
                 }
             }
             OnPropertyChanged(nameof(IsSybFinalCheck));
-            OnPropertyChanged(nameof(AllChecked));
+            NotifyChecklistChanged();
             // Künye alanları ham değer olarak tutulur; etiket ("FİRMA", "BEDEL" vb.)
             // ekranda ayrı bir TextBlock olarak yazıldığı için buraya ön ek konmuyor.
             var tr = CultureInfo.GetCultureInfo("tr-TR");
@@ -234,16 +400,28 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 ? "-"
                 : full.CreatedByUser.FullName + (string.IsNullOrWhiteSpace(full.CreatedByUser.Department) ? "" : $" ({full.CreatedByUser.Department})");
             DetailCompany = full.CompanyName;
-            DetailStatus = ContractStatusHelper.ToLabel(full.Status);
+            DetailTaxNo = string.IsNullOrWhiteSpace(full.TaxNo) ? "-" : full.TaxNo;
+            DetailSapCariKodu = string.IsNullOrWhiteSpace(full.SapCariKodu) ? "-" : full.SapCariKodu!;
+            DetailType = string.IsNullOrWhiteSpace(full.Type) ? "-" : full.Type;
+            DetailCompanyType = string.IsNullOrWhiteSpace(full.CompanyType) ? "-" : full.CompanyType!;
+            DetailRefNo = string.IsNullOrWhiteSpace(full.RequestRefNo) ? "-" : full.RequestRefNo;
+            DetailDescription = full.Description ?? string.Empty;
             DetailTotal = CurrencyHelper.Format(full.TotalAmount, full.Currency);
             DetailStart = full.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             DetailEnd = full.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";
             Items = new ObservableCollection<ContractItem>(full.Items);
-            Attachments = new ObservableCollection<Attachment>(full.Attachments);
+            Attachments = new ObservableCollection<AttachmentRowViewModel>(
+                full.Attachments.Select(a => new AttachmentRowViewModel(a)));
+            // Karar bekleyen kayıtlar, sonucu henüz yazılmamış (IsApproved null) olanlardır.
             IsPendingTermination = full.PendingTermination;
             if (full.PendingTermination)
             {
-                var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
+                var term = full.Terminations
+                    .Where(t => t.IsApproved is null)
+                    .OrderByDescending(t => t.RequestedAt)
+                    .ThenByDescending(t => t.Id)
+                    .FirstOrDefault();
+
                 if (term is not null)
                 {
                     var compensation = term.CompensationAmount.HasValue
@@ -252,9 +430,18 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                     TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}\nTazminat: {compensation}";
                 }
             }
-            else if (full.Revisions.Count > 0)
+            // ŞARTA DİKKAT: eskiden "Revisions.Count > 0" idi, yani geçmişte BİR KEZ
+            // revizyon görmüş her sözleşmede "Bu bir değişiklik onayıdır" kutusu
+            // çıkıyordu — sıradan bir ilk onayda bile. Doğru şart, o an bekleyen bir
+            // düzenleme talebinin olması.
+            else if (full.PendingEdit)
             {
-                var rev = full.Revisions.OrderByDescending(r => r.ChangedAt).FirstOrDefault();
+                var rev = full.Revisions
+                    .Where(r => r.IsApproved is null)
+                    .OrderByDescending(r => r.ChangedAt)
+                    .ThenByDescending(r => r.Id)
+                    .FirstOrDefault();
+
                 if (rev is not null)
                 {
                     HasRevisionHistory = true;

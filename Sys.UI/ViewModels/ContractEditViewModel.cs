@@ -64,6 +64,59 @@ public partial class ContractEditViewModel : ViewModelBase
     [ObservableProperty]
     public partial string NewPaymentPeriod { get; set; } = string.Empty;
 
+    // --- Seçilen sözleşmenin MEVCUT değerleri ---
+    //
+    // Ekranda yalnızca "Yeni Bedel", "Yeni Bitiş Tarihi" gibi boş kutular vardı:
+    // kullanıcı neyi neyle değiştirdiğini göremeden yazıyordu. Bir bedel revizyonunda
+    // mevcut tutarı bilmeden yeni tutar girmek doğrudan hata kaynağı. Bu değerler
+    // ilgili kutunun altında ve sağdaki özet kartında gösteriliyor.
+
+    [ObservableProperty]
+    public partial string CurrentTitle { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CurrentNo { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CurrentCompany { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string CurrentAmountText { get; set; } = "-";
+
+    [ObservableProperty]
+    public partial string CurrentStartText { get; set; } = "-";
+
+    [ObservableProperty]
+    public partial string CurrentEndText { get; set; } = "-";
+
+    [ObservableProperty]
+    public partial string CurrentDescription { get; set; } = "-";
+
+    [ObservableProperty]
+    public partial string CurrentCompanyName { get; set; } = "-";
+
+    [ObservableProperty]
+    public partial string CurrentTaxNo { get; set; } = "-";
+
+    [ObservableProperty]
+    public partial string CurrentPaymentPeriod { get; set; } = "-";
+
+    // --- Alan bazlı doğrulama mesajları ---
+    // Diğer formlarda olduğu gibi hata, ilgili kutunun hemen altında gösteriliyor;
+    // eskiden hepsi tek bir kırmızı satırda toplanıyordu.
+
+    [ObservableProperty]
+    public partial string ContractError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string ReasonError { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string AmountError { get; set; } = string.Empty;
+
+    partial void OnReasonChanged(string value) => ReasonError = string.Empty;
+    partial void OnNewTotalAmountTextChanged(string value) => AmountError = string.Empty;
+
     [ObservableProperty]
     public partial string? SelectedFilePath { get; set; }
 
@@ -123,11 +176,14 @@ public partial class ContractEditViewModel : ViewModelBase
     {
         ErrorMessage = string.Empty;
         SuccessMessage = string.Empty;
+        ContractError = string.Empty;
+        ReasonError = string.Empty;
+        AmountError = string.Empty;
         Reason = string.Empty;
         NewTotalAmountText = string.Empty;
         NewAmountLabel = value is null
-            ? "Yeni Bedel"
-            : $"Yeni Bedel ({CurrencyHelper.Symbol(value.Currency)})";
+            ? "YENİ BEDEL"
+            : $"YENİ BEDEL ({CurrencyHelper.Symbol(value.Currency)})";
         NewEndDate = null;
         NewDescription = string.Empty;
         NewCompanyName = string.Empty;
@@ -135,7 +191,23 @@ public partial class ContractEditViewModel : ViewModelBase
         NewPaymentPeriod = string.Empty;
         SelectedFilePath = null;
         SelectedFileName = string.Empty;
+
+        var tr = CultureInfo.GetCultureInfo("tr-TR");
+        CurrentTitle = value?.Title ?? string.Empty;
+        CurrentNo = value is null
+            ? string.Empty
+            : (string.IsNullOrWhiteSpace(value.ContractNo) ? value.RequestRefNo : value.ContractNo!);
+        CurrentCompany = value?.CompanyName ?? string.Empty;
+        CurrentAmountText = value is null ? "-" : CurrencyHelper.Format(value.TotalAmount, value.Currency);
+        CurrentStartText = value?.StartDate?.ToString("dd.MM.yyyy", tr) ?? "-";
+        CurrentEndText = value?.EndDate?.ToString("dd.MM.yyyy", tr) ?? "-";
+        CurrentDescription = Dash(value?.Description);
+        CurrentCompanyName = Dash(value?.CompanyName);
+        CurrentTaxNo = Dash(value?.TaxNo);
+        CurrentPaymentPeriod = Dash(value?.PaymentPeriod);
     }
+
+    private static string Dash(string? text) => string.IsNullOrWhiteSpace(text) ? "-" : text!;
 
     [RelayCommand]
     private async Task Submit()
@@ -147,28 +219,37 @@ public partial class ContractEditViewModel : ViewModelBase
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
 
+            // Tüm alanlar birlikte doğrulanıp her mesaj kendi alanının altında
+            // gösteriliyor; eskiden ilk hatada durulup tek satırda yazılıyordu.
+            ContractError = string.Empty;
+            ReasonError = string.Empty;
+            AmountError = string.Empty;
+
             if (SelectedContract is null)
-            {
-                ErrorMessage = "Önce bir sözleşme seçin.";
-                return;
-            }
+                ContractError = "Bir sözleşme seçilmelidir.";
 
             if (string.IsNullOrWhiteSpace(Reason))
-            {
-                ErrorMessage = "Değişiklik gerekçesi zorunludur.";
-                return;
-            }
+                ReasonError = "Değişiklik gerekçesi zorunludur.";
 
             decimal? newAmount = null;
             if (!string.IsNullOrWhiteSpace(NewTotalAmountText))
             {
                 if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
-                {
-                    ErrorMessage = "Yeni bedel geçerli, negatif olmayan bir sayı olmalı.";
-                    return;
-                }
-                newAmount = parsed;
+                    AmountError = "Yeni bedel geçerli, negatif olmayan bir sayı olmalı.";
+                else
+                    newAmount = parsed;
             }
+
+            if (!string.IsNullOrEmpty(ContractError) ||
+                !string.IsNullOrEmpty(ReasonError) ||
+                !string.IsNullOrEmpty(AmountError))
+            {
+                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+                return;
+            }
+
+            // Buraya gelindiyse ContractError boştur, yani seçim yapılmıştır.
+            if (SelectedContract is null) return;
 
             DateTime? newEnd = NewEndDate?.DateTime;
 

@@ -21,4 +21,16 @@ public class ContractRevision
 
     public int ChangedByUserId { get; set; }
     public DateTime ChangedAt { get; set; }
+
+    // Düzenleme talebinin SONUCU.
+    //
+    // Bu alanlar olmadan geçmiş yanlış bilgi veriyordu: reddedilmiş bir bedel
+    // değişikliği de "Revizyon Geçmişi"nde gerçekleşmiş gibi duruyordu. Kayıt hem
+    // talebi hem sonucunu temsil ediyor.
+    //   null  → karar bekliyor (ya da bu alanlar eklenmeden önce oluşmuş eski kayıt)
+    //   true  → onaylandı, değişiklik yürürlüğe girdi
+    //   false → reddedildi, sözleşme eski değerlerine döndürüldü
+    public bool? IsApproved { get; set; }
+
+    public DateTime? ResolvedAt { get; set; }
 }

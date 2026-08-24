@@ -188,12 +188,37 @@ public class ContractRepository : IContractRepository
         }
     }
 
-    public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog)
+    public async Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog,
+                                         ContractRevision? resolvedRevision = null,
+                                         ContractTermination? resolvedTermination = null)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
         var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
         CopyWorkflowState(contract, tracked);
+
+        // Düzenleme/fesih talebinin sonucu, sözleşme durumuyla aynı SaveChanges
+        // çağrısında yazılır. Yalnızca sonuç alanları güncelleniyor; talebin içeriği
+        // (gerekçe, önceki değerler) değişmemeli.
+        if (resolvedRevision is not null)
+        {
+            var revision = await db.ContractRevisions.FirstOrDefaultAsync(r => r.Id == resolvedRevision.Id);
+            if (revision is not null)
+            {
+                revision.IsApproved = resolvedRevision.IsApproved;
+                revision.ResolvedAt = resolvedRevision.ResolvedAt;
+            }
+        }
+
+        if (resolvedTermination is not null)
+        {
+            var termination = await db.ContractTerminations.FirstOrDefaultAsync(t => t.Id == resolvedTermination.Id);
+            if (termination is not null)
+            {
+                termination.IsApproved = resolvedTermination.IsApproved;
+                termination.ResolvedAt = resolvedTermination.ResolvedAt;
+            }
+        }
         // Kullanıcının ekranda gördüğü RowVersion ile veritabanındaki güncel değer
         // eşleşmiyorsa (araya başka bir güncelleme girmişse) SaveChangesAsync bir
         // DbUpdateConcurrencyException fırlatır — böylece iki kişi aynı sözleşmeyi

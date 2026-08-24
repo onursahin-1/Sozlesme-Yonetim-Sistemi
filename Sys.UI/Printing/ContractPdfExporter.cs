@@ -342,8 +342,9 @@ public static class ContractPdfExporter
                 if (revision.PreviousEndDate.HasValue)
                     detay += $" · Önceki bitiş: {revision.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr)}";
 
+                // Sonuç başlığa yazılıyor: bu kayıtlar birer talep, reddedilmiş olabilir.
                 DrawEntry(
-                    revision.ChangeType,
+                    $"{revision.ChangeType} — {OutcomeText(revision.IsApproved)}",
                     string.IsNullOrWhiteSpace(revision.Reason) ? detay : revision.Reason + "\n" + detay,
                     revision.ChangedAt.ToString("dd.MM.yyyy HH:mm", Tr));
             }
@@ -362,7 +363,7 @@ public static class ContractPdfExporter
                     detay += $" · Tazminat: {termination.CompensationAmount.Value.ToString("N2", Tr)} TL ({termination.CompensationDirection})";
 
                 DrawEntry(
-                    termination.TerminationType,
+                    $"{termination.TerminationType} — {OutcomeText(termination.IsApproved)}",
                     string.IsNullOrWhiteSpace(termination.Reason) ? detay : termination.Reason + "\n" + detay,
                     termination.RequestedAt.ToString("dd.MM.yyyy HH:mm", Tr));
             }
@@ -437,6 +438,15 @@ public static class ContractPdfExporter
             _gfx.DrawLine(PenLine, MarginLeft + 2, top, MarginLeft + 2, _y - 2);
             _y += 7;
         }
+
+        // Revizyon/fesih kaydının sonucu. null, sonuç alanları eklenmeden önce
+        // oluşmuş eski kayıtları temsil eder; "onaylandı" varsaymak yanlış olur.
+        private static string OutcomeText(bool? isApproved) => isApproved switch
+        {
+            true => "Onaylandı",
+            false => "Reddedildi",
+            _ => "Sonuç bekliyor"
+        };
 
         private void DrawRight(string text, XFont font, double x, double width, XBrush? brush = null)
         {

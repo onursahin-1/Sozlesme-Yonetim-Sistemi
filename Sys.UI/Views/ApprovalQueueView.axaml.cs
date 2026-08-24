@@ -22,7 +22,9 @@ public partial class ApprovalQueueView : UserControl
             var owner = TopLevel.GetTopLevel(this) as Window;
             if (owner is null) return;
 
-            var confirmed = await ConfirmDialog.ShowAsync(owner, "Bu sözleşmeyi onaylamak istediğinizden emin misiniz?", "Evet, Onayla");
+            // Metin ViewModel'den geliyor: karar bir fesih ya da düzenleme talebine
+            // aitse "Bu sözleşmeyi onaylamak..." demek yanlış olur.
+            var confirmed = await ConfirmDialog.ShowAsync(owner, vm.ApproveConfirmMessage, vm.ApproveConfirmButtonText);
             if (confirmed)
                 vm.ApproveCommand.Execute(null);
         }
@@ -42,7 +44,7 @@ public partial class ApprovalQueueView : UserControl
             var owner = TopLevel.GetTopLevel(this) as Window;
             if (owner is null) return;
 
-            var confirmed = await ConfirmDialog.ShowAsync(owner, "Bu sözleşmeyi reddetmek istediğinizden emin misiniz?", "Evet, Reddet");
+            var confirmed = await ConfirmDialog.ShowAsync(owner, vm.RejectConfirmMessage, vm.RejectConfirmButtonText);
             if (confirmed)
                 vm.RejectCommand.Execute(null);
         }

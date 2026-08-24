@@ -111,6 +111,28 @@ public class ContractStepViewModel
         return steps;
     }
 
+    // Zaman çizelgesi kırmızı bir "Reddedildi" adımıyla bitip hemen altında
+    // "Yürürlükte" yazınca çelişki gibi okunuyordu. Oysa reddedilen şey SÖZLEŞME değil,
+    // onun üzerinde açılan düzenleme/fesih talebi; sözleşme talep öncesi haliyle
+    // yürürlükte kalmaya devam ediyor. Bu satır o bağlantıyı açıkça kuruyor.
+    private static string? LastRejectionExplanation(Contract contract)
+    {
+        var lastLog = contract.ApprovalLogs
+            .OrderByDescending(l => l.ActionDate)
+            .ThenByDescending(l => l.Id)
+            .FirstOrDefault();
+
+        if (lastLog is null || lastLog.Decision != ApprovalDecision.Red) return null;
+
+        if (lastLog.StepName.Contains("Düzenleme", StringComparison.OrdinalIgnoreCase))
+            return "Düzenleme talebi reddedildi; sözleşme değişiklik öncesi değerleriyle yürürlükte kaldı.";
+
+        if (lastLog.StepName.Contains("Fesih", StringComparison.OrdinalIgnoreCase))
+            return "Fesih talebi reddedildi; sözleşme yürürlükte kalmaya devam ediyor.";
+
+        return null;
+    }
+
     // Son düğüm: sözleşmenin şu anki hali. Onay sürecindeyse kimin onayının
     // beklendiğini de yazar ki kullanıcı topu kimde olduğunu görsün.
     private static ContractStepViewModel BuildCurrentStateStep(Contract contract)
@@ -135,13 +157,15 @@ public class ContractStepViewModel
                 return new ContractStepViewModel(bekleyen + ek, ContractStepState.Current);
 
             case ContractStatus.Aktif:
-                return new ContractStepViewModel("Yürürlükte", ContractStepState.Current);
+                return new ContractStepViewModel("Yürürlükte", ContractStepState.Current, null, LastRejectionExplanation(contract));
 
             case ContractStatus.Uyari:
-                return new ContractStepViewModel("Yürürlükte — bitiş tarihi yaklaşıyor", ContractStepState.Current);
+                return new ContractStepViewModel("Yürürlükte — bitiş tarihi yaklaşıyor", ContractStepState.Current,
+                    null, LastRejectionExplanation(contract));
 
             case ContractStatus.Ihlal:
-                return new ContractStepViewModel("Yürürlükte — ihlal bildirimi var", ContractStepState.Rejected);
+                return new ContractStepViewModel("Yürürlükte — ihlal bildirimi var", ContractStepState.Rejected,
+                    null, LastRejectionExplanation(contract));
 
             case ContractStatus.Tamamlandi:
                 return new ContractStepViewModel("Süresi doldu — tamamlandı", ContractStepState.Completed);

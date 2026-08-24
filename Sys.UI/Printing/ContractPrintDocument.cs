@@ -247,8 +247,8 @@ public static class ContractPrintDocument
                 if (rev.PreviousEndDate.HasValue)
                     detay += $" · Önceki bitiş: {rev.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr)}";
 
-                sb.Append("<div class=\"entry\">");
-                sb.Append($"<div class=\"t\">{E(rev.ChangeType)}</div>");
+                sb.Append($"<div class=\"entry {OutcomeClass(rev.IsApproved)}\">");
+                sb.Append($"<div class=\"t\">{E(rev.ChangeType)} — {E(OutcomeText(rev.IsApproved))}</div>");
                 if (!string.IsNullOrWhiteSpace(rev.Reason))
                     sb.Append($"<div class=\"b\">{E(rev.Reason)}</div>");
                 sb.Append($"<div class=\"b\">{E(detay)}</div>");
@@ -267,8 +267,8 @@ public static class ContractPrintDocument
                 if (term.CompensationAmount.HasValue)
                     detay += $" · Tazminat: {term.CompensationAmount.Value.ToString("N2", Tr)} TL ({term.CompensationDirection})";
 
-                sb.Append("<div class=\"entry no\">");
-                sb.Append($"<div class=\"t\">{E(term.TerminationType)}</div>");
+                sb.Append($"<div class=\"entry {OutcomeClass(term.IsApproved)}\">");
+                sb.Append($"<div class=\"t\">{E(term.TerminationType)} — {E(OutcomeText(term.IsApproved))}</div>");
                 if (!string.IsNullOrWhiteSpace(term.Reason))
                     sb.Append($"<div class=\"b\">{E(term.Reason)}</div>");
                 sb.Append($"<div class=\"b\">{E(detay)}</div>");
@@ -294,6 +294,23 @@ public static class ContractPrintDocument
     }
 
     private static string Dash(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value!;
+
+    // Revizyon/fesih kaydının sonucu. null, sonuç alanları eklenmeden önce oluşmuş
+    // eski kayıtları temsil eder; "onaylandı" varsaymak yanlış olur.
+    private static string OutcomeText(bool? isApproved) => isApproved switch
+    {
+        true => "Onaylandı",
+        false => "Reddedildi",
+        _ => "Sonuç bekliyor"
+    };
+
+    // Soldaki renkli işaret çizgisi: onaylandı yeşil, reddedildi kırmızı, belirsiz nötr.
+    private static string OutcomeClass(bool? isApproved) => isApproved switch
+    {
+        true => "ok",
+        false => "no",
+        _ => ""
+    };
 
     private static string E(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 

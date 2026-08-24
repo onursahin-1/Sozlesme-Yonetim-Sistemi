@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Sys.Domain;
 using Sys.Services;
 using Xunit;
@@ -69,6 +70,109 @@ public class ContractServiceApprovalTests
         Assert.True(contract.WasRejected);
         Assert.Equal("tutarsız bedel", contract.LastRejectionNote);
         Assert.NotNull(contract.LastRejectedAt);
+    }
+
+    // --- Revizyon / fesih taleplerinin sonucu ---
+
+    private static Contract ContractWithPendingEdit(int stage) => new()
+    {
+        Id = 1,
+        Stage = stage,
+        Status = ContractStatus.OnayBekliyor,
+        PendingEdit = true,
+        PreviousStatusBeforeEdit = ContractStatus.Aktif,
+        TotalAmount = 90_000m,
+        Revisions =
+        {
+            new ContractRevision
+            {
+                Id = 5,
+                ChangeType = "Bedel Değişikliği",
+                PreviousTotalAmount = 50_000m,
+                ChangedAt = DateTime.Now
+            }
+        }
+    };
+
+    // Reddedilen düzenleme "gerçekleşmiş" gibi görünmemeli.
+    [Fact]
+    public async Task RejectedEdit_MarksRevisionAsRejected()
+    {
+        var service = CreateService(out var repo);
+        var contract = ContractWithPendingEdit(stage: 2);
+        var mudur = new User { Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Red, "uygun değil");
+
+        var revision = contract.Revisions.Single();
+        Assert.False(revision.IsApproved);
+        Assert.NotNull(revision.ResolvedAt);
+
+        // Sonuç, sözleşme durumuyla aynı transaction'da yazılsın diye repository'ye
+        // birlikte gönderilmeli.
+        Assert.Same(revision, repo.LastResolvedRevision);
+
+        // Reddedilen düzenleme sözleşmeyi eski bedeline döndürür.
+        Assert.Equal(50_000m, contract.TotalAmount);
+    }
+
+    [Fact]
+    public async Task ApprovedEdit_MarksRevisionAsApproved()
+    {
+        var service = CreateService(out _);
+        var contract = ContractWithPendingEdit(stage: 2);
+        var mudur = new User { Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Onay, null);
+
+        var revision = contract.Revisions.Single();
+        Assert.True(revision.IsApproved);
+        Assert.Equal(90_000m, contract.TotalAmount); // yeni bedel korunur
+    }
+
+    // Stage 1 onayı talebi bir sonraki aşamaya taşır; henüz sonuçlandırmaz.
+    [Fact]
+    public async Task EditApprovedAtStage1_LeavesRevisionUnresolved()
+    {
+        var service = CreateService(out _);
+        var contract = ContractWithPendingEdit(stage: 1);
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.DecideApprovalAsync(contract, syb, ApprovalDecision.Onay, null);
+
+        Assert.Equal(2, contract.Stage);
+        Assert.Null(contract.Revisions.Single().IsApproved);
+    }
+
+    [Fact]
+    public async Task RejectedTermination_MarksTerminationAsRejected()
+    {
+        var service = CreateService(out var repo);
+        var contract = new Contract
+        {
+            Id = 1,
+            Stage = 2,
+            Status = ContractStatus.OnayBekliyor,
+            PendingTermination = true,
+            PreviousStatusBeforeTermination = ContractStatus.Aktif,
+            Terminations =
+            {
+                new ContractTermination
+                {
+                    Id = 3,
+                    TerminationType = "İhbarlı Fesih",
+                    RequestedAt = DateTime.Now
+                }
+            }
+        };
+        var mudur = new User { Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Red, "fesih uygun değil");
+
+        var termination = contract.Terminations.Single();
+        Assert.False(termination.IsApproved);
+        Assert.Same(termination, repo.LastResolvedTermination);
+        Assert.Equal(ContractStatus.Aktif, contract.Status);
     }
 
     // Zincirde ileri gidildiğinde red izi temizlenir; aksi halde "daha önce reddedildi"

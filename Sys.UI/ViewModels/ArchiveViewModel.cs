@@ -317,7 +317,15 @@ public partial class ArchiveViewModel : ViewModelBase
 
             if (full.Status == ContractStatus.Feshedildi)
             {
-                var term = full.Terminations.OrderByDescending(t => t.RequestedAt).FirstOrDefault();
+                // Sözleşmeyi gerçekten sonlandıran, ONAYLANMIŞ fesih kaydıdır. Reddedilmiş
+                // bir fesih talebi de listede duruyor; "en sonuncu" almak yanlış kaydı
+                // gösterebilirdi. (Eski kayıtlarda sonuç bilinmediği için null da kabul
+                // ediliyor — sözleşme zaten Feshedildi durumunda.)
+                var term = full.Terminations
+                    .Where(t => t.IsApproved != false)
+                    .OrderByDescending(t => t.RequestedAt)
+                    .ThenByDescending(t => t.Id)
+                    .FirstOrDefault();
                 if (term is not null)
                 {
                     HasTerminationInfo = true;

@@ -18,10 +18,17 @@ public class FakeContractRepository : IContractRepository
     public Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog)
         => Task.CompletedTask;
 
-    public Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog)
+    public ContractRevision? LastResolvedRevision { get; private set; }
+    public ContractTermination? LastResolvedTermination { get; private set; }
+
+    public Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog,
+                                   ContractRevision? resolvedRevision = null,
+                                   ContractTermination? resolvedTermination = null)
     {
         LastAppliedContract = contract;
         LastAppliedLog = log;
+        LastResolvedRevision = resolvedRevision;
+        LastResolvedTermination = resolvedTermination;
         return Task.CompletedTask;
     }
 
