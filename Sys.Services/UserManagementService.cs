@@ -78,6 +78,11 @@ public class UserManagementService
     {
         EnsureAdmin(actingUser);
 
+        // Bu yol eskiden hiçbir doğrulama yapmıyordu: yönetici yeni kullanıcıya "1"
+        // şifresini verebiliyordu, oysa kullanıcının kendisi "12345" bile yapamıyordu.
+        if (PasswordPolicy.Validate(initialPassword) is { } policyError)
+            throw new InvalidOperationException(policyError);
+
         var user = new User
         {
             Username = username,
@@ -85,6 +90,11 @@ public class UserManagementService
             Role = role,
             Department = department,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(initialPassword),
+
+            // Şifreyi yönetici belirledi, yani iki kişi biliyor. Kullanıcı ilk
+            // girişinde değiştirmek zorunda; ancak ondan sonra hesap gerçekten
+            // yalnızca ona ait olur ve denetim kaydı anlamlı hale gelir.
+            MustChangePassword = true,
         };
 
         await _users.AddAsync(user);
@@ -100,6 +110,9 @@ public class UserManagementService
     {
         EnsureAdmin(actingUser);
 
+        if (PasswordPolicy.Validate(newPassword) is { } policyError)
+            throw new InvalidOperationException(policyError);
+
         var user = await _users.GetByIdAsync(userId);
         if (user is null)
             throw new InvalidOperationException("Kullanıcı bulunamadı.");
@@ -109,6 +122,9 @@ public class UserManagementService
         // kullanıcı doğru yeni şifreyle bile hâlâ kilitli kalabilir.
         user.FailedLoginCount = 0;
         user.LockedUntil = null;
+
+        // Geçici şifre: kullanıcı ilk girişinde değiştirecek.
+        user.MustChangePassword = true;
         await _users.UpdateAsync(user);
 
         // Bu kullanıcının bekleyen sıfırlama talepleri artık karşılanmış sayılır;

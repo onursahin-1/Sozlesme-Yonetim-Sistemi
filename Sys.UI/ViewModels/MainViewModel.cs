@@ -36,6 +36,29 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnLoginSucceeded(User user)
     {
+        // Şifreyi yönetici belirlediyse kullanıcı uygulamaya HİÇ girmez; önce
+        // şifresini değiştirmesi gerekir. Kabuk içinde bir kilit yerine kabuğun
+        // öncesinde durdurmak daha güvenli: kabuk açılsaydı bildirimler, klavye
+        // kısayolları ve arka plan yüklemeleri zaten çalışmaya başlamış olurdu.
+        if (user.MustChangePassword)
+        {
+            CurrentViewModel = CreateForcedPasswordChange(user);
+            return;
+        }
+
+        OpenShell(user);
+    }
+
+    private ChangePasswordViewModel CreateForcedPasswordChange(User user)
+    {
+        var vm = new ChangePasswordViewModel(_authService, user, isForced: true);
+        vm.ForcedChangeCompleted += () => OpenShell(user);
+        vm.ForcedLogoutRequested += OnLogoutRequested;
+        return vm;
+    }
+
+    private void OpenShell(User user)
+    {
         var shell = new ShellViewModel(user, _contractService, _userManagementService, _notificationService, _authService, _attachmentsPath);
         shell.LogoutRequested += OnLogoutRequested;
         CurrentViewModel = shell;

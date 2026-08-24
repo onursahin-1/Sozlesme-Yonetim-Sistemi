@@ -230,7 +230,7 @@
 									<TextBlock Text="Caps Lock açık" FontSize="11" Foreground="#A32D2D" VerticalAlignment="Center"/>
 								</StackPanel>
 							</Grid>
-							<TextBox Text="{Binding NewPassword}" PasswordChar="•" PlaceholderText="En az 6 karakter"
+							<TextBox Text="{Binding NewPassword}" PasswordChar="•" PlaceholderText="En az 8 karakter, harf ve rakam"
 									 KeyUp="OnNewUserPasswordKeyUp" GotFocus="OnNewUserPasswordFocus"
 									 LostFocus="OnNewUserPasswordLostFocus"/>
 						</StackPanel>
@@ -356,7 +356,7 @@
 											</StackPanel>
 											<StackPanel Orientation="Horizontal" Spacing="10">
 												<TextBox Width="260" Text="{Binding NewPasswordText}"
-														 PasswordChar="•" PlaceholderText="En az 6 karakter"
+														 PasswordChar="•" PlaceholderText="En az 8 karakter, harf ve rakam"
 														 KeyUp="OnResetPasswordKeyUp" GotFocus="OnResetPasswordFocus"
 														 LostFocus="OnResetPasswordLostFocus"/>
 												<Button Classes="flat" VerticalAlignment="Center"

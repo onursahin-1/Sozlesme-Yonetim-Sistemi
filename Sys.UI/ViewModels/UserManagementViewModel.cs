@@ -362,9 +362,11 @@ public partial class UserManagementViewModel : ViewModelBase
                 return;
             }
 
-            if (NewPassword.Length < 6)
+            // Kural PasswordPolicy'den geliyor; servis de aynı kaynağa bakıyor.
+            // Ekranda kabul edilip serviste reddedilen bir şifre olmasın.
+            if (PasswordPolicy.Validate(NewPassword) is { } policyError)
             {
-                ErrorMessage = "Şifre en az 6 karakter olmalı.";
+                ErrorMessage = policyError;
                 return;
             }
 
@@ -413,16 +415,20 @@ public partial class UserManagementViewModel : ViewModelBase
             ErrorMessage = string.Empty;
             SuccessMessage = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(row.NewPasswordText) || row.NewPasswordText.Length < 6)
+            if (PasswordPolicy.Validate(row.NewPasswordText) is { } policyError)
             {
-                ErrorMessage = "Yeni şifre en az 6 karakter olmalı.";
+                ErrorMessage = policyError;
                 return;
             }
 
             try
             {
                 await _userManagementService.ResetPasswordAsync(_currentUser, row.Id, row.NewPasswordText);
-                SuccessMessage = $"{row.FullName} kullanıcısının şifresi sıfırlandı.";
+
+                // Kullanıcının bunu ilk girişinde değiştireceğini yöneticinin bilmesi
+                // gerekiyor: aksi halde "şifreyi verdim ama çalışmıyor" diye geri döner.
+                SuccessMessage = $"{row.FullName} kullanıcısının şifresi sıfırlandı. " +
+                                 "Kullanıcı ilk girişinde kendi şifresini belirleyecek.";
                 row.IsResettingPassword = false;
                 row.NewPasswordText = string.Empty;
 

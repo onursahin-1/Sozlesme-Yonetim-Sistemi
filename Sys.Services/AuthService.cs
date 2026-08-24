@@ -163,8 +163,11 @@ public class AuthService
     // mevcut şifrenin doğrulanması ve yeni şifreyi kimsenin bilmemesidir.
     public async Task<AuthResult> ChangeOwnPasswordAsync(User currentUser, string currentPassword, string newPassword)
     {
-        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
-            return AuthResult.Fail("Yeni şifre en az 6 karakter olmalıdır.");
+        // Kural PasswordPolicy'de; yönetici yollarıyla aynı kaynaktan besleniyor.
+        // Eskiden buradaki "en az 6 karakter" kontrolü tek başınaydı ve yönetici
+        // şifre belirlerken hiç çalışmıyordu.
+        if (PasswordPolicy.Validate(newPassword) is { } policyError)
+            return AuthResult.Fail(policyError);
 
         if (currentPassword == newPassword)
             return AuthResult.Fail("Yeni şifre, mevcut şifreyle aynı olamaz.");
@@ -184,11 +187,20 @@ public class AuthService
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         user.FailedLoginCount = 0;
         user.LockedUntil = null;
+
+        // Şifreyi artık yalnızca kullanıcı biliyor; zorunlu değişim borcu kapandı.
+        user.MustChangePassword = false;
+        user.PasswordChangedAt = DateTime.Now;
         await _users.UpdateAsync(user);
 
         // Oturumdaki nesne de güncellenir; aksi halde aynı oturumda ikinci kez şifre
         // değiştirmeye çalışıldığında "mevcut şifre" kontrolü eski hash'e bakardı.
+        // Bayrak da taşınmalı: kabuk ekranı bu nesneye bakarak kullanıcıyı serbest
+        // bırakıyor, güncellenmezse kullanıcı şifresini değiştirdiği halde zorunlu
+        // değişim ekranında kilitli kalırdı.
         currentUser.PasswordHash = user.PasswordHash;
+        currentUser.MustChangePassword = false;
+        currentUser.PasswordChangedAt = user.PasswordChangedAt;
 
         await LogAsync(user.Id, "ŞifreDeğiştirildi",
             $"{user.FullName} ({user.Username}) kendi şifresini değiştirdi.");

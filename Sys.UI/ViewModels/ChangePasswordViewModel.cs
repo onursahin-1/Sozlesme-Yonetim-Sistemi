@@ -20,10 +20,29 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
     // döndürmesi için ShellViewModel bu olaya abone oluyor.
     public event Action? BackRequested;
 
+    // Zorunlu değişim tamamlandığında tetiklenir; kullanıcı bu noktada uygulamaya
+    // alınır. BackRequested'dan ayrı bir olay çünkü zorunlu modda "geri" diye bir
+    // seçenek yok — tek çıkış şifreyi değiştirmek.
+    public event Action? ForcedChangeCompleted;
+
+    // Zorunlu modda kullanıcının tek çıkışı şifreyi değiştirmek olmamalı: yanlış
+    // hesaba girmiş olabilir ya da geçici şifreyi hatırlamıyor olabilir. Uygulamayı
+    // kapatmak zorunda bırakmak yerine giriş ekranına dönüş bırakılıyor.
+    public event Action? ForcedLogoutRequested;
+
     [RelayCommand]
     private void Back() => BackRequested?.Invoke();
 
-    public bool CanHandleEscape => true;
+    [RelayCommand]
+    private void ForcedLogout() => ForcedLogoutRequested?.Invoke();
+
+    // Yönetici şifreyi belirlediyse kullanıcı bu ekrandan çıkamaz: geri butonu ve
+    // Esc kapalı, mevcut şifre alanı "yöneticinin verdiği geçici şifre" olarak
+    // etiketleniyor.
+    public bool IsForced { get; }
+    public bool ShowBackButton => !IsForced;
+
+    public bool CanHandleEscape => !IsForced;
     public void HandleEscape() => BackRequested?.Invoke();
 
     [ObservableProperty]
@@ -59,16 +78,44 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
     public string SubmitButtonText => IsBusy ? "Kaydediliyor..." : "Şifreyi Değiştir";
 
     partial void OnCurrentPasswordChanged(string value) => CurrentPasswordError = string.Empty;
-    partial void OnNewPasswordChanged(string value) => NewPasswordError = string.Empty;
-    partial void OnNewPasswordRepeatChanged(string value) => RepeatError = string.Empty;
+
+    partial void OnNewPasswordChanged(string value)
+    {
+        NewPasswordError = string.Empty;
+        RaiseRuleFlags();
+    }
+
+    partial void OnNewPasswordRepeatChanged(string value)
+    {
+        RepeatError = string.Empty;
+        OnPropertyChanged(nameof(RuleRepeatOk));
+    }
+
+    private void RaiseRuleFlags()
+    {
+        OnPropertyChanged(nameof(RuleLengthOk));
+        OnPropertyChanged(nameof(RuleLetterOk));
+        OnPropertyChanged(nameof(RuleDigitOk));
+        OnPropertyChanged(nameof(RuleRepeatOk));
+    }
 
     public ChangePasswordViewModel() : this(null!, new User()) { } // yalnızca tasarımcı önizlemesi için
 
-    public ChangePasswordViewModel(AuthService authService, User currentUser)
+    public ChangePasswordViewModel(AuthService authService, User currentUser, bool isForced = false)
     {
         _authService = authService;
         _currentUser = currentUser;
+        IsForced = isForced;
     }
+
+    // Ekrandaki canlı kural listesi. Kurallar PasswordPolicy'den geliyor; sabit metin
+    // yazılsaydı kural değiştiğinde ekran sessizce yanlış bilgi vermeye başlardı.
+    public string MinLengthRule => $"En az {PasswordPolicy.MinLength} karakter";
+
+    public bool RuleLengthOk => PasswordPolicy.HasMinLength(NewPassword);
+    public bool RuleLetterOk => PasswordPolicy.HasLetter(NewPassword);
+    public bool RuleDigitOk => PasswordPolicy.HasDigit(NewPassword);
+    public bool RuleRepeatOk => NewPassword.Length > 0 && NewPassword == NewPasswordRepeat;
 
     [RelayCommand]
     private async Task Submit()
@@ -86,10 +133,10 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
             if (string.IsNullOrWhiteSpace(CurrentPassword))
                 CurrentPasswordError = "Mevcut şifrenizi girin.";
 
-            if (string.IsNullOrWhiteSpace(NewPassword))
-                NewPasswordError = "Yeni şifre zorunludur.";
-            else if (NewPassword.Length < 6)
-                NewPasswordError = "Yeni şifre en az 6 karakter olmalıdır.";
+            // Kural metni PasswordPolicy'den; servisle aynı kaynağı kullanıyor ki
+            // ekranda geçen bir şifre serviste reddedilmesin.
+            if (PasswordPolicy.Validate(NewPassword) is { } policyError)
+                NewPasswordError = policyError;
 
             if (string.IsNullOrWhiteSpace(NewPasswordRepeat))
                 RepeatError = "Yeni şifreyi tekrar girin.";
@@ -117,10 +164,19 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
                     return;
                 }
 
-                SuccessMessage = "Şifreniz güncellendi. Bir sonraki girişinizde yeni şifrenizi kullanın.";
                 CurrentPassword = string.Empty;
                 NewPassword = string.Empty;
                 NewPasswordRepeat = string.Empty;
+
+                if (IsForced)
+                {
+                    // Zorunlu modda ekran kapanıp uygulama açılıyor; "başarılı" mesajını
+                    // kullanıcının okuyacağı bir an yok, doğrudan içeri alınıyor.
+                    ForcedChangeCompleted?.Invoke();
+                    return;
+                }
+
+                SuccessMessage = "Şifreniz güncellendi. Bir sonraki girişinizde yeni şifrenizi kullanın.";
             }
             catch (Exception ex)
             {
