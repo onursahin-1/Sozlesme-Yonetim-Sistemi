@@ -20,6 +20,10 @@ public interface IContractRepository
     Task<List<Contract>> GetByStageAsync(int stage);
     Task ApplyEditAsync(Contract contract, ContractRevision revision, AuditLog auditLog);
     Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog);
+
+    // İhlalin giderilmesi: ihlal kaydının çözüm alanları ve (gerekiyorsa değişen)
+    // sözleşme durumu aynı transaction içinde yazılır.
+    Task ResolveViolationAsync(Contract contract, Violation violation, AuditLog auditLog);
     Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog);
     Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold);
     Task AddAuditLogAsync(AuditLog log);

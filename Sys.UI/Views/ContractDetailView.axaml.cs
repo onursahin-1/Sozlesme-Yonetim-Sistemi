@@ -79,6 +79,31 @@ public partial class ContractDetailView : UserControl
         }
     }
 
+    // İhlali "giderildi" olarak işaretler. Gerekçe zorunlu olduğu için pencere açılır;
+    // pencere ayrıca sözleşmenin durumunun değişip değişmeyeceğini de yazar.
+    private async void OnResolveViolationClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: ViolationRowViewModel row }) return;
+        if (DataContext is not ContractDetailViewModel vm) return;
+
+        try
+        {
+            var owner = TopLevel.GetTopLevel(this) as Window;
+            if (owner is null) return;
+
+            var note = await ResolveViolationDialog.ShowAsync(
+                owner, row.ViolationType, vm.IsLastOpenViolation(row), vm.ResolvedStatusText);
+
+            if (note is null) return; // kullanıcı vazgeçti
+
+            await vm.ResolveViolationAsync(row, note);
+        }
+        catch (System.Exception ex)
+        {
+            vm.ErrorMessage = "İhlal işlenirken bir hata oluştu: " + ex.Message;
+        }
+    }
+
     private async void OnDeleteAttachmentClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { DataContext: Attachment attachment }) return;

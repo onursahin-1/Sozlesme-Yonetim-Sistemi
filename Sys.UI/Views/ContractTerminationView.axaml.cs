@@ -61,8 +61,12 @@ public partial class ContractTerminationView : UserControl
             var owner = TopLevel.GetTopLevel(this) as Window;
             if (owner is null) return;
 
+            // Onay metni hangi sözleşmenin feshedileceğini adıyla yazıyor: listede
+            // yanlış satır seçilmişse son fırsat burası.
             var confirmed = await ConfirmDialog.ShowAsync(owner,
-                "Fesih işlemi geri alınamaz. Bu sözleşme için fesih talebi göndermek istediğinizden emin misiniz?",
+                $"\"{vm.CurrentTitle}\" sözleşmesi için fesih talebi gönderilecek.\n\n" +
+                "Talep, SYB son kontrolü ve Yönetim (YK) onayından geçtikten sonra sözleşme feshedilir " +
+                "ve arşive alınır. Devam etmek istiyor musunuz?",
                 "Evet, Fesih Talebini Gönder");
 
             if (confirmed)

@@ -746,10 +746,20 @@ public class ContractService
         if (stage == -1) return new List<Contract>();
         return await _contracts.GetByStageAsync(stage);
     }
+    // Düzenleme / fesih / ihlal ekranlarının açılır listeleri. Üçü de EnsureContractIsLive
+    // ile AYNI kümeye (LiveStatuses) bağlı.
+    //
+    // Eskiden üçü ayrı ayrı yazılmıştı ve kümeler birbirini tutmuyordu: fesih listesi
+    // İhlal durumunu atlıyordu, yani ihlal bildirilen bir sözleşme feshedilemiyordu —
+    // oysa "Haklı Fesih (İhlal Nedeniyle)" diye bir fesih türü var. İhlal listesi de
+    // Uyarı durumunu atlıyordu. Tek kaynağa bağlanınca bu sapma bir daha oluşamaz.
     public async Task<List<Contract>> GetEditableContractsAsync(User currentUser)
+        => await GetLiveContractsAsync(currentUser);
+
+    private async Task<List<Contract>> GetLiveContractsAsync(User currentUser)
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
-        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari, ContractStatus.Ihlal);
+        return await _contracts.GetByStatusesAsync(userId, LiveStatuses);
     }
     public async Task EditContractAsync(
         Contract contract, User actingUser, string changeType, string reason,
@@ -800,11 +810,12 @@ public class ContractService
         await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
             "Sözleşmede düzenleme", $"\"{contract.Title}\" sözleşmesinde düzenleme yapıldı ve onaya gönderildi. Gerekçe: {reason}");
     }
+    // Uyarı durumu da eklendi: EnsureContractIsLive Aktif/Uyarı/İhlal üçlüsüne izin
+    // veriyor ama bu liste yalnızca Aktif ve İhlal döndürüyordu. Sonuç: bitişine 30
+    // günden az kalmış (Uyarı) bir sözleşme için ihlal bildirilemiyordu — oysa ihlal
+    // en çok sözleşmenin son döneminde ortaya çıkar.
     public async Task<List<Contract>> GetViolationReportableContractsAsync(User currentUser)
-    {
-        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
-        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Ihlal);
-    }
+        => await GetLiveContractsAsync(currentUser);
     public async Task ReportViolationAsync(Contract contract, User reporter, string violationType, DateTime violationDate, string description)
     {
         if (reporter.Role == UserRole.Mudur)
@@ -842,11 +853,82 @@ public class ContractService
         await NotifyAsync(ihlalHedefleri, contract.Id, NotificationType.SozlesmeOlayi,
             "İhlal bildirildi", $"\"{contract.Title}\" sözleşmesinde ihlal bildirildi ({violationType}).");
     }
-    public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
+    // Bir ihlalin giderildiğini kaydeder. Sözleşmenin başka açık ihlali kalmamışsa
+    // durumu normale döner.
+    //
+    // Onay zinciri YOK — ihlal bildiriminin de yok, simetrik olsun diye. İhlali
+    // kapatmak sözleşmeyi yöneten SYB'nin işi.
+    public async Task ResolveViolationAsync(Contract contract, Violation violation, User actingUser, string? note)
     {
-        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
-        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari);
+        if (actingUser.Role != UserRole.SYB)
+            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+
+        if (violation.IsResolved)
+            throw new InvalidOperationException("Bu ihlal zaten giderildi olarak işaretlenmiş.");
+
+        if (string.IsNullOrWhiteSpace(note))
+            throw new InvalidOperationException("İhlalin nasıl giderildiği yazılmalıdır.");
+
+        violation.ResolvedAt = DateTime.Now;
+        violation.ResolvedByUserId = actingUser.Id;
+        violation.ResolutionNote = note;
+
+        // Sözleşme yalnızca TÜM açık ihlalleri kapandığında normale döner; birden fazla
+        // ihlal bildirilmiş olabilir.
+        var kalanAcikIhlal = contract.Violations.Any(v => v.Id != violation.Id && !v.IsResolved);
+
+        var statusChanged = false;
+        if (!kalanAcikIhlal && contract.Status == ContractStatus.Ihlal)
+        {
+            // Yeni durum bakım işiyle aynı kurala göre belirlenir (tek yerden):
+            // süresi dolmuşsa Tamamlandı, bitişi yakınsa Uyarı, değilse Aktif.
+            contract.Status = ResolveLiveStatus(contract.EndDate);
+            statusChanged = true;
+        }
+
+        var auditLog = new AuditLog
+        {
+            EntityName = "Contract",
+            EntityId = contract.Id,
+            Action = "İhlalGiderildi",
+            ActingUserId = actingUser.Id,
+            Detail = $"{contract.Title} - {violation.ViolationType}: {note}",
+            ActionDate = DateTime.Now,
+        };
+
+        await _contracts.ResolveViolationAsync(contract, violation, auditLog);
+
+        var hedefler = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
+        hedefler.Add(contract.CreatedByUserId);
+
+        var mesaj = statusChanged
+            ? $"\"{contract.Title}\" sözleşmesindeki ihlal giderildi; sözleşme yeniden {ContractStatusText(contract.Status)} durumuna döndü."
+            : $"\"{contract.Title}\" sözleşmesinde bir ihlal giderildi. Sözleşmede hâlâ açık ihlal var.";
+
+        await NotifyAsync(hedefler, contract.Id, NotificationType.SozlesmeOlayi, "İhlal giderildi", mesaj);
     }
+
+    // Yürürlükteki bir sözleşmenin bitiş tarihine göre alacağı durum.
+    // ReconcileStatusesAsync ile aynı eşikler kullanılıyor.
+    private static ContractStatus ResolveLiveStatus(DateTime? endDate)
+    {
+        if (endDate is null) return ContractStatus.Aktif;
+
+        var today = DateTime.Today;
+        if (endDate.Value.Date < today) return ContractStatus.Tamamlandi;
+        return endDate.Value.Date <= today.AddDays(30) ? ContractStatus.Uyari : ContractStatus.Aktif;
+    }
+
+    private static string ContractStatusText(ContractStatus status) => status switch
+    {
+        ContractStatus.Aktif => "Aktif",
+        ContractStatus.Uyari => "Bitiş Yaklaşıyor",
+        ContractStatus.Tamamlandi => "Tamamlandı",
+        _ => status.ToString()
+    };
+
+    public async Task<List<Contract>> GetTerminableContractsAsync(User currentUser)
+        => await GetLiveContractsAsync(currentUser);
     // Arşiv, sözleşmenin/talebin ARTIK İŞLEM GÖRMEYECEĞİ tüm son durumları kapsar:
     // süresi dolanlar, feshedilenler ve sözleşmeye hiç dönüşmeden kapatılan talepler.
     // Reddedilen talepler eskiden hiçbir listede görünmüyordu — ne aktif listede

@@ -511,6 +511,29 @@ public class ContractRepository : IContractRepository
         await SaveWithConcurrencyCheckAsync(db);
     }
 
+    public async Task ResolveViolationAsync(Contract contract, Violation violation, AuditLog auditLog)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var tracked = await db.Contracts.FirstAsync(c => c.Id == contract.Id);
+        CopyWorkflowState(contract, tracked);
+        db.Entry(tracked).Property(c => c.RowVersion).OriginalValue = contract.RowVersion;
+
+        // Yalnızca çözüm alanları güncelleniyor; ihlalin kendisi (tür, tarih, açıklama)
+        // değişmemeli.
+        var trackedViolation = await db.Violations.FirstOrDefaultAsync(v => v.Id == violation.Id);
+        if (trackedViolation is not null)
+        {
+            trackedViolation.ResolvedAt = violation.ResolvedAt;
+            trackedViolation.ResolvedByUserId = violation.ResolvedByUserId;
+            trackedViolation.ResolutionNote = violation.ResolutionNote;
+        }
+
+        db.AuditLogs.Add(auditLog);
+
+        await SaveWithConcurrencyCheckAsync(db);
+    }
+
     public async Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);

@@ -1,66 +1,326 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:domain="using:Sys.Domain"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="760"
              x:Class="Sys.UI.Views.ViolationReportView"
              x:DataType="vm:ViolationReportViewModel">
 
-    <ScrollViewer Margin="24">
-        <StackPanel Spacing="16" MaxWidth="520">
+	<UserControl.Styles>
+		<!-- Form stilleri bu ekranla sınırlı; global TextBox stili diğer ekranları da değiştirirdi. -->
+		<Style Selector="TextBlock.formLabel">
+			<Setter Property="FontSize" Value="11.5"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#5B6472"/>
+			<Setter Property="Margin" Value="0,0,0,5"/>
+		</Style>
+		<Style Selector="TextBlock.formHint">
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="Foreground" Value="#A3ABB8"/>
+			<Setter Property="Margin" Value="2,5,0,0"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="Padding" Value="11,9"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="TextBox:focus">
+			<Setter Property="Background" Value="White"/>
+		</Style>
+		<Style Selector="ComboBox">
+			<Setter Property="Padding" Value="11,8"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="DatePicker">
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		</Style>
 
-            <TextBlock Text="İhlal Bildir" FontSize="22" FontWeight="Bold"/>
-            <TextBlock Text="İhlal bildirimi yapıldığında sözleşme SYB'nin aksiyon almasını bekleyen bir duruma geçer."
-                       Foreground="#E24B4A" TextWrapping="Wrap"/>
+		<Style Selector="TextBlock.summaryLabel">
+			<Setter Property="FontSize" Value="9.5"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="LetterSpacing" Value="0.6"/>
+		</Style>
+		<Style Selector="TextBlock.summaryValue">
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="Foreground" Value="#1A2E4A"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+		</Style>
+	</UserControl.Styles>
 
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
-                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-            <TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
-                       IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+	<!-- Solda form, sağda sözleşmenin künyesi ve önceki ihlalleri -->
+	<Grid ColumnSpacing="22" Margin="0,0,20,0">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*" MinWidth="460"/>
+			<ColumnDefinition Width="300"/>
+		</Grid.ColumnDefinitions>
 
-			<StackPanel Spacing="4">
-				<TextBlock Text="İlgili Sözleşme *" FontWeight="Bold"/>
-				<ComboBox HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding AvailableContracts}"
-                          SelectedItem="{Binding SelectedContract}"
-                          DisplayMemberBinding="{Binding Title}"/>
-				<TextBlock Text="İhlal bildirilebilecek uygun sözleşme yok." IsVisible="{Binding !AvailableContracts.Count}" Foreground="Gray"/>
+		<!-- ========== SOL: FORM ========== -->
+		<ScrollViewer Grid.Column="0">
+			<StackPanel Spacing="16" Margin="0,0,4,24">
+
+				<!--
+				  İhlal bildiriminin onay süreci YOK: kaydedildiği anda sözleşme "İhlal
+				  Mevcut" durumuna geçiyor. Diğer taleplerden farkı bu ve kullanıcının
+				  bunu bilmesi gerekiyor.
+				-->
+				<Border Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+						CornerRadius="10" Padding="16,13">
+					<StackPanel Spacing="3">
+						<TextBlock Text="İhlal bildirimi onaya gitmez, anında geçerli olur" FontSize="13"
+								   FontWeight="SemiBold" Foreground="#A32D2D"/>
+						<TextBlock Text="Kaydettiğinizde sözleşme &quot;İhlal Mevcut&quot; durumuna geçer ve SYB'ye bildirim gönderilir. Kayıt sözleşmenin geçmişinde kalıcıdır."
+								   FontSize="11.5" Foreground="#9B3B25" TextWrapping="Wrap"/>
+					</StackPanel>
+				</Border>
+
+				<Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+						CornerRadius="10" Padding="14,11">
+					<TextBlock Text="{Binding ErrorMessage}" Foreground="#9B3B25"
+							   FontSize="12.5" TextWrapping="Wrap"/>
+				</Border>
+
+				<Border IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						Background="#E6F4E7" BorderBrush="#A9D6B0" BorderThickness="1"
+						CornerRadius="10" Padding="14,11">
+					<TextBlock Text="{Binding SuccessMessage}" Foreground="#1A6B2A"
+							   FontSize="12.5" TextWrapping="Wrap"/>
+				</Border>
+
+				<!-- ===== 1 · SÖZLEŞME VE İHLAL ===== -->
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="24,20">
+					<StackPanel Spacing="18">
+
+						<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+							<Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+									Background="#A32D2D" VerticalAlignment="Center">
+								<TextBlock Text="1" Foreground="White" FontSize="13" FontWeight="Bold"
+										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+								<TextBlock Classes="display" Text="Sözleşme ve İhlal" FontSize="15.5"
+										   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+								<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="#A3ABB8"/>
+							</StackPanel>
+						</Grid>
+						<Border Background="#EDF1F6" Height="1"/>
+
+						<StackPanel>
+							<TextBlock Classes="formLabel">
+								<Run Text="İLGİLİ SÖZLEŞME"/>
+								<Run Text=" *" Foreground="#D14343"/>
+							</TextBlock>
+							<ComboBox HorizontalAlignment="Stretch"
+									  ItemsSource="{Binding AvailableContracts}"
+									  SelectedItem="{Binding SelectedContract}"
+									  PlaceholderText="Sözleşme seçin...">
+								<ComboBox.ItemTemplate>
+									<DataTemplate x:DataType="domain:Contract">
+										<TextBlock TextTrimming="CharacterEllipsis">
+											<Run Text="{Binding Title}"/>
+											<Run Text="  ·  " Foreground="#A3ABB8"/>
+											<Run Text="{Binding CompanyName}" Foreground="#8A94A6"/>
+										</TextBlock>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+							<TextBlock Classes="fieldError" Text="{Binding ContractError}"
+									   IsVisible="{Binding ContractError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+							<TextBlock Classes="formHint" Text="İhlal bildirilebilecek uygun sözleşme yok."
+									   IsVisible="{Binding !AvailableContracts.Count}"/>
+						</StackPanel>
+
+						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+							<StackPanel Grid.Column="0">
+								<TextBlock Classes="formLabel">
+									<Run Text="İHLAL TÜRÜ"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<ComboBox HorizontalAlignment="Stretch"
+										  ItemsSource="{Binding ViolationTypes}"
+										  SelectedItem="{Binding SelectedViolationType}"/>
+							</StackPanel>
+							<StackPanel Grid.Column="1">
+								<TextBlock Classes="formLabel">
+									<Run Text="İHLAL TARİHİ"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<DatePicker SelectedDate="{Binding ViolationDate}"/>
+								<TextBlock Classes="fieldError" Text="{Binding DateError}"
+										   IsVisible="{Binding DateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+							</StackPanel>
+						</Grid>
+
+						<StackPanel>
+							<TextBlock Classes="formLabel">
+								<Run Text="AÇIKLAMA"/>
+								<Run Text=" *" Foreground="#D14343"/>
+							</TextBlock>
+							<TextBox Text="{Binding Description}" AcceptsReturn="True" Height="120"
+									 TextWrapping="Wrap" AcceptsTab="False"
+									 PlaceholderText="İhlalin ayrıntılı açıklaması, belge referansları, kanıtlar..."/>
+							<TextBlock Classes="fieldError" Text="{Binding DescriptionError}"
+									   IsVisible="{Binding DescriptionError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+							<TextBlock Classes="formHint"
+									   Text="Bu metin sözleşme geçmişinde kalıcı olarak saklanır ve fesih kararına dayanak oluşturabilir."/>
+						</StackPanel>
+					</StackPanel>
+				</Border>
+
+				<!-- ===== 2 · DESTEKLEYİCİ BELGE ===== -->
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="24,20">
+					<StackPanel Spacing="16">
+
+						<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+							<Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+									Background="#A32D2D" VerticalAlignment="Center">
+								<TextBlock Text="2" Foreground="White" FontSize="13" FontWeight="Bold"
+										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+								<TextBlock Classes="display" Text="Destekleyici Belge" FontSize="15.5"
+										   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+								<TextBlock Text="İsteğe bağlı — yazışma, tutanak, fotoğraf veya rapor."
+										   FontSize="11" Foreground="#A3ABB8"/>
+							</StackPanel>
+						</Grid>
+
+						<Border IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+								Background="#FAFBFD" BorderBrush="#DFE5EE" BorderThickness="1"
+								CornerRadius="10" Padding="24,20">
+							<StackPanel Spacing="12" HorizontalAlignment="Center">
+								<Path Stroke="#B8C2D0" StrokeThickness="1.6" Fill="Transparent"
+									  Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center"
+									  Data="M12 16V4M12 4L7.5 8.5M12 4l4.5 4.5M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/>
+								<Button Classes="flat" HorizontalAlignment="Center" Click="OnPickFileClick">
+									<Border Background="#EEF1F6" BorderBrush="#C9D3E0" BorderThickness="1"
+											CornerRadius="8" Padding="18,9">
+										<TextBlock Text="Dosya Seç" Foreground="#3D4654" FontSize="12.5"
+												   FontWeight="SemiBold"/>
+									</Border>
+								</Button>
+							</StackPanel>
+						</Border>
+
+						<Border IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+								Background="#F5F9FD" BorderBrush="#C4DCF2" BorderThickness="1"
+								CornerRadius="10" Padding="14,12">
+							<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+								<Path Grid.Column="0" Stroke="#2D6EA8" StrokeThickness="1.8" Fill="Transparent"
+									  Width="17" Height="17" Stretch="Uniform" VerticalAlignment="Center"
+									  Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>
+								<TextBlock Grid.Column="1" Text="{Binding SelectedFileName}" FontSize="12.5"
+										   Foreground="#1A2E4A" VerticalAlignment="Center"
+										   TextTrimming="CharacterEllipsis"/>
+								<Button Grid.Column="2" Classes="flat" Click="OnPickFileClick" VerticalAlignment="Center">
+									<TextBlock Text="Değiştir" Foreground="#2D6EA8" FontSize="11.5"/>
+								</Button>
+								<Button Grid.Column="3" Classes="flat" Command="{Binding ClearFileCommand}" VerticalAlignment="Center">
+									<TextBlock Text="Kaldır" Foreground="#A32D2D" FontSize="11.5"/>
+								</Button>
+							</Grid>
+						</Border>
+					</StackPanel>
+				</Border>
+
 			</StackPanel>
+		</ScrollViewer>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="İhlal Türü *" FontWeight="Bold"/>
-                <ComboBox HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding ViolationTypes}"
-                          SelectedItem="{Binding SelectedViolationType}"/>
-            </StackPanel>
+		<!-- ========== SAĞ: SÖZLEŞME VE ÖNCEKİ İHLALLER ========== -->
+		<ScrollViewer Grid.Column="1">
+			<StackPanel Spacing="14" Margin="0,0,0,24">
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="İhlal Tarihi *" FontWeight="Bold"/>
-                <DatePicker SelectedDate="{Binding ViolationDate}"/>
-            </StackPanel>
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="18,16">
+					<StackPanel Spacing="14">
+						<TextBlock Classes="sectionLabel" Text="İLGİLİ SÖZLEŞME"/>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Açıklama *" FontWeight="Bold"/>
-                <TextBox Text="{Binding Description}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
-                         PlaceholderText="İhlalin ayrıntılı açıklaması, belge referansları, kanıtlar..."/>
-            </StackPanel>
+						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
+									Spacing="14">
+							<StackPanel Spacing="2">
+								<TextBlock Classes="summaryValue" Text="{Binding CurrentTitle}" FontWeight="SemiBold"/>
+								<TextBlock FontSize="11.5" Foreground="#8A94A6" TextWrapping="Wrap">
+									<Run Text="{Binding CurrentNo}"/>
+									<Run Text="  ·  "/>
+									<Run Text="{Binding CurrentCompany}"/>
+								</TextBlock>
+							</StackPanel>
 
-			<StackPanel Spacing="4">
-				<TextBlock Text="Destekleyici Belge" FontWeight="Bold"/>
-				<StackPanel Orientation="Horizontal" Spacing="8">
-					<Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
-					<TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
-					<Button Content="Kaldır" FontSize="11" Command="{Binding ClearFileCommand}"
-                            IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-				</StackPanel>
+							<Border Background="#EDF1F6" Height="1"/>
+
+							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+								<StackPanel Grid.Column="0" Spacing="3">
+									<TextBlock Classes="summaryLabel" Text="BAŞLANGIÇ"/>
+									<TextBlock Text="{Binding CurrentStartText}" FontSize="12.5" Foreground="#1A2E4A"/>
+								</StackPanel>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="summaryLabel" Text="BİTİŞ"/>
+									<TextBlock Text="{Binding CurrentEndText}" FontSize="12.5" Foreground="#1A2E4A"/>
+								</StackPanel>
+							</Grid>
+						</StackPanel>
+
+						<TextBlock Text="Soldan bir sözleşme seçin." FontSize="12.5" Foreground="#C4CBD6"
+								   IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNull}}"/>
+					</StackPanel>
+				</Border>
+
+				<!--
+				  Sözleşmenin sicili: aynı ihlalin ikinci kez bildirilmesini önler ve
+				  bildirimi yapan, firmanın geçmişini görerek karar verir.
+				-->
+				<Border IsVisible="{Binding HasExistingViolations}"
+						Background="#FDF6F5" BorderBrush="#F2DAD5" BorderThickness="1"
+						CornerRadius="12" Padding="18,16">
+					<StackPanel Spacing="12">
+						<TextBlock Classes="sectionLabel" Text="ÖNCEKİ İHLALLER" Foreground="#B07A70"/>
+						<ItemsControl ItemsSource="{Binding ExistingViolations}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="vm:ViolationRowViewModel">
+									<StackPanel Spacing="3" Margin="0,0,0,10">
+										<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+											<TextBlock Grid.Column="0" Text="{Binding ViolationType}" FontSize="12"
+													   FontWeight="SemiBold" Foreground="{Binding TitleColorHex}"
+													   TextWrapping="Wrap"/>
+											<Border Grid.Column="1" Background="{Binding StatusBgHex}"
+													CornerRadius="8" Padding="7,1" VerticalAlignment="Top">
+												<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}"
+														   FontSize="9.5" FontWeight="Bold"/>
+											</Border>
+										</Grid>
+										<TextBlock Text="{Binding ViolationDateText}" FontSize="10.5"
+												   Foreground="#B07A70"/>
+									</StackPanel>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</Border>
+
+				<Button Classes="flat" HorizontalAlignment="Stretch"
+						IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
+						IsEnabled="{Binding !IsBusy}" Click="OnSubmitClick">
+					<Border Background="#A32D2D" CornerRadius="9" Padding="18,12">
+						<TextBlock Text="İhlali Bildir" Foreground="White" FontSize="13"
+								   FontWeight="SemiBold" HorizontalAlignment="Center"/>
+					</Border>
+				</Button>
+
 			</StackPanel>
-
-            <Button Classes="flat" HorizontalAlignment="Left" Margin="0,8,0,0"
-                    IsEnabled="{Binding !IsBusy}"
-                    Command="{Binding SubmitCommand}">
-                <Border Background="#E24B4A" CornerRadius="4" Padding="16,8">
-                    <TextBlock Text="SYB'ye İlet" Foreground="White"/>
-                </Border>
-            </Button>
-
-        </StackPanel>
-    </ScrollViewer>
+		</ScrollViewer>
+	</Grid>
 </UserControl>

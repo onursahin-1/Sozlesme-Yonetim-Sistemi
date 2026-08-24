@@ -237,6 +237,24 @@ public static class ContractPrintDocument
             }
         }
 
+        // --- İhlal geçmişi ---
+        if (contract.Violations.Count > 0)
+        {
+            sb.Append("<h2>İhlal Geçmişi</h2>");
+            foreach (var v in contract.Violations.OrderBy(v => v.ViolationDate).ThenBy(v => v.Id))
+            {
+                sb.Append($"<div class=\"entry {(v.IsResolved ? "ok" : "no")}\">");
+                sb.Append($"<div class=\"t\">{E(v.ViolationType)} — {(v.IsResolved ? "Giderildi" : "Açık")}</div>");
+                if (!string.IsNullOrWhiteSpace(v.Description))
+                    sb.Append($"<div class=\"b\">{E(v.Description)}</div>");
+                sb.Append($"<div class=\"b\">İhlal tarihi: {E(v.ViolationDate.ToString("dd.MM.yyyy", Tr))}</div>");
+                if (v.IsResolved)
+                    sb.Append($"<div class=\"b\">Giderildi ({E(v.ResolvedAt?.ToString("dd.MM.yyyy HH:mm", Tr) ?? "-")}): {E(v.ResolutionNote)}</div>");
+                sb.Append($"<div class=\"d\">{E(v.ReportedAt.ToString("dd.MM.yyyy HH:mm", Tr))}</div>");
+                sb.Append("</div>");
+            }
+        }
+
         // --- Revizyon geçmişi ---
         if (contract.Revisions.Count > 0)
         {

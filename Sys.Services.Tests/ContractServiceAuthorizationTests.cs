@@ -363,6 +363,104 @@ public class ContractServiceAuthorizationTests
             () => service.RequestTerminationAsync(contract, syb, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
     }
 
+    // --- İhlalin giderilmesi ---
+
+    private static (Contract Contract, Violation Violation) IhlalliSozlesme(DateTime? endDate = null)
+    {
+        var violation = new Violation { Id = 1, ViolationType = "Gecikme", ViolationDate = DateTime.Today };
+        var contract = new Contract
+        {
+            Id = 1,
+            Title = "Test",
+            Status = ContractStatus.Ihlal,
+            EndDate = endDate ?? DateTime.Today.AddYears(1),
+            Violations = { violation }
+        };
+        return (contract, violation);
+    }
+
+    [Theory]
+    [InlineData(UserRole.Personel)]
+    [InlineData(UserRole.Mudur)]
+    [InlineData(UserRole.Admin)]
+    public async Task ResolveViolationAsync_NonSyb_ThrowsException(UserRole role)
+    {
+        var service = CreateService(out _);
+        var (contract, violation) = IhlalliSozlesme();
+        var user = new User { Id = 5, Role = role };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ResolveViolationAsync(contract, violation, user, "giderildi"));
+    }
+
+    [Fact]
+    public async Task ResolveViolationAsync_EmptyNote_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var (contract, violation) = IhlalliSozlesme();
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ResolveViolationAsync(contract, violation, syb, "   "));
+    }
+
+    [Fact]
+    public async Task ResolveViolationAsync_AlreadyResolved_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var (contract, violation) = IhlalliSozlesme();
+        violation.ResolvedAt = DateTime.Now;
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.ResolveViolationAsync(contract, violation, syb, "tekrar"));
+    }
+
+    // Son açık ihlal kapanınca sözleşme yürürlüğe döner.
+    [Fact]
+    public async Task ResolveViolationAsync_LastOpen_ReturnsContractToActive()
+    {
+        var service = CreateService(out var repo);
+        var (contract, violation) = IhlalliSozlesme();
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.ResolveViolationAsync(contract, violation, syb, "eksik iş tamamlandı");
+
+        Assert.True(violation.IsResolved);
+        Assert.Equal(3, violation.ResolvedByUserId);
+        Assert.Equal("eksik iş tamamlandı", violation.ResolutionNote);
+        Assert.Equal(ContractStatus.Aktif, contract.Status);
+        Assert.Same(violation, repo.LastResolvedViolation);
+    }
+
+    // Bitişi yaklaşmış sözleşme Aktif'e değil Uyarı'ya döner (bakım işiyle aynı eşik).
+    [Fact]
+    public async Task ResolveViolationAsync_EndingSoon_ReturnsToWarning()
+    {
+        var service = CreateService(out _);
+        var (contract, violation) = IhlalliSozlesme(DateTime.Today.AddDays(10));
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.ResolveViolationAsync(contract, violation, syb, "telafi edildi");
+
+        Assert.Equal(ContractStatus.Uyari, contract.Status);
+    }
+
+    // Başka açık ihlal varken durum korunur.
+    [Fact]
+    public async Task ResolveViolationAsync_OtherOpenViolations_KeepsIhlalStatus()
+    {
+        var service = CreateService(out _);
+        var (contract, violation) = IhlalliSozlesme();
+        contract.Violations.Add(new Violation { Id = 2, ViolationType = "Kalite", ViolationDate = DateTime.Today });
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.ResolveViolationAsync(contract, violation, syb, "biri giderildi");
+
+        Assert.True(violation.IsResolved);
+        Assert.Equal(ContractStatus.Ihlal, contract.Status);
+    }
+
     // Kapatılmış bir talep sözleşmeye dönüştürülememeli.
     [Fact]
     public async Task FinalizeContractAsync_RejectedRequest_ThrowsException()

@@ -102,6 +102,10 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
     [ObservableProperty]
     public partial ObservableCollection<TerminationRowViewModel> Terminations { get; set; } = new();
 
+    // İhlal kayıtları yazılıyor ama hiçbir ekranda gösterilmiyordu.
+    [ObservableProperty]
+    public partial ObservableCollection<ViolationRowViewModel> Violations { get; set; } = new();
+
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
 
@@ -171,6 +175,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         Attachments = new ObservableCollection<Attachment>();
         Revisions = new ObservableCollection<RevisionRowViewModel>();
         Terminations = new ObservableCollection<TerminationRowViewModel>();
+        Violations = new ObservableCollection<ViolationRowViewModel>();
         Detail = null;
 
         var requestId = ++_loadRequestId;
@@ -231,6 +236,13 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
                 full.Terminations
                     .OrderByDescending(t => t.RequestedAt).ThenByDescending(t => t.Id)
                     .Select(t => new TerminationRowViewModel(t)));
+
+            // Açık ihlalleri yalnızca SYB kapatabilir.
+            var canResolve = _currentUser.Role == UserRole.SYB;
+            Violations = new ObservableCollection<ViolationRowViewModel>(
+                full.Violations
+                    .OrderByDescending(v => v.ViolationDate).ThenByDescending(v => v.Id)
+                    .Select(v => new ViolationRowViewModel(v, canResolve)));
         }
         catch (Exception ex)
         {
@@ -287,6 +299,46 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         catch (Exception ex)
         {
             ErrorMessage = "PDF oluşturulamadı: " + ex.Message;
+        }
+    }
+
+    // --- İhlalin giderilmesi ---
+    //
+    // Gerekçe penceresi kod-arkasından açıldığı için akış iki parçalı: pencereden önce
+    // bağlam (bu son açık ihlal mi, sözleşme hangi duruma dönecek), sonra kayıt.
+
+    public bool IsLastOpenViolation(ViolationRowViewModel row)
+        => Violations.Count(v => !v.IsResolved) <= 1
+        && !row.IsResolved;
+
+    // İhlal kapandığında sözleşmenin alacağı durumun ekranda yazılacak karşılığı.
+    public string ResolvedStatusText
+    {
+        get
+        {
+            if (Detail?.EndDate is not { } end) return "Aktif";
+
+            var today = DateTime.Today;
+            if (end.Date < today) return "Tamamlandı";
+            return end.Date <= today.AddDays(30) ? "Bitiş Yaklaşıyor" : "Aktif";
+        }
+    }
+
+    public async Task ResolveViolationAsync(ViolationRowViewModel row, string note)
+    {
+        if (Detail is null) return;
+
+        ErrorMessage = string.Empty;
+        try
+        {
+            await _contractService.ResolveViolationAsync(Detail, row.RawViolation, _currentUser, note);
+
+            // Sözleşmenin durumu ve rozetleri değişmiş olabilir; detay yeniden yüklenir.
+            await LoadDetailAsync(Detail, ++_loadRequestId);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "İhlal giderildi olarak işaretlenemedi: " + ex.Message;
         }
     }
 

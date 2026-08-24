@@ -47,4 +47,34 @@ public partial class ViolationReportView : UserControl
             vm.ErrorMessage = "Dosya seçilirken bir hata oluştu: " + ex.Message;
         }
     }
+
+    // İhlal bildiriminin onay süreci yok: kaydedildiği anda sözleşme "İhlal Mevcut"
+    // durumuna geçiyor ve bu durumu geri alacak bir akış bulunmuyor. Fesih ve düzenleme
+    // taleplerinde onay penceresi varken burada hiç yoktu.
+    private async void OnSubmitClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ViolationReportViewModel vm) return;
+        if (vm.IsBusy) return;
+
+        try
+        {
+            if (!vm.CanSubmit()) return; // zorunlu alanlar eksikse pencere açılmadan hata gösterilir
+
+            var owner = TopLevel.GetTopLevel(this) as Window;
+            if (owner is null) return;
+
+            var confirmed = await ConfirmDialog.ShowAsync(owner,
+                $"\"{vm.CurrentTitle}\" sözleşmesi için ihlal bildirilecek.\n\n" +
+                "Sözleşme hemen \"İhlal Mevcut\" durumuna geçecek ve kayıt sözleşmenin " +
+                "geçmişinde kalıcı olacak. Devam etmek istiyor musunuz?",
+                "Evet, İhlali Bildir");
+
+            if (confirmed)
+                vm.SubmitCommand.Execute(null);
+        }
+        catch (Exception ex)
+        {
+            vm.ErrorMessage = "İhlal bildirilirken bir hata oluştu: " + ex.Message;
+        }
+    }
 }

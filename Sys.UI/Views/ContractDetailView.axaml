@@ -285,6 +285,66 @@
 						</StackPanel>
 					</Border>
 
+					<!-- ========== İHLAL GEÇMİŞİ ========== -->
+					<!--
+					  İhlal kayıtları veritabanına yazılıyor ama hiçbir ekranda
+					  gösterilmiyordu: sözleşme "İhlal Mevcut" durumuna geçiyor, ihlalin
+					  ne olduğu ise hiçbir yerden okunamıyordu.
+					-->
+					<Border IsVisible="{Binding Violations.Count}"
+							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+							CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="display" Text="İhlal Geçmişi" FontSize="15.5"
+									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<ItemsControl ItemsSource="{Binding Violations}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:ViolationRowViewModel">
+										<Border Background="{Binding CardBgHex}" BorderBrush="{Binding CardBorderHex}"
+												BorderThickness="1" CornerRadius="9" Padding="14,12" Margin="0,0,0,8">
+											<StackPanel Spacing="6">
+												<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+													<TextBlock Grid.Column="0" Text="{Binding ViolationType}" FontSize="12.5"
+															   FontWeight="SemiBold" Foreground="{Binding TitleColorHex}"
+															   VerticalAlignment="Center" TextWrapping="Wrap"/>
+													<Border Grid.Column="1" Background="{Binding StatusBgHex}"
+															CornerRadius="9" Padding="9,2" VerticalAlignment="Center">
+														<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}"
+																   FontSize="10" FontWeight="Bold"/>
+													</Border>
+													<TextBlock Grid.Column="2" Text="{Binding ReportedAtText}"
+															   FontSize="10.5" Foreground="#A3ABB8" VerticalAlignment="Center"/>
+												</Grid>
+
+												<TextBlock Text="{Binding Description}" FontSize="12" Foreground="#5B6472"
+														   TextWrapping="Wrap" IsVisible="{Binding HasDescription}"/>
+												<TextBlock Text="{Binding ViolationDateText}" FontSize="11" Foreground="#8A94A6"/>
+
+												<!-- Nasıl giderildiği: bildirimin kendisi kadar önemli bir kayıt -->
+												<Border IsVisible="{Binding HasResolution}"
+														Background="#E6F4E7" BorderBrush="#A9D6B0" BorderThickness="1"
+														CornerRadius="7" Padding="10,7" Margin="0,2,0,0">
+													<TextBlock Text="{Binding ResolutionText}" FontSize="11.5"
+															   Foreground="#1A6B2A" TextWrapping="Wrap"/>
+												</Border>
+
+												<Button Classes="flat" HorizontalAlignment="Left" Margin="0,2,0,0"
+														IsVisible="{Binding CanResolve}"
+														Click="OnResolveViolationClick">
+													<Border Background="#E6F4E7" BorderBrush="#A9D6B0" BorderThickness="1"
+															CornerRadius="7" Padding="12,6">
+														<TextBlock Text="Giderildi olarak işaretle" Foreground="#1A6B2A"
+																   FontSize="11.5" FontWeight="SemiBold"/>
+													</Border>
+												</Button>
+											</StackPanel>
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</Border>
+
 					<!-- ========== REVİZYON GEÇMİŞİ ========== -->
 					<Border IsVisible="{Binding Revisions.Count}"
 							Background="White" BorderBrush="#E3E7EE" BorderThickness="1"

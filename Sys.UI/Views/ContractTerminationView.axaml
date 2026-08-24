@@ -1,77 +1,375 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
+             xmlns:domain="using:Sys.Domain"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="760"
              x:Class="Sys.UI.Views.ContractTerminationView"
              x:DataType="vm:ContractTerminationViewModel">
 
-    <ScrollViewer Margin="24">
-        <StackPanel Spacing="16" MaxWidth="560">
+	<UserControl.Styles>
+		<!-- Form stilleri bu ekranla sınırlı; global TextBox stili diğer ekranları da değiştirirdi. -->
+		<Style Selector="TextBlock.formLabel">
+			<Setter Property="FontSize" Value="11.5"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#5B6472"/>
+			<Setter Property="Margin" Value="0,0,0,5"/>
+		</Style>
+		<Style Selector="TextBlock.formHint">
+			<Setter Property="FontSize" Value="11"/>
+			<Setter Property="Foreground" Value="#A3ABB8"/>
+			<Setter Property="Margin" Value="2,5,0,0"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+		</Style>
+		<Style Selector="TextBox">
+			<Setter Property="Padding" Value="11,9"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="TextBox:focus">
+			<Setter Property="Background" Value="White"/>
+		</Style>
+		<Style Selector="ComboBox">
+			<Setter Property="Padding" Value="11,8"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="DatePicker">
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+			<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		</Style>
 
-            <TextBlock Text="Sözleşme Fesih" FontSize="22" FontWeight="Bold"/>
-            <TextBlock Text="Fesih işlemi geri alınamaz. SYB onayı ve ardından Müdür onayı gerekir; onaylanmadan sözleşme feshedilmez."
-                       Foreground="#A32D2D" TextWrapping="Wrap"/>
+		<Style Selector="TextBlock.summaryLabel">
+			<Setter Property="FontSize" Value="9.5"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="LetterSpacing" Value="0.6"/>
+		</Style>
+		<Style Selector="TextBlock.summaryValue">
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="Foreground" Value="#1A2E4A"/>
+			<Setter Property="TextWrapping" Value="Wrap"/>
+		</Style>
+	</UserControl.Styles>
 
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red"
-                       IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-            <TextBlock Text="{Binding SuccessMessage}" Foreground="Green"
-                       IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+	<!-- Solda form, sağda feshedilecek sözleşmenin künyesi ve gönder butonu -->
+	<Grid ColumnSpacing="22" Margin="0,0,20,0">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*" MinWidth="460"/>
+			<ColumnDefinition Width="300"/>
+		</Grid.ColumnDefinitions>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Sözleşme Seç *" FontWeight="Bold"/>
-                <ComboBox HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding AvailableContracts}"
-                          SelectedItem="{Binding SelectedContract}"
-                          DisplayMemberBinding="{Binding Title}"/>
-				<TextBlock Text="Feshedilebilecek uygun sözleşme yok." IsVisible="{Binding !AvailableContracts.Count}" Foreground="Gray"/>
-            </StackPanel>
+		<!-- ========== SOL: FORM ========== -->
+		<ScrollViewer Grid.Column="0">
+			<StackPanel Spacing="16" Margin="0,0,4,24">
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Fesih Türü *" FontWeight="Bold"/>
-                <ComboBox HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding TerminationTypes}"
-                          SelectedItem="{Binding SelectedTerminationType}"/>
-            </StackPanel>
-
-            <StackPanel Spacing="4">
-                <TextBlock Text="Fesih Tarihi *" FontWeight="Bold"/>
-                <DatePicker SelectedDate="{Binding TerminationDate}"/>
-            </StackPanel>
-
-            <StackPanel Spacing="4">
-                <TextBlock Text="Fesih Gerekçesi *" FontWeight="Bold"/>
-                <TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
-                         PlaceholderText="Feshin gerekçesini detaylı açıklayın. Bu bilgi hukuki kayıt niteliği taşır."/>
-            </StackPanel>
-
-            <StackPanel Spacing="4">
-                <TextBlock Text="{Binding CompensationLabel}" FontWeight="Bold"/>
-				<TextBox Text="{Binding CompensationAmountText}" PlaceholderText="0 — ödeme yoksa boş bırakın" LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
-            </StackPanel>
-
-            <StackPanel Spacing="4">
-                <TextBlock Text="Tazminat Yönü" FontWeight="Bold"/>
-                <ComboBox HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding CompensationDirections}"
-                          SelectedItem="{Binding SelectedCompensationDirection}"/>
-            </StackPanel>
-
-			<StackPanel Spacing="4">
-				<TextBlock Text="Fesih Bildirimi / Tutanak (PDF) *" FontWeight="Bold"/>
-				<StackPanel Orientation="Horizontal" Spacing="8">
-					<Button Content="📎 Dosya Seç" Click="OnPickFileClick"/>
-					<TextBlock Text="{Binding SelectedFileName}" VerticalAlignment="Center" Foreground="Gray"/>
-					<Button Content="Kaldır" FontSize="11" Command="{Binding ClearFileCommand}"
-                            IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-				</StackPanel>
-			</StackPanel>
-
-			<Button Classes="flat" HorizontalAlignment="Left" Margin="0,8,0,0"
-                    IsEnabled="{Binding !IsBusy}"
-                    Click="OnSubmitClick">
-				<Border Background="#A32D2D" CornerRadius="4" Padding="16,8">
-					<TextBlock Text="Fesih Talebini Gönder" Foreground="White"/>
+				<!-- Bu ekranın en kritik bilgisi; tek satır kırmızı yazıydı -->
+				<Border Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+						CornerRadius="10" Padding="16,13">
+					<StackPanel Spacing="3">
+						<TextBlock Text="Fesih, sözleşmeyi sonlandırır" FontSize="13"
+								   FontWeight="SemiBold" Foreground="#A32D2D"/>
+						<TextBlock Text="Talep önce SYB son kontrolünden, ardından Yönetim (YK) onayından geçer. Onaylanana kadar sözleşme yürürlükte kalır; onaylandığında feshedilir ve arşive alınır."
+								   FontSize="11.5" Foreground="#9B3B25" TextWrapping="Wrap"/>
+					</StackPanel>
 				</Border>
-			</Button>
-        </StackPanel>
-    </ScrollViewer>
+
+				<Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+						CornerRadius="10" Padding="14,11">
+					<TextBlock Text="{Binding ErrorMessage}" Foreground="#9B3B25"
+							   FontSize="12.5" TextWrapping="Wrap"/>
+				</Border>
+
+				<Border IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						Background="#E6F4E7" BorderBrush="#A9D6B0" BorderThickness="1"
+						CornerRadius="10" Padding="14,11">
+					<TextBlock Text="{Binding SuccessMessage}" Foreground="#1A6B2A"
+							   FontSize="12.5" TextWrapping="Wrap"/>
+				</Border>
+
+				<!-- ===== 1 · SÖZLEŞME VE FESİH TÜRÜ ===== -->
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="24,20">
+					<StackPanel Spacing="18">
+
+						<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+							<Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+									Background="#A32D2D" VerticalAlignment="Center">
+								<TextBlock Text="1" Foreground="White" FontSize="13" FontWeight="Bold"
+										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+								<TextBlock Classes="display" Text="Sözleşme ve Fesih Türü" FontSize="15.5"
+										   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+								<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="#A3ABB8"/>
+							</StackPanel>
+						</Grid>
+						<Border Background="#EDF1F6" Height="1"/>
+
+						<StackPanel>
+							<TextBlock Classes="formLabel">
+								<Run Text="FESHEDİLECEK SÖZLEŞME"/>
+								<Run Text=" *" Foreground="#D14343"/>
+							</TextBlock>
+							<ComboBox HorizontalAlignment="Stretch"
+									  ItemsSource="{Binding AvailableContracts}"
+									  SelectedItem="{Binding SelectedContract}"
+									  PlaceholderText="Sözleşme seçin...">
+								<ComboBox.ItemTemplate>
+									<DataTemplate x:DataType="domain:Contract">
+										<TextBlock TextTrimming="CharacterEllipsis">
+											<Run Text="{Binding Title}"/>
+											<Run Text="  ·  " Foreground="#A3ABB8"/>
+											<Run Text="{Binding CompanyName}" Foreground="#8A94A6"/>
+										</TextBlock>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+							<TextBlock Classes="fieldError" Text="{Binding ContractError}"
+									   IsVisible="{Binding ContractError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+							<TextBlock Classes="formHint" Text="Feshedilebilecek uygun sözleşme yok."
+									   IsVisible="{Binding !AvailableContracts.Count}"/>
+						</StackPanel>
+
+						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+							<StackPanel Grid.Column="0">
+								<TextBlock Classes="formLabel">
+									<Run Text="FESİH TÜRÜ"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<ComboBox HorizontalAlignment="Stretch"
+										  ItemsSource="{Binding TerminationTypes}"
+										  SelectedItem="{Binding SelectedTerminationType}"/>
+							</StackPanel>
+							<StackPanel Grid.Column="1">
+								<TextBlock Classes="formLabel">
+									<Run Text="FESİH TARİHİ"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<DatePicker SelectedDate="{Binding TerminationDate}"/>
+								<TextBlock Classes="fieldError" Text="{Binding DateError}"
+										   IsVisible="{Binding DateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+							</StackPanel>
+						</Grid>
+
+						<!--
+						  Haklı fesih, sözleşmenin ihlal edilmiş olmasına dayanır. Sistemde
+						  kayıtlı ihlal yoksa uyarılıyor ama engellenmiyor: ihlal sistem
+						  dışında da (yazışma, tutanak) belgelenmiş olabilir.
+						-->
+						<Border IsVisible="{Binding ShowUnsupportedJustCauseWarning}"
+								Background="#FFF7E6" BorderBrush="#E8C989" BorderThickness="1"
+								CornerRadius="9" Padding="13,10">
+							<StackPanel Spacing="3">
+								<TextBlock Text="Bu sözleşmede kayıtlı ihlal yok" FontSize="12"
+										   FontWeight="SemiBold" Foreground="#7A5C10"/>
+								<TextBlock Text="&quot;Haklı Fesih&quot; ihlale dayanır. Sistemde kayıt yoksa önce İhlal Bildir ekranından ihlali kaydedin ya da gerekçede dayanağı (yazışma, tutanak) açıkça belirtin."
+										   FontSize="11.5" Foreground="#7A5C10" TextWrapping="Wrap"/>
+							</StackPanel>
+						</Border>
+
+						<StackPanel>
+							<TextBlock Classes="formLabel">
+								<Run Text="FESİH GEREKÇESİ"/>
+								<Run Text=" *" Foreground="#D14343"/>
+							</TextBlock>
+							<TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="110" TextWrapping="Wrap"
+									 AcceptsTab="False"
+									 PlaceholderText="Feshin gerekçesini detaylı açıklayın."/>
+							<TextBlock Classes="fieldError" Text="{Binding ReasonError}"
+									   IsVisible="{Binding ReasonError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+							<TextBlock Classes="formHint"
+									   Text="Bu metin hukuki kayıt niteliği taşır ve onaycıların gördüğü tek gerekçedir."/>
+						</StackPanel>
+					</StackPanel>
+				</Border>
+
+				<!-- ===== 2 · TAZMİNAT ===== -->
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="24,20">
+					<StackPanel Spacing="18">
+
+						<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+							<Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+									Background="#A32D2D" VerticalAlignment="Center">
+								<TextBlock Text="2" Foreground="White" FontSize="13" FontWeight="Bold"
+										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+								<TextBlock Classes="display" Text="Tazminat" FontSize="15.5"
+										   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+								<TextBlock Text="Tazminat yoksa yönü &quot;Tazminat yok&quot; bırakın ve tutarı boş geçin."
+										   FontSize="11" Foreground="#A3ABB8"/>
+							</StackPanel>
+						</Grid>
+						<Border Background="#EDF1F6" Height="1"/>
+
+						<!--
+						  Yön önce geliyor: tutar kutusu ona bağlı. "Tazminat yok" seçiliyken
+						  kutu kapalı ve boş kalır, böylece çelişkili veri hiç oluşamaz.
+						-->
+						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+							<StackPanel Grid.Column="0">
+								<TextBlock Classes="formLabel" Text="TAZMİNAT YÖNÜ"/>
+								<ComboBox HorizontalAlignment="Stretch"
+										  ItemsSource="{Binding CompensationDirections}"
+										  SelectedItem="{Binding SelectedCompensationDirection}"/>
+							</StackPanel>
+							<StackPanel Grid.Column="1">
+								<TextBlock Classes="formLabel" Text="{Binding CompensationLabel}"/>
+								<TextBox Text="{Binding CompensationAmountText}" PlaceholderText="0,00"
+										 IsEnabled="{Binding IsCompensationEnabled}"
+										 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
+								<TextBlock Classes="formHint" Text="Tazminat yönü seçilince açılır."
+										   IsVisible="{Binding !IsCompensationEnabled}"/>
+							</StackPanel>
+						</Grid>
+
+						<TextBlock Classes="fieldError" Text="{Binding CompensationError}" Margin="2,-10,0,0"
+								   IsVisible="{Binding CompensationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+					</StackPanel>
+				</Border>
+
+				<!-- ===== 3 · FESİH BELGESİ ===== -->
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="24,20">
+					<StackPanel Spacing="16">
+
+						<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+							<Border Grid.Column="0" Width="26" Height="26" CornerRadius="8"
+									Background="#A32D2D" VerticalAlignment="Center">
+								<TextBlock Text="3" Foreground="White" FontSize="13" FontWeight="Bold"
+										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+								<TextBlock Classes="display" Text="Fesih Bildirimi / Tutanak" FontSize="15.5"
+										   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+								<TextBlock Text="Zorunlu — yalnızca PDF." FontSize="11" Foreground="#A3ABB8"/>
+							</StackPanel>
+						</Grid>
+
+						<Border IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+								Background="#FAFBFD" BorderBrush="#DFE5EE" BorderThickness="1"
+								CornerRadius="10" Padding="24,20">
+							<StackPanel Spacing="12" HorizontalAlignment="Center">
+								<Path Stroke="#B8C2D0" StrokeThickness="1.6" Fill="Transparent"
+									  Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center"
+									  Data="M12 16V4M12 4L7.5 8.5M12 4l4.5 4.5M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/>
+								<Button Classes="flat" HorizontalAlignment="Center" Click="OnPickFileClick">
+									<Border Background="#EEF1F6" BorderBrush="#C9D3E0" BorderThickness="1"
+											CornerRadius="8" Padding="18,9">
+										<TextBlock Text="PDF Seç" Foreground="#3D4654" FontSize="12.5"
+												   FontWeight="SemiBold"/>
+									</Border>
+								</Button>
+							</StackPanel>
+						</Border>
+
+						<Border IsVisible="{Binding SelectedFileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+								Background="#F5F9FD" BorderBrush="#C4DCF2" BorderThickness="1"
+								CornerRadius="10" Padding="14,12">
+							<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+								<Path Grid.Column="0" Stroke="#2D6EA8" StrokeThickness="1.8" Fill="Transparent"
+									  Width="17" Height="17" Stretch="Uniform" VerticalAlignment="Center"
+									  Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>
+								<TextBlock Grid.Column="1" Text="{Binding SelectedFileName}" FontSize="12.5"
+										   Foreground="#1A2E4A" VerticalAlignment="Center"
+										   TextTrimming="CharacterEllipsis"/>
+								<Button Grid.Column="2" Classes="flat" Click="OnPickFileClick" VerticalAlignment="Center">
+									<TextBlock Text="Değiştir" Foreground="#2D6EA8" FontSize="11.5"/>
+								</Button>
+								<Button Grid.Column="3" Classes="flat" Command="{Binding ClearFileCommand}" VerticalAlignment="Center">
+									<TextBlock Text="Kaldır" Foreground="#A32D2D" FontSize="11.5"/>
+								</Button>
+							</Grid>
+						</Border>
+
+						<TextBlock Classes="fieldError" Text="{Binding FileError}"
+								   IsVisible="{Binding FileError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+					</StackPanel>
+				</Border>
+
+			</StackPanel>
+		</ScrollViewer>
+
+		<!-- ========== SAĞ: FESHEDİLECEK SÖZLEŞME + GÖNDER ========== -->
+		<ScrollViewer Grid.Column="1">
+			<StackPanel Spacing="14" Margin="0,0,0,24">
+
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="18,16">
+					<StackPanel Spacing="14">
+						<TextBlock Classes="sectionLabel" Text="FESHEDİLECEK SÖZLEŞME"/>
+
+						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
+									Spacing="14">
+							<StackPanel Spacing="2">
+								<TextBlock Classes="summaryValue" Text="{Binding CurrentTitle}" FontWeight="SemiBold"/>
+								<TextBlock FontSize="11.5" Foreground="#8A94A6" TextWrapping="Wrap">
+									<Run Text="{Binding CurrentNo}"/>
+									<Run Text="  ·  "/>
+									<Run Text="{Binding CurrentCompany}"/>
+								</TextBlock>
+							</StackPanel>
+
+							<Border Background="#EDF1F6" Height="1"/>
+
+							<StackPanel Spacing="3">
+								<TextBlock Classes="summaryLabel" Text="BEDEL"/>
+								<TextBlock Classes="display" Text="{Binding CurrentAmountText}" FontSize="19"
+										   FontWeight="Bold" Foreground="#1A2E4A"/>
+							</StackPanel>
+
+							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+								<StackPanel Grid.Column="0" Spacing="3">
+									<TextBlock Classes="summaryLabel" Text="BAŞLANGIÇ"/>
+									<TextBlock Text="{Binding CurrentStartText}" FontSize="12.5" Foreground="#1A2E4A"/>
+								</StackPanel>
+								<StackPanel Grid.Column="1" Spacing="3">
+									<TextBlock Classes="summaryLabel" Text="BİTİŞ"/>
+									<TextBlock Text="{Binding CurrentEndText}" FontSize="12.5" Foreground="#1A2E4A"/>
+								</StackPanel>
+							</Grid>
+
+							<!--
+							  Kalan süre, fesih kararının en belirleyici bilgisi: 5 gün kalmış
+							  bir sözleşmeyi feshetmekle 2 yıl kalmışı feshetmek aynı şey değil,
+							  tazminat da çoğunlukla buna bağlı hesaplanıyor.
+							-->
+							<Border Background="#FFF7E6" BorderBrush="#E8C989" BorderThickness="1"
+									CornerRadius="9" Padding="12,9">
+								<StackPanel Spacing="2">
+									<TextBlock Classes="summaryLabel" Text="KALAN SÜRE" Foreground="#B08A3A"/>
+									<TextBlock Text="{Binding CurrentRemainingText}" FontSize="13.5"
+											   FontWeight="SemiBold" Foreground="#7A5C10"/>
+								</StackPanel>
+							</Border>
+						</StackPanel>
+
+						<TextBlock Text="Soldan bir sözleşme seçin." FontSize="12.5" Foreground="#C4CBD6"
+								   IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNull}}"/>
+					</StackPanel>
+				</Border>
+
+				<Button Classes="flat" HorizontalAlignment="Stretch"
+						IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
+						IsEnabled="{Binding !IsBusy}" Click="OnSubmitClick">
+					<Border Background="#A32D2D" CornerRadius="9" Padding="18,12">
+						<TextBlock Text="Fesih Talebini Gönder" Foreground="White" FontSize="13"
+								   FontWeight="SemiBold" HorizontalAlignment="Center" TextWrapping="Wrap"
+								   TextAlignment="Center"/>
+					</Border>
+				</Button>
+
+			</StackPanel>
+		</ScrollViewer>
+	</Grid>
 </UserControl>

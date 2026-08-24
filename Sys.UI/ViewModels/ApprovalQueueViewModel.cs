@@ -242,6 +242,16 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     // görünüm modeli tutuluyor.
     [ObservableProperty]
     public partial ObservableCollection<AttachmentRowViewModel> Attachments { get; set; } = new();
+
+    // Sözleşmenin ihlal sicili. Fesih kontrol listesinde "devam eden ihlal durumu
+    // kontrol edildi" maddesi var ama bu ekran ihlal kayıtlarını hiç yüklemiyordu —
+    // madde doğrulanamıyordu. Özellikle "Haklı Fesih (İhlal Nedeniyle)" onaylanırken
+    // dayanağın görülmesi şart.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasViolations))]
+    public partial ObservableCollection<ViolationRowViewModel> Violations { get; set; } = new();
+
+    public bool HasViolations => Violations.Count > 0;
     [ObservableProperty]
     public partial string Note { get; set; } = string.Empty;
     [ObservableProperty]
@@ -322,6 +332,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         Note = string.Empty;
         Items = new ObservableCollection<ContractItem>();
         Attachments = new ObservableCollection<AttachmentRowViewModel>();
+        Violations = new ObservableCollection<ViolationRowViewModel>();
         DetailDescription = string.Empty;
         Detail = null;
         IsPendingTermination = false;
@@ -412,6 +423,15 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<AttachmentRowViewModel>(
                 full.Attachments.Select(a => new AttachmentRowViewModel(a)));
+
+            // Açık ihlaller üstte: karar verirken önemli olan halen çözülmemiş sorunlar.
+            // Kapatma butonu burada gösterilmiyor (canResolve = false); onay ekranında
+            // karar verilir, ihlal yönetimi sözleşme detayından yapılır.
+            Violations = new ObservableCollection<ViolationRowViewModel>(
+                full.Violations
+                    .OrderBy(v => v.IsResolved)
+                    .ThenByDescending(v => v.ViolationDate).ThenByDescending(v => v.Id)
+                    .Select(v => new ViolationRowViewModel(v)));
             // Karar bekleyen kayıtlar, sonucu henüz yazılmamış (IsApproved null) olanlardır.
             IsPendingTermination = full.PendingTermination;
             if (full.PendingTermination)

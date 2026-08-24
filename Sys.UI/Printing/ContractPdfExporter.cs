@@ -84,6 +84,7 @@ public static class ContractPdfExporter
         w.DrawDescription(contract);
         w.DrawItems(contract);
         w.DrawApprovalLogs(contract);
+        w.DrawViolations(contract);
         w.DrawRevisions(contract);
         w.DrawTerminations(contract);
         w.FinishPageNumbers();
@@ -327,6 +328,29 @@ public static class ContractPdfExporter
                     : $"{log.StepName} — {karar}";
 
                 DrawEntry(baslik, log.Note, log.ActionDate.ToString("dd.MM.yyyy HH:mm", Tr));
+            }
+            Gap(6);
+        }
+
+        // İhlal kayıtları hiçbir çıktıda yer almıyordu.
+        public void DrawViolations(Contract contract)
+        {
+            if (contract.Violations.Count == 0) return;
+
+            DrawSectionHeading("İhlal Geçmişi");
+            foreach (var violation in contract.Violations.OrderBy(v => v.ViolationDate).ThenBy(v => v.Id))
+            {
+                var detay = $"İhlal tarihi: {violation.ViolationDate.ToString("dd.MM.yyyy", Tr)}";
+
+                // Giderilen ihlaller açık olanlardan ayrılmalı; aksi halde geçmiş,
+                // hepsi hâlâ sürüyormuş gibi okunur.
+                if (violation.IsResolved)
+                    detay += $"\nGiderildi ({violation.ResolvedAt:dd.MM.yyyy HH:mm}): {violation.ResolutionNote}";
+
+                DrawEntry(
+                    $"{violation.ViolationType} — {(violation.IsResolved ? "Giderildi" : "Açık")}",
+                    string.IsNullOrWhiteSpace(violation.Description) ? detay : violation.Description + "\n" + detay,
+                    violation.ReportedAt.ToString("dd.MM.yyyy HH:mm", Tr));
             }
             Gap(6);
         }

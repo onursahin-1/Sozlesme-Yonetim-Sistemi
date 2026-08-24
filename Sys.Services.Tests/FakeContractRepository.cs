@@ -34,6 +34,15 @@ public class FakeContractRepository : IContractRepository
 
     public Task ApplyEditAsync(Contract contract, ContractRevision revision, AuditLog auditLog) => Task.CompletedTask;
     public Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog) => Task.CompletedTask;
+
+    public Violation? LastResolvedViolation { get; private set; }
+
+    public Task ResolveViolationAsync(Contract contract, Violation violation, AuditLog auditLog)
+    {
+        LastAppliedContract = contract;
+        LastResolvedViolation = violation;
+        return Task.CompletedTask;
+    }
     public Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog) => Task.CompletedTask;
     public Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold) => Task.FromResult(0);
     public Task AddAuditLogAsync(AuditLog log) => Task.CompletedTask;
