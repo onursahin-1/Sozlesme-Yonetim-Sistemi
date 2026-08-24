@@ -23,6 +23,12 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- Sözleşme künyesini PDF olarak dışa aktarmak için. MIT lisanslı. -->
     <PackageReference Include="PDFsharp" Version="6.2.4" />
+    <!--
+      Liste ekranlarını Excel'e aktarmak için. MIT lisanslı.
+      CSV yerine gerçek .xlsx üretiliyor: CSV'de ayraç karakteri Türkçe yerel ayarda
+      noktalı virgüle kayıyor, sayı/tarih biçimi ve sütun genişliği taşınamıyor.
+    -->
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

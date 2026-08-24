@@ -214,6 +214,37 @@ public partial class ArchiveViewModel : ViewModelBase
     [RelayCommand]
     private async Task Refresh() => await LoadListAsync();
 
+    // --- Excel'e aktarma ---
+    //
+    // Arşiv, dışa aktarmanın en çok işe yaradığı yer: yıl sonu analizinde kapanmış
+    // sözleşmelerin tamamı gerekiyor. Ekrandaki filtre ve arama aynen uygulanır ama
+    // görünen sayfa değil, eşleşen tüm kayıtlar aktarılır.
+
+    public string SuggestedExportFileName => Exporting.ExcelExporter.SuggestFileName("Arsiv");
+
+    public async Task ExportToExcelAsync(string destinationPath)
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var rows = await _contractService.GetArchivedContractsForExportAsync(
+                _currentUser, SelectedFilter, SearchText);
+
+            Exporting.ExcelExporter.ExportContracts(rows, destinationPath, "Arşiv");
+            await _contractService.LogExportAsync(_currentUser, "Arşiv listesi", rows.Count);
+
+            if (rows.Count >= ContractService.MaxExportRows)
+                ErrorMessage = $"Aktarma {ContractService.MaxExportRows} kayıtla sınırlandı. " +
+                               "Tümünü almak için filtreyi daraltıp tekrar deneyin.";
+
+            Printing.DocumentPrinter.Open(destinationPath);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Excel'e aktarılamadı: " + ex.Message;
+        }
+    }
+
     [RelayCommand]
     private async Task NextPage()
     {

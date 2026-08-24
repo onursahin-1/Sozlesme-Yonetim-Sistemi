@@ -206,6 +206,10 @@ Denetim kaydı. İşlem adları `AuditActionCatalog` içinde etiketlenir.
 | `Title`, `Message` | nvarchar | |
 | `IsRead` | bit | |
 | `CreatedAt` | datetime2 | |
+| `DedupeKey` | nvarchar, null | Tekrarlayan taramaların aynı olay için mükerrer bildirim üretmesini engeller. Olay anında üretilen bildirimlerde null |
+
+`(UserId, DedupeKey)` üzerinde **filtreli benzersiz index** (`DedupeKey IS NOT NULL`) —
+birden fazla null serbest.
 
 **NotificationType:**
 `0 YaklasanBitis · 1 OnayBekliyor · 2 TalepSonucu · 3 SozlesmeOlayi · 4 SifreSifirlamaTalebi`
@@ -221,9 +225,10 @@ aynı yanıtı verir.
 | Alan | Tip | Not |
 |---|---|---|
 | `Id` | int, PK | |
-| `Username` | nvarchar | Kullanıcının yazdığı ad |
+| `Username` | nvarchar(150) | Kullanıcının yazdığı ad |
 | `UserId` | int, null | Eşleşen kullanıcı; yoksa null |
 | `RequestedAt` | datetime2 | |
+| `IsHandled` | bit | Talep karşılandı ya da kapatıldı |
 | `HandledAt` | datetime2, null | |
 | `HandledByUserId` | int, null | |
 
@@ -239,10 +244,11 @@ belirli bir süre sonra kendiliğinden düşer.
 | Alan | Tip | Not |
 |---|---|---|
 | `Id` | int, PK | |
-| `JobName` | nvarchar | |
+| `JobName` | nvarchar(100) | **Benzersiz** — her iş için tabloda tek satır olmalı, kilit mantığı buna dayanıyor |
 | `LastRunAt` | datetime2, null | |
 | `LockedUntil` | datetime2, null | Kilit bitiş zamanı |
 | `LockedBy` | nvarchar, null | |
+| `LastResult` | nvarchar, null | Son çalıştırmanın sonucu |
 
 Bakım işi, bitiş tarihi geçen Aktif/Uyarı/**İhlal** sözleşmeleri `Tamamlandi`'ya,
 bitişi 30 günden yakın olanları `Uyari`'ya çeker.
@@ -251,7 +257,22 @@ bitişi 30 günden yakın olanları `Uyari`'ya çeker.
 
 ## İndeksler
 
-- `Contracts.ContractNo` — **benzersiz** (aynı anda iki sözleşme yaratılırsa
-  numara çakışması burada yakalanır)
-- Performans indeksleri: `Contracts.Status`, `Contracts.Stage`,
-  `Contracts.CreatedByUserId`, `AuditLog.ActionDate`
+**Benzersizlik kısıtları**
+
+| İndeks | Not |
+|---|---|
+| `Users.Username` | |
+| `Contracts.ContractNo` | Filtreli (`IS NOT NULL`) — talep aşamasındaki kayıtlarda numara yok. Aynı anda iki sözleşme yaratılırsa numara çakışması burada yakalanır |
+| `Notifications (UserId, DedupeKey)` | Filtreli (`IS NOT NULL`) — mükerrer bildirimi engeller |
+| `ScheduledJobRuns.JobName` | Her iş için tek satır |
+
+**Performans indeksleri**
+
+`Contracts.Status` · `Contracts.Stage` · `Contracts.EndDate` ·
+`Contracts (CreatedByUserId, Status)` · `AuditLog.ActionDate` ·
+`Notifications (UserId, IsRead)` · `Notifications.CreatedAt` ·
+`PasswordResetRequests (IsHandled, RequestedAt)` · `PasswordResetRequests.Username`
+
+**Ondalık alanlar** `decimal(18,2)` olarak tanımlıdır:
+`Contracts.TotalAmount`, `ContractItems.UnitPrice`,
+`ContractRevisions.PreviousTotalAmount`, `ContractTerminations.CompensationAmount`.

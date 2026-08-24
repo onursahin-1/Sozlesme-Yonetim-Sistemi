@@ -288,18 +288,50 @@ public class ContractRepository : IContractRepository
             .ToDictionaryAsync(x => x.Status, x => x.Count);
     }
 
-    // Filtre + arama + sayfalama tek bir SQL sorgusunda yapılır; sayfa dışındaki
-    // kayıtlar hiç belleğe alınmaz. Toplam kayıt sayısı ayrı bir COUNT ile alınır
-    // (AuditLog ekranındaki GetAuditLogsPagedAsync ile aynı desen).
-    public async Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
+    // Ekrandaki filtrelerin aynısını uygular ama sayfalamaz: Excel'e aktarmanın amacı
+    // tüm eşleşen kayıtları analiz edebilmek. Üst sınır, filtresiz bir aktarmanın
+    // milyonlarca satır çekmesini engelliyor.
+    public async Task<List<Contract>> GetContractsForExportAsync(
         int? createdByUserId,
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
         string? searchText,
-        int page,
-        int pageSize)
+        int maxRows)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var query = BuildContractQuery(db, createdByUserId, includeStatuses, excludeStatuses, searchText);
+
+        return await query
+            .Include(c => c.CreatedByUser)
+            .OrderByDescending(c => c.CreatedAt)
+            .ThenByDescending(c => c.Id)
+            .Take(maxRows)
+            .ToListAsync();
+    }
+
+    public async Task<List<AuditLog>> GetAuditLogsForExportAsync(
+        string? userText, DateTime? startDate, DateTime? endDate, string? action, int maxRows)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var query = BuildAuditLogQuery(db, userText, startDate, endDate, action);
+
+        return await query
+            .OrderByDescending(a => a.ActionDate)
+            .Take(maxRows)
+            .ToListAsync();
+    }
+
+    // Filtre mantığı sayfalı ve dışa aktarma sorguları arasında paylaşılıyor;
+    // iki yerde ayrı yazılsaydı ekranda görülenle aktarılan kayıtlar zamanla ayrışırdı.
+    private static IQueryable<Contract> BuildContractQuery(
+        SysDbContext db,
+        int? createdByUserId,
+        ContractStatus[]? includeStatuses,
+        ContractStatus[]? excludeStatuses,
+        string? searchText)
+    {
         var query = db.Contracts.AsNoTracking().AsQueryable();
 
         if (createdByUserId.HasValue)
@@ -313,16 +345,54 @@ public class ContractRepository : IContractRepository
 
         if (!string.IsNullOrWhiteSpace(searchText))
         {
-            var term = searchText.Trim();
             // EF.Functions.Like ile SQL Server tarafında büyük/küçük harf duyarsız arama
             // (varsayılan collation case-insensitive olduğu için ek bir dönüşüm gerekmez).
-            var pattern = $"%{term}%";
+            var pattern = $"%{searchText.Trim()}%";
             query = query.Where(c =>
                 EF.Functions.Like(c.Title, pattern) ||
                 EF.Functions.Like(c.CompanyName, pattern) ||
                 (c.ContractNo != null && EF.Functions.Like(c.ContractNo, pattern)) ||
                 EF.Functions.Like(c.RequestRefNo, pattern));
         }
+
+        return query;
+    }
+
+    private static IQueryable<AuditLog> BuildAuditLogQuery(
+        SysDbContext db, string? userText, DateTime? startDate, DateTime? endDate, string? action)
+    {
+        var query = db.AuditLogs.AsNoTracking().Include(a => a.ActingUser).AsQueryable();
+
+        if (!string.IsNullOrEmpty(userText))
+            query = query.Where(a => (a.ActingUser != null ? a.ActingUser.FullName : ("Kullanıcı #" + a.ActingUserId)) == userText);
+
+        if (!string.IsNullOrEmpty(action))
+            query = query.Where(a => a.Action == action);
+
+        if (startDate.HasValue)
+            query = query.Where(a => a.ActionDate.Date >= startDate.Value.Date);
+
+        if (endDate.HasValue)
+            query = query.Where(a => a.ActionDate.Date <= endDate.Value.Date);
+
+        return query;
+    }
+
+    // Filtre + arama + sayfalama tek bir SQL sorgusunda yapılır; sayfa dışındaki
+    // kayıtlar hiç belleğe alınmaz. Toplam kayıt sayısı ayrı bir COUNT ile alınır
+    // (AuditLog ekranındaki GetAuditLogsPagedAsync ile aynı desen).
+    public async Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
+        int? createdByUserId,
+        ContractStatus[]? includeStatuses,
+        ContractStatus[]? excludeStatuses,
+        string? searchText,
+        int page,
+        int pageSize)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        // Filtre mantığı dışa aktarma sorgusuyla paylaşılıyor.
+        var query = BuildContractQuery(db, createdByUserId, includeStatuses, excludeStatuses, searchText);
 
         var totalCount = await query.CountAsync();
 
@@ -594,22 +664,10 @@ public class ContractRepository : IContractRepository
         int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate, string? action = null)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
-        var query = db.AuditLogs.AsNoTracking().Include(a => a.ActingUser).AsQueryable();
 
-        if (!string.IsNullOrEmpty(userText))
-            query = query.Where(a => (a.ActingUser != null ? a.ActingUser.FullName : ("Kullanıcı #" + a.ActingUserId)) == userText);
-
-        // İşlem türü filtresi: denetimde "tüm şifre sıfırlamaları" ya da "tüm ek
-        // silmeleri" gibi sorular en sık sorulanlar; kullanıcı ve tarih tek başına
-        // yetmiyordu.
-        if (!string.IsNullOrEmpty(action))
-            query = query.Where(a => a.Action == action);
-
-        if (startDate.HasValue)
-            query = query.Where(a => a.ActionDate.Date >= startDate.Value.Date);
-
-        if (endDate.HasValue)
-            query = query.Where(a => a.ActionDate.Date <= endDate.Value.Date);
+        // Filtre mantığı dışa aktarma sorgusuyla paylaşılıyor. İşlem türü filtresi,
+        // denetimde en sık sorulan "tüm şifre sıfırlamaları" gibi soruları karşılıyor.
+        var query = BuildAuditLogQuery(db, userText, startDate, endDate, action);
 
         var totalCount = await query.CountAsync();
 

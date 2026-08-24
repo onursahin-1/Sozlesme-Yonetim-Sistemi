@@ -72,18 +72,39 @@
 				</Grid>
 			</Border>
 
-			<Button Grid.Column="1" Classes="flat" Command="{Binding RefreshCommand}"
-					ToolTip.Tip="Listeyi yenile" VerticalAlignment="Center">
-				<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
-						CornerRadius="8" Padding="12,9">
-					<StackPanel Orientation="Horizontal" Spacing="7">
-						<Path Stroke="#4B5563" StrokeThickness="1.8" Fill="Transparent"
-							  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
-							  Data="M20 11a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>
-						<TextBlock Text="Yenile" Foreground="#3D4654" FontSize="12.5" VerticalAlignment="Center"/>
-					</StackPanel>
-				</Border>
-			</Button>
+			<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+
+				<!--
+				  Ekrandaki filtreler aynen uygulanır ama görünen sayfa değil, eşleşen
+				  TÜM kayıtlar aktarılır — aktarmanın amacı analiz.
+				-->
+				<Button Classes="flat" Click="OnExportExcelClick" IsEnabled="{Binding !IsBusy}"
+						ToolTip.Tip="Filtrelenmiş listeyi Excel dosyası olarak kaydeder">
+					<Border Background="#E9F4EB" BorderBrush="#A9D6B0" BorderThickness="1"
+							CornerRadius="8" Padding="12,9">
+						<StackPanel Orientation="Horizontal" Spacing="7">
+							<Path Stroke="#1A6B2A" StrokeThickness="1.8" Fill="Transparent"
+								  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
+								  Data="M12 3v12M12 15l-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
+							<TextBlock Text="Excel" Foreground="#1A6B2A" FontSize="12.5"
+									   FontWeight="SemiBold" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Border>
+				</Button>
+
+				<Button Classes="flat" Command="{Binding RefreshCommand}"
+						ToolTip.Tip="Listeyi yenile">
+					<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+							CornerRadius="8" Padding="12,9">
+						<StackPanel Orientation="Horizontal" Spacing="7">
+							<Path Stroke="#4B5563" StrokeThickness="1.8" Fill="Transparent"
+								  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
+								  Data="M20 11a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>
+							<TextBlock Text="Yenile" Foreground="#3D4654" FontSize="12.5" VerticalAlignment="Center"/>
+						</StackPanel>
+					</Border>
+				</Button>
+			</StackPanel>
 		</Grid>
 
 		<!-- Filtre hapları: seçili olan koyu mavi zeminle vurgulanır -->

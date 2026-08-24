@@ -59,6 +59,9 @@ public static class AuditActionCatalog
         new("Ekİndirildi",             "Ek İndirildi",                 Category.Erisim,   Tone.Notr),
         new("EkSilindi",               "Ek Silindi",                   Category.Erisim,   Tone.Olumsuz),
         new("SözleşmeYazdırıldı",      "Sözleşme Yazdırıldı",          Category.Erisim,   Tone.Notr),
+        // Dışa aktarma toplu veri çıkışıdır; tek bir sözleşmenin yazdırılmasından
+        // daha dikkat çekici olduğu için uyarı tonunda.
+        new("ListeDışaAktarıldı",      "Liste Excel'e Aktarıldı",      Category.Erisim,   Tone.Uyari),
 
         new("KullanıcıOluşturuldu",    "Kullanıcı Oluşturuldu",        Category.Hesap,    Tone.Notr),
         new("ŞifreSıfırlandı",         "Şifre Sıfırlandı (Yönetici)",  Category.Hesap,    Tone.Uyari),

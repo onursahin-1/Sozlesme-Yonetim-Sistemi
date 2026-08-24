@@ -205,6 +205,40 @@ public class ContractService
         return await _contracts.GetContractsPagedAsync(userId, include, exclude, searchText, page, pageSize);
     }
 
+    // Excel'e aktarmada tek seferde çekilecek azami satır sayısı. Filtresiz bir
+    // aktarmanın tüm tabloyu belleğe almasını engelliyor; sınıra takıldığında
+    // kullanıcı uyarılıp filtreyi daraltması isteniyor.
+    public const int MaxExportRows = 10_000;
+
+    // Ekrandaki filtrelerin aynısıyla, ama sayfalamadan. Dışa aktarmanın amacı tüm
+    // eşleşen kayıtları analiz edebilmek; yalnızca görünen sayfayı aktarmak işe yaramaz.
+    public async Task<List<Contract>> GetContractsForExportAsync(User currentUser, string filterKey, string? searchText)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        var (include, exclude) = MapFilter(filterKey);
+        return await _contracts.GetContractsForExportAsync(userId, include, exclude, searchText, MaxExportRows);
+    }
+
+    public async Task<List<Contract>> GetArchivedContractsForExportAsync(User currentUser, string filterKey, string? searchText)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetContractsForExportAsync(userId, MapArchiveFilter(filterKey), null, searchText, MaxExportRows);
+    }
+
+    public async Task<List<AuditLog>> GetAuditLogsForExportAsync(
+        User currentUser, string? userText, DateTime? startDate, DateTime? endDate, string? action)
+    {
+        if (currentUser.Role != UserRole.Mudur)
+            throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
+
+        return await _contracts.GetAuditLogsForExportAsync(userText, startDate, endDate, action, MaxExportRows);
+    }
+
+    // Dışa aktarma, sözleşme verisinin uygulama dışına çıkması demek — PDF ve yazdırma
+    // gibi denetim kaydına yazılıyor. Kaç kaydın alındığı da kayda giriyor.
+    public Task LogExportAsync(User actingUser, string what, int rowCount)
+        => LogAuditAsync(0, "ListeDışaAktarıldı", actingUser.Id, $"{what} — {rowCount} kayıt Excel'e aktarıldı.");
+
     // "Tümü" seçildiğinde kapanmış sözleşmeler (Tamamlandı/Feshedildi) listede gösterilmez —
     // bu ekran devam eden işleri gösterir. Eskiden bu ayıklama ViewModel'de bellekte yapılıyordu.
     private static (ContractStatus[]? Include, ContractStatus[]? Exclude) MapFilter(string filterKey) => filterKey switch
@@ -485,6 +519,19 @@ public class ContractService
         // yeniden onay zincirinin başına gönderilebilirdi.
         if (contract.Status != ContractStatus.Talep)
             throw new InvalidOperationException("Bu talep sözleşmeye dönüştürülemez; artık bekleyen bir talep değil.");
+
+        // Tarih doğrulaması sadece sihirbaz ekranında vardı; servis hiç bakmıyordu.
+        // Tarihsiz bir sözleşme "Aktif" olabiliyordu — o durumda kalan gün
+        // hesaplanamıyor, bakım işi süresi dolmuşları hiç göremiyor ve sözleşme
+        // sonsuza kadar yürürlükte kalıyordu.
+        if (contract.StartDate is null || contract.EndDate is null)
+            throw new InvalidOperationException("Sözleşmenin başlangıç ve bitiş tarihi girilmelidir.");
+
+        if (contract.EndDate.Value.Date <= contract.StartDate.Value.Date)
+            throw new InvalidOperationException("Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.");
+
+        if (items.Count == 0)
+            throw new InvalidOperationException("Sözleşmede en az bir bedel kalemi bulunmalıdır.");
 
         contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
         contract.Status = ContractStatus.OnayBekliyor;

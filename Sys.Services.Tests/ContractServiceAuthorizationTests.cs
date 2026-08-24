@@ -140,17 +140,69 @@ public class ContractServiceAuthorizationTests
             () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), mudur));
     }
 
+    // Sözleşmeye dönüştürülmeye hazır talep: tarihleri ve en az bir kalemi var.
+    private static Contract HazirTalep() => new()
+    {
+        Status = ContractStatus.Talep,
+        StartDate = DateTime.Today,
+        EndDate = DateTime.Today.AddYears(1)
+    };
+
+    private static List<ContractItem> BirKalem() => new()
+    {
+        new ContractItem { Description = "Hizmet", Quantity = 1, Unit = "adet", UnitPrice = 1000m }
+    };
+
     [Fact]
     public async Task FinalizeContractAsync_Syb_Succeeds()
+    {
+        var service = CreateService(out _);
+        var contract = HazirTalep();
+        var syb = new User { Role = UserRole.SYB };
+
+        await service.FinalizeContractAsync(contract, BirKalem(), new List<Attachment>(), syb);
+
+        Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
+        Assert.Equal(1, contract.Stage);
+        Assert.Equal(1000m, contract.TotalAmount);
+    }
+
+    // Tarih doğrulaması sadece sihirbaz ekranındaydı; servis hiç bakmıyordu.
+    // Tarihsiz bir sözleşme "Aktif" olabiliyor, kalan gün hesaplanamıyor ve bakım
+    // işi süresi dolmuşları hiç göremiyordu.
+    [Fact]
+    public async Task FinalizeContractAsync_WithoutDates_ThrowsException()
     {
         var service = CreateService(out _);
         var contract = new Contract { Status = ContractStatus.Talep };
         var syb = new User { Role = UserRole.SYB };
 
-        await service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), syb);
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.FinalizeContractAsync(contract, BirKalem(), new List<Attachment>(), syb));
+    }
 
-        Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
-        Assert.Equal(1, contract.Stage);
+    [Fact]
+    public async Task FinalizeContractAsync_EndBeforeStart_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = HazirTalep();
+        contract.EndDate = contract.StartDate;
+        var syb = new User { Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.FinalizeContractAsync(contract, BirKalem(), new List<Attachment>(), syb));
+    }
+
+    // Kalemsiz sözleşmenin bedeli sıfır olurdu.
+    [Fact]
+    public async Task FinalizeContractAsync_WithoutItems_ThrowsException()
+    {
+        var service = CreateService(out _);
+        var contract = HazirTalep();
+        var syb = new User { Role = UserRole.SYB };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), syb));
     }
 
     [Fact]

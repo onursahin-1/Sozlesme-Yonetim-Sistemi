@@ -363,3 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 appsettings.Local.json
+
+# Commit mesajını dosyadan vermek için kullanılan geçici dosya (git commit -F).
+# Repoya girmemeli.
+commit-mesaji.txt

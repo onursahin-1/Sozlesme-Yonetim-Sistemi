@@ -12,6 +12,14 @@ public class FakeContractRepository : IContractRepository
     public Task<List<Contract>> GetByCreatedUserAsync(int userId) => Task.FromResult(new List<Contract>());
     public Task<List<Contract>> GetByStageAsync(int stage) => Task.FromResult(new List<Contract>());
 
+    public Task<List<Contract>> GetContractsForExportAsync(
+        int? createdByUserId, ContractStatus[]? includeStatuses, ContractStatus[]? excludeStatuses,
+        string? searchText, int maxRows) => Task.FromResult(new List<Contract>());
+
+    public Task<List<AuditLog>> GetAuditLogsForExportAsync(
+        string? userText, DateTime? startDate, DateTime? endDate, string? action, int maxRows)
+        => Task.FromResult(new List<AuditLog>());
+
     public Task<(List<Contract> Items, int TotalCount)> GetByStagePagedAsync(int stage, int page, int pageSize)
         => Task.FromResult((new List<Contract>(), 0));
     public Task<Contract?> GetByIdWithDetailsAsync(int id) => Task.FromResult<Contract?>(null);

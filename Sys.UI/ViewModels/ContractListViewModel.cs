@@ -155,6 +155,43 @@ public partial class ContractListViewModel : ViewModelBase
         }
     }
 
+    // --- Excel'e aktarma ---
+    //
+    // Ekrandaki filtreler aynen uygulanır ama SAYFA DEĞİL, eşleşen tüm kayıtlar
+    // aktarılır — aktarmanın amacı analiz. Dosya seçim penceresi kod-arkasından
+    // açıldığı için yol buraya iletiliyor.
+
+    public string SuggestedExportFileName => Exporting.ExcelExporter.SuggestFileName("Sozlesmeler");
+
+    public async Task ExportToExcelAsync(string destinationPath)
+    {
+        if (IsBusy) return;
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
+        {
+            var rows = await _contractService.GetContractsForExportAsync(_currentUser, SelectedFilter, SearchText);
+
+            Exporting.ExcelExporter.ExportContracts(rows, destinationPath, "Sözleşmeler");
+            await _contractService.LogExportAsync(_currentUser, "Sözleşme listesi", rows.Count);
+
+            if (rows.Count >= ContractService.MaxExportRows)
+                ErrorMessage = $"Aktarma {ContractService.MaxExportRows} kayıtla sınırlandı. " +
+                               "Tümünü almak için filtreyi daraltıp tekrar deneyin.";
+
+            Printing.DocumentPrinter.Open(destinationPath);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Excel'e aktarılamadı: " + ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     // Ekran açıkken başka bir kullanıcının eklediği/güncellediği sözleşmeleri
     // görebilmek için üstteki "Yenile" butonuna bağlanır. Bulunulan sayfayı korur.
     [RelayCommand]

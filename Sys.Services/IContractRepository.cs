@@ -65,6 +65,22 @@ public interface IContractRepository
     // yapılır. Böylece kayıt sayısı arttığında tüm tablo belleğe çekilmez.
     // includeStatuses: sadece bu durumlar (null = durum filtresi yok)
     // excludeStatuses: bu durumlar hariç (örn. "Tümü" filtresinde Tamamlandı/Feshedildi)
+    // --- Excel'e aktarma ---
+    //
+    // Dışa aktarma sayfalanmaz: analiz için tüm eşleşen kayıtlar gerekiyor. Yine de
+    // sınırsız sorgu açmamak için üst sınır veriliyor; sınıra takılırsa kullanıcı
+    // uyarılır (filtreyi daraltması gerekir).
+
+    Task<List<Contract>> GetContractsForExportAsync(
+        int? createdByUserId,
+        ContractStatus[]? includeStatuses,
+        ContractStatus[]? excludeStatuses,
+        string? searchText,
+        int maxRows);
+
+    Task<List<AuditLog>> GetAuditLogsForExportAsync(
+        string? userText, DateTime? startDate, DateTime? endDate, string? action, int maxRows);
+
     Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
         int? createdByUserId,
         ContractStatus[]? includeStatuses,

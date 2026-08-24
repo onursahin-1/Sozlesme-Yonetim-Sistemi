@@ -46,7 +46,7 @@
 		<!-- ========== FİLTRELER ========== -->
 		<Border DockPanel.Dock="Top" Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
 				CornerRadius="12" Padding="20,16" Margin="0,0,0,14">
-			<Grid ColumnDefinitions="*,*,*,*,Auto" ColumnSpacing="14">
+			<Grid ColumnDefinitions="*,*,*,*,Auto,Auto" ColumnSpacing="14">
 
 				<StackPanel Grid.Column="0">
 					<TextBlock Classes="filterLabel" Text="KULLANICI"/>
@@ -80,6 +80,25 @@
 					<Border Background="#EEF1F6" BorderBrush="#DFE5EE" BorderThickness="1"
 							CornerRadius="8" Padding="14,10">
 						<TextBlock Text="Temizle" Foreground="#5B6472" FontSize="12.5"/>
+					</Border>
+				</Button>
+
+				<!--
+				  Denetim çıktısı çoğunlukla dışarıya (iç denetim, mali müşavir)
+				  veriliyor; filtrelenmiş kayıtların TAMAMI aktarılır, görünen sayfa değil.
+				-->
+				<Button Grid.Column="5" Classes="flat" VerticalAlignment="Bottom"
+						Click="OnExportExcelClick"
+						ToolTip.Tip="Filtrelenmiş kayıtları Excel dosyası olarak kaydeder">
+					<Border Background="#E9F4EB" BorderBrush="#A9D6B0" BorderThickness="1"
+							CornerRadius="8" Padding="14,10">
+						<StackPanel Orientation="Horizontal" Spacing="7">
+							<Path Stroke="#1A6B2A" StrokeThickness="1.8" Fill="Transparent"
+								  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
+								  Data="M12 3v12M12 15l-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
+							<TextBlock Text="Excel" Foreground="#1A6B2A" FontSize="12.5"
+									   FontWeight="SemiBold" VerticalAlignment="Center"/>
+						</StackPanel>
 					</Border>
 				</Button>
 			</Grid>

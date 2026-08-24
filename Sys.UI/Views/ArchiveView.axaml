@@ -38,19 +38,36 @@
 					   Text="Süresi dolan, feshedilen ve reddedilen kayıtlar — salt okunur"
 					   FontSize="12" Foreground="#8A94A6" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
-			<Border DockPanel.Dock="Top" Background="White" BorderBrush="#DDE3EC" BorderThickness="1"
-					CornerRadius="8" Margin="0,0,0,10">
-				<Grid ColumnDefinitions="Auto,*">
-					<Path Grid.Column="0" Stroke="#A3ABB8" StrokeThickness="2" Fill="Transparent"
-						  Width="13" Height="13" Stretch="Uniform" Margin="11,0,0,0"
-						  VerticalAlignment="Center"
-						  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
-					<TextBox Grid.Column="1" Text="{Binding SearchText}"
-							 PlaceholderText="Başlık, firma veya no ile ara..."
-							 Background="Transparent" BorderThickness="0"
-							 Padding="9,8" FontSize="12"/>
-				</Grid>
-			</Border>
+			<!--
+			  Arama kutusunun yanındaki Excel butonu LİSTEYE ait (aşağıdaki Yazdır /
+			  PDF Kaydet ise seçili tek sözleşmeye). Ekrandaki filtre ve arama aynen
+			  uygulanır, görünen sayfa değil eşleşen tüm kayıtlar aktarılır.
+			-->
+			<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,10">
+				<Border Grid.Column="0" Background="White" BorderBrush="#DDE3EC" BorderThickness="1"
+						CornerRadius="8">
+					<Grid ColumnDefinitions="Auto,*">
+						<Path Grid.Column="0" Stroke="#A3ABB8" StrokeThickness="2" Fill="Transparent"
+							  Width="13" Height="13" Stretch="Uniform" Margin="11,0,0,0"
+							  VerticalAlignment="Center"
+							  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
+						<TextBox Grid.Column="1" Text="{Binding SearchText}"
+								 PlaceholderText="Başlık, firma veya no ile ara..."
+								 Background="Transparent" BorderThickness="0"
+								 Padding="9,8" FontSize="12"/>
+					</Grid>
+				</Border>
+
+				<Button Grid.Column="1" Classes="flat" Click="OnExportExcelClick"
+						ToolTip.Tip="Filtrelenmiş arşiv listesini Excel dosyası olarak kaydeder">
+					<Border Background="#E9F4EB" BorderBrush="#A9D6B0" BorderThickness="1"
+							CornerRadius="8" Padding="11,9">
+						<Path Stroke="#1A6B2A" StrokeThickness="1.8" Fill="Transparent"
+							  Width="14" Height="14" Stretch="Uniform"
+							  Data="M12 3v12M12 15l-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
+					</Border>
+				</Button>
+			</Grid>
 
 			<!-- Arşivde neyin neden bulunduğunu ayırt edebilmek için durum filtreleri -->
 			<WrapPanel DockPanel.Dock="Top" Margin="0,0,0,12">

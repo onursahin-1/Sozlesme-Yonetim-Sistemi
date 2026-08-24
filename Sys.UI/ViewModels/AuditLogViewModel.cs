@@ -202,20 +202,59 @@ public partial class AuditLogViewModel : ViewModelBase
         _ = LoadPageAsync();
     }
 
+    // --- Excel'e aktarma ---
+    //
+    // Ekrandaki filtreler aynen uygulanır ama sayfa değil, eşleşen tüm kayıtlar
+    // aktarılır. Denetim çıktısı çoğunlukla dışarıya (iç denetim, mali müşavir)
+    // verildiği için aktarmanın kendisi de denetim kaydına yazılıyor.
+
+    public string SuggestedExportFileName => Exporting.ExcelExporter.SuggestFileName("Islem_Gecmisi");
+
+    public async Task ExportToExcelAsync(string destinationPath)
+    {
+        ErrorMessage = string.Empty;
+        try
+        {
+            var (userFilter, start, end, actionFilter) = CurrentFilters();
+
+            var rows = await _contractService.GetAuditLogsForExportAsync(
+                _currentUser, userFilter, start, end, actionFilter);
+
+            Exporting.ExcelExporter.ExportAuditLogs(rows, destinationPath);
+            await _contractService.LogExportAsync(_currentUser, "İşlem geçmişi", rows.Count);
+
+            if (rows.Count >= ContractService.MaxExportRows)
+                ErrorMessage = $"Aktarma {ContractService.MaxExportRows} kayıtla sınırlandı. " +
+                               "Tümünü almak için tarih aralığını daraltıp tekrar deneyin.";
+
+            Printing.DocumentPrinter.Open(destinationPath);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Excel'e aktarılamadı: " + ex.Message;
+        }
+    }
+
+    // Sayfalama ve dışa aktarma aynı filtreleri kullanıyor; tek yerden üretiliyor.
+    private (string? User, DateTime? Start, DateTime? End, string? Action) CurrentFilters()
+    {
+        string? userFilter = string.IsNullOrEmpty(SelectedUser) || SelectedUser == "Tümü" ? null : SelectedUser;
+
+        // Açılır listede okunabilir etiket görünüyor; sorguya ham işlem adı gider.
+        string? actionFilter = SelectedAction == TumIslemler
+            ? null
+            : AuditActionCatalog.Actions.FirstOrDefault(a => a.Label == SelectedAction)?.Key;
+
+        return (userFilter, StartDate?.Date, EndDate?.Date, actionFilter);
+    }
+
     private async Task LoadPageAsync()
     {
         IsLoading = true;
         ErrorMessage = string.Empty;
         try
         {
-            string? userFilter = string.IsNullOrEmpty(SelectedUser) || SelectedUser == "Tümü" ? null : SelectedUser;
-            DateTime? start = StartDate?.Date;
-            DateTime? end = EndDate?.Date;
-
-            // Açılır listede okunabilir etiket görünüyor; sorguya ham işlem adı gider.
-            string? actionFilter = SelectedAction == TumIslemler
-                ? null
-                : AuditActionCatalog.Actions.FirstOrDefault(a => a.Label == SelectedAction)?.Key;
+            var (userFilter, start, end, actionFilter) = CurrentFilters();
 
             var (items, totalCount) = await _contractService.GetAuditLogsAsync(
                 _currentUser, CurrentPage, PageSize, userFilter, start, end, actionFilter);
