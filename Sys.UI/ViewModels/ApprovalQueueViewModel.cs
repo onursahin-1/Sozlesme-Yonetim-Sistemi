@@ -25,8 +25,52 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     private readonly User _currentUser;
     [ObservableProperty]
     public partial string PageTitle { get; set; } = string.Empty;
+    // Sayfa başına kayıt sayısı tek merkezden gelir; diğer sayfalanan ekranlarla
+    // (sözleşme listesi, arşiv, işlem geçmişi) tutarlı kalsın diye.
+    private const int PageSize = PagingDefaults.PageSize;
+
     [ObservableProperty]
     public partial ObservableCollection<Contract> PendingContracts { get; set; } = new();
+
+    // --- Sayfalama ---
+    // Bu ekran, diğerleri sayfalanırken tüm bekleyen kayıtları tek seferde çekmeye
+    // devam ediyordu.
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    [NotifyPropertyChangedFor(nameof(CanGoPrevious))]
+    [NotifyPropertyChangedFor(nameof(CanGoNext))]
+    public partial int CurrentPage { get; set; } = 1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    [NotifyPropertyChangedFor(nameof(CanGoPrevious))]
+    [NotifyPropertyChangedFor(nameof(CanGoNext))]
+    [NotifyPropertyChangedFor(nameof(ShowPager))]
+    [NotifyPropertyChangedFor(nameof(TotalPages))]
+    public partial int TotalCount { get; set; }
+
+    public int TotalPages => TotalCount == 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)PageSize);
+    public bool CanGoPrevious => CurrentPage > 1;
+    public bool CanGoNext => CurrentPage < TotalPages;
+    public bool ShowPager => TotalCount > PageSize;
+    public string PageInfoText => $"{CurrentPage} / {TotalPages}";
+
+    [RelayCommand]
+    private async Task NextPage()
+    {
+        if (!CanGoNext) return;
+        CurrentPage++;
+        await LoadQueueAsync();
+    }
+
+    [RelayCommand]
+    private async Task PreviousPage()
+    {
+        if (!CanGoPrevious) return;
+        CurrentPage--;
+        await LoadQueueAsync();
+    }
     public ObservableCollection<ChecklistItemViewModel> ChecklistItems { get; } = new();
     public bool IsSybFinalCheck => Detail?.Stage == 1;
     public bool AllChecked => !IsSybFinalCheck || ChecklistItems.All(i => i.IsChecked);
@@ -307,7 +351,21 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         ErrorMessage = string.Empty;
         try
         {
-            var list = await _contractService.GetPendingApprovalsAsync(_currentUser);
+            var (list, totalCount) = await _contractService.GetPendingApprovalsPagedAsync(
+                _currentUser, CurrentPage, PageSize);
+
+            TotalCount = totalCount;
+
+            // Karar verildikçe kuyruk kısalıyor; son sayfadaki tek kayıt işlendiğinde
+            // sayfa numarası sınırın dışında kalıyordu.
+            if (CurrentPage > TotalPages)
+            {
+                CurrentPage = TotalPages;
+                var (clamped, _) = await _contractService.GetPendingApprovalsPagedAsync(
+                    _currentUser, CurrentPage, PageSize);
+                list = clamped;
+            }
+
             PendingContracts = new ObservableCollection<Contract>(list);
         }
         catch (Exception ex)

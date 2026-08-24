@@ -18,6 +18,9 @@ public interface IContractRepository
                             ContractRevision? resolvedRevision = null,
                             ContractTermination? resolvedTermination = null);
     Task<List<Contract>> GetByStageAsync(int stage);
+
+    // Onay kuyruğu için sayfalanmış hâli; en eski bekleyen üstte.
+    Task<(List<Contract> Items, int TotalCount)> GetByStagePagedAsync(int stage, int page, int pageSize);
     Task ApplyEditAsync(Contract contract, ContractRevision revision, AuditLog auditLog);
     Task ApplyViolationAsync(Contract contract, Violation violation, AuditLog auditLog);
 
@@ -28,7 +31,8 @@ public interface IContractRepository
     Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold);
     Task AddAuditLogAsync(AuditLog log);
     Task<List<string>> GetAuditLogUserOptionsAsync();
-    Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate);
+    Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(
+        int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate, string? action = null);
     Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses);
     Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId);
 

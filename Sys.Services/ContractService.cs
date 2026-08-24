@@ -746,6 +746,21 @@ public class ContractService
         if (stage == -1) return new List<Contract>();
         return await _contracts.GetByStageAsync(stage);
     }
+
+    // Onay kuyruğunun sayfalanmış hâli. Diğer listeler sayfalanırken bu ekran tüm
+    // bekleyen kayıtları tek seferde çekmeye devam ediyordu.
+    public async Task<(List<Contract> Items, int TotalCount)> GetPendingApprovalsPagedAsync(
+        User currentUser, int page, int pageSize)
+    {
+        int stage = currentUser.Role switch
+        {
+            UserRole.SYB => 1,
+            UserRole.Mudur => 2,
+            _ => -1
+        };
+        if (stage == -1) return (new List<Contract>(), 0);
+        return await _contracts.GetByStagePagedAsync(stage, page, pageSize);
+    }
     // Düzenleme / fesih / ihlal ekranlarının açılır listeleri. Üçü de EnsureContractIsLive
     // ile AYNI kümeye (LiveStatuses) bağlı.
     //
@@ -1009,10 +1024,12 @@ public class ContractService
         return await _contracts.GetAuditLogUserOptionsAsync();
     }
 
-    public async Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsAsync(User currentUser, int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate)
+    public async Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsAsync(
+        User currentUser, int page, int pageSize, string? userText,
+        DateTime? startDate, DateTime? endDate, string? action = null)
     {
         if (currentUser.Role != UserRole.Mudur)
             throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
-        return await _contracts.GetAuditLogsPagedAsync(page, pageSize, userText, startDate, endDate);
+        return await _contracts.GetAuditLogsPagedAsync(page, pageSize, userText, startDate, endDate, action);
     }
 }

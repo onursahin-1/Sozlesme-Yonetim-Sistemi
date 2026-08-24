@@ -1,18 +1,72 @@
 # SYS — Sözleşme Yönetim Sistemi
 
-Şirket içi, çok kullanıcılı masaüstü uygulaması (WPF, .NET 10, SQL Server Express).
+Şirket içi, çok kullanıcılı masaüstü uygulaması. Sözleşme taleplerinin
+oluşturulması, onay zincirinden geçirilmesi, yürürlükteki sözleşmelerin
+izlenmesi (revizyon, ihlal, fesih) ve arşivlenmesi için.
+
+**Teknolojiler:** .NET 10 · Avalonia 12 · CommunityToolkit.Mvvm · EF Core ·
+SQL Server Express · PDFsharp
 
 ## Katman Yapısı
-- **Sys.Domain** — Entity sınıfları (Contract, User, vb.). Hiçbir projeye bağımlı değil.
-- **Sys.Services** — İş kuralları ve servisler (ContractService, ApprovalWorkflowService, AuthService). Sadece Sys.Domain'e bağımlı.
-- **Sys.Infrastructure** — Veritabanı erişimi (EF Core), dosya işlemleri, loglama.
-- **Sys.UI** — WPF arayüzü (View + ViewModel).
+
+| Proje | İçerik | Bağımlılık |
+|---|---|---|
+| `Sys.Domain` | Entity sınıfları ve enum'lar | yok |
+| `Sys.Services` | İş kuralları, yetki kontrolleri, repository arayüzleri | Domain |
+| `Sys.Infrastructure` | EF Core repository'leri, migration'lar, dosya işlemleri | Domain, Services |
+| `Sys.UI` | Avalonia arayüzü (View + ViewModel), PDF/yazdırma | tümü |
+| `Sys.Services.Tests` | xUnit birim testleri (sahte repository ile) | Domain, Services |
+
+İş kuralları **yalnızca** `Sys.Services` içinde. ViewModel'ler kural işletmez;
+doğrulama yaparlar ama yetki ve durum geçişi kararı servistedir.
 
 ## Kurulum
-- SQL Server Express (SQLEXPRESS instance), TCP/IP etkin, Mixed Mode Authentication.
-- Bağlantı bilgisi kodda düz metin tutulmaz (DPAPI ile şifrelenecek — Gün 2).
+
+1. **SQL Server Express** (`SQLEXPRESS` instance), TCP/IP etkin, Mixed Mode
+   Authentication. Veritabanı adı: `SysDb`.
+2. `Sys.UI/appsettings.Local.json.example` dosyasını `appsettings.Local.json`
+   olarak kopyalayıp bağlantı dizesini girin. Bu dosya `.gitignore`'da.
+3. Migration'ları uygulayın — Package Manager Console, **Default project:
+   `Sys.Infrastructure`**:
+   ```
+   Update-Database
+   ```
+4. Uygulama ilk çalıştırmada `DbSeeder` ile bir yönetici hesabı oluşturur.
+
+## Roller
+
+| Rol | Yetki |
+|---|---|
+| **Personel** | Kendi taleplerini oluşturur, düzenler ve görüntüler |
+| **SYB** | Talepleri sözleşmeye dönüştürür, son kontrolü yapar, düzenleme/fesih talebi açar, ihlal bildirir ve giderir |
+| **Müdür** | Onay zincirinin ikinci aşaması; işlem geçmişini görür |
+| **Admin** | Kullanıcı yönetimi ve şifre sıfırlama; sözleşme akışına katılmaz |
+
+## Onay Zinciri
+
+```
+Talep (Stage 0)
+   ↓ SYB sözleşmeyi oluşturur
+SYB Son Kontrol (Stage 1)
+   ↓ onay                    ↘ red → talep sahibine döner
+Yönetim (YK) Onayı (Stage 2)
+   ↓ onay                    ↘ red → SYB son kontrolüne döner
+Yürürlükte (Stage 3)
+```
+
+Düzenleme ve fesih talepleri de aynı zincirden geçer; sözleşme onay sürecinde
+`PendingEdit` / `PendingTermination` bayrağıyla işaretlenir ve karar verilene
+kadar önceki durumunu `PreviousStatusBefore…` alanlarında saklar.
+
+## Belgeler
+
+- [Uygulama Mimarisi](SYS_Uygulama_Mimarisi.md) — katmanlar, desenler, iş kuralları
+- [Veritabanı Şeması](SYS_Veritabani_Semasi.md) — tablolar, alanlar, ilişkiler
 
 ## İsimlendirme Kuralları
+
 - Sınıf/metot adları: PascalCase
-- Private alanlar: _camelCase
-- Async metotlar: Async son eki (örn. GetContractAsync)
+- Private alanlar: `_camelCase`
+- Async metotlar: `Async` son eki (örn. `GetContractAsync`)
+- Enum değerleri veritabanına **int** olarak yazılır — yeni değer **mutlaka
+  listenin sonuna** eklenir, araya sokulursa mevcut kayıtların anlamı kayar.

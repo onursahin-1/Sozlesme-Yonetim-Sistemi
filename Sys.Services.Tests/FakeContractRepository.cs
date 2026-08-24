@@ -11,6 +11,9 @@ public class FakeContractRepository : IContractRepository
     public Task<List<Contract>> GetAllAsync() => Task.FromResult(new List<Contract>());
     public Task<List<Contract>> GetByCreatedUserAsync(int userId) => Task.FromResult(new List<Contract>());
     public Task<List<Contract>> GetByStageAsync(int stage) => Task.FromResult(new List<Contract>());
+
+    public Task<(List<Contract> Items, int TotalCount)> GetByStagePagedAsync(int stage, int page, int pageSize)
+        => Task.FromResult((new List<Contract>(), 0));
     public Task<Contract?> GetByIdWithDetailsAsync(int id) => Task.FromResult<Contract?>(null);
     public Task AddAsync(Contract contract) => Task.CompletedTask;
     public Task UpdateRequestAsync(Contract contract) => Task.CompletedTask;
@@ -48,7 +51,8 @@ public class FakeContractRepository : IContractRepository
     public Task AddAuditLogAsync(AuditLog log) => Task.CompletedTask;
     public Task<List<string>> GetAuditLogUserOptionsAsync() => Task.FromResult(new List<string>());
 
-    public Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate)
+    public Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(
+        int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate, string? action = null)
         => Task.FromResult((new List<AuditLog>(), 0));
 
     public Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)

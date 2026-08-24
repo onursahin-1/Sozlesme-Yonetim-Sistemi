@@ -3,7 +3,7 @@
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="1040" d:DesignHeight="700"
              x:Class="Sys.UI.Views.UserManagementView"
              x:DataType="vm:UserManagementViewModel">
 
@@ -11,43 +11,91 @@
 		<vm:UserManagementViewModel />
 	</Design.DataContext>
 
+	<UserControl.Styles>
+		<Style Selector="TextBox">
+			<Setter Property="Padding" Value="11,9"/>
+			<Setter Property="FontSize" Value="13"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="TextBox:focus">
+			<Setter Property="Background" Value="White"/>
+		</Style>
+		<Style Selector="ComboBox">
+			<Setter Property="Padding" Value="11,8"/>
+			<Setter Property="FontSize" Value="12.5"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="BorderBrush" Value="#DFE5EE"/>
+			<Setter Property="Background" Value="#FBFCFE"/>
+		</Style>
+		<Style Selector="TextBlock.formLabel">
+			<Setter Property="FontSize" Value="11.5"/>
+			<Setter Property="FontWeight" Value="SemiBold"/>
+			<Setter Property="Foreground" Value="#5B6472"/>
+			<Setter Property="Margin" Value="0,0,0,5"/>
+		</Style>
+		<Style Selector="TextBlock.filterLabel">
+			<Setter Property="FontSize" Value="10"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="LetterSpacing" Value="0.5"/>
+			<Setter Property="Margin" Value="0,0,0,5"/>
+		</Style>
+	</UserControl.Styles>
+
 	<!-- Renkli butonlar Classes="flat" kullanır; stil tanımı App.axaml içindedir. -->
 	<ScrollViewer>
-		<StackPanel Margin="0,0,20,20" Spacing="12">
+		<StackPanel Margin="0,0,20,24" Spacing="14">
 
-			<TextBlock Text="Yükleniyor..." IsVisible="{Binding IsLoading}"/>
+			<TextBlock Text="Yükleniyor..." Foreground="#A3ABB8" FontSize="12.5"
+					   IsVisible="{Binding IsLoading}"/>
 
-			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
-					   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-			<TextBlock Text="{Binding SuccessMessage}" Foreground="Green" TextWrapping="Wrap"
-					   IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+			<Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+					Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+					CornerRadius="10" Padding="14,11">
+				<TextBlock Text="{Binding ErrorMessage}" Foreground="#9B3B25"
+						   FontSize="12.5" TextWrapping="Wrap"/>
+			</Border>
 
-			<StackPanel IsVisible="{Binding !IsLoading}" Spacing="12">
+			<Border IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+					Background="#E9F4EB" BorderBrush="#A9D6B0" BorderThickness="1"
+					CornerRadius="10" Padding="14,11">
+				<TextBlock Text="{Binding SuccessMessage}" Foreground="#1A6B2A"
+						   FontSize="12.5" TextWrapping="Wrap"/>
+			</Border>
 
+			<StackPanel IsVisible="{Binding !IsLoading}" Spacing="14">
+
+				<!-- ========== BEKLEYEN ŞİFRE TALEPLERİ ========== -->
 				<!-- Giriş ekranındaki "Şifremi unuttum" akışından gelen talepler -->
 				<Border IsVisible="{Binding HasResetRequests}"
-						Background="#FFF6E5" BorderBrush="#E8C87A" BorderThickness="1"
-						CornerRadius="8" Padding="14">
-					<StackPanel Spacing="8">
-						<TextBlock Text="{Binding ResetRequestHeader}" FontWeight="Bold" Foreground="Black"/>
+						Background="#FBF2E3" BorderBrush="#E8C989" BorderThickness="1"
+						CornerRadius="12" Padding="20,16">
+					<StackPanel Spacing="10">
+						<TextBlock Text="{Binding ResetRequestHeader}" FontSize="13"
+								   FontWeight="SemiBold" Foreground="#7A5C10"/>
 						<TextBlock Text="Şifreyi sıfırlamak için ilgili kullanıcının satırındaki &quot;Şifre Sıfırla&quot; butonunu kullanın; talep otomatik kapanır."
-								   FontSize="11" Foreground="#7A5C10" TextWrapping="Wrap"/>
+								   FontSize="11.5" Foreground="#8A6B1E" TextWrapping="Wrap"/>
 
 						<ItemsControl ItemsSource="{Binding ResetRequests}">
 							<ItemsControl.ItemTemplate>
 								<DataTemplate x:DataType="vm:ResetRequestRowViewModel">
-									<Border Background="White" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
-										<Grid ColumnDefinitions="*,Auto">
+									<Border Background="White" BorderBrush="#EBDCBC" BorderThickness="1"
+											CornerRadius="9" Padding="13,10" Margin="0,4,0,0">
+										<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 											<StackPanel Grid.Column="0" Spacing="2">
-												<TextBlock Text="{Binding DisplayText}" Foreground="Black" FontSize="12" TextWrapping="Wrap"/>
-												<TextBlock Text="{Binding TimeText}" Foreground="#999" FontSize="10"/>
+												<TextBlock Text="{Binding DisplayText}" Foreground="#1A2E4A"
+														   FontSize="12.5" TextWrapping="Wrap"/>
+												<TextBlock Text="{Binding TimeText}" Foreground="#A3ABB8" FontSize="10.5"/>
 											</StackPanel>
 											<Button Grid.Column="1" Classes="flat" VerticalAlignment="Center"
 													Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).DismissResetRequestCommand}"
 													CommandParameter="{Binding}"
 													ToolTip.Tip="Talebi karşılamadan kapat">
-												<Border Background="#6B7280" CornerRadius="4" Padding="10,4">
-													<TextBlock Text="Kapat" Foreground="White" FontSize="11"/>
+												<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+														CornerRadius="7" Padding="12,6">
+													<TextBlock Text="Kapat" Foreground="#5B6472" FontSize="11.5"/>
 												</Border>
 											</Button>
 										</Grid>
@@ -58,95 +106,276 @@
 					</StackPanel>
 				</Border>
 
-				<Button Classes="flat" HorizontalAlignment="Left"
-						Command="{Binding ToggleNewUserFormCommand}">
-					<Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
-						<TextBlock Text="+ Yeni Kullanıcı" Foreground="White"/>
-					</Border>
-				</Button>
+				<!-- ========== ARAMA, FİLTRE, YENİ KULLANICI ========== -->
+				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						CornerRadius="12" Padding="20,16">
+					<Grid ColumnDefinitions="*,180,150,Auto,Auto" ColumnSpacing="12">
 
-				<!-- Yeni kullanıcı formu -->
-				<Border IsVisible="{Binding ShowNewUserForm}" Background="#F5F5F5" CornerRadius="8" Padding="16">
-					<StackPanel Spacing="8" MaxWidth="420">
-						<TextBlock Text="Kullanıcı Adı *" FontWeight="Bold" Foreground="Black"/>
-						<TextBox Text="{Binding NewUsername}" Background="White" Foreground="Black"/>
+						<StackPanel Grid.Column="0">
+							<TextBlock Classes="filterLabel" Text="ARA"/>
+							<Border Background="#FBFCFE" BorderBrush="#DFE5EE" BorderThickness="1" CornerRadius="8">
+								<Grid ColumnDefinitions="Auto,*">
+									<Path Grid.Column="0" Stroke="#A3ABB8" StrokeThickness="2" Fill="Transparent"
+										  Width="13" Height="13" Stretch="Uniform" Margin="11,0,0,0"
+										  VerticalAlignment="Center"
+										  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
+									<TextBox Grid.Column="1" Text="{Binding SearchText}"
+											 PlaceholderText="Ad, kullanıcı adı veya departman..."
+											 Background="Transparent" BorderThickness="0" Padding="9,8" FontSize="12.5"/>
+								</Grid>
+							</Border>
+						</StackPanel>
 
-						<TextBlock Text="Ad Soyad *" FontWeight="Bold" Foreground="Black" Margin="0,8,0,0"/>
-						<TextBox Text="{Binding NewFullName}" Background="White" Foreground="Black"/>
+						<StackPanel Grid.Column="1">
+							<TextBlock Classes="filterLabel" Text="ROL"/>
+							<ComboBox HorizontalAlignment="Stretch"
+									  ItemsSource="{Binding RoleFilterOptions}" SelectedItem="{Binding SelectedRoleFilter}"/>
+						</StackPanel>
 
-						<TextBlock Text="Departman" FontWeight="Bold" Foreground="Black" Margin="0,8,0,0"/>
-						<TextBox Text="{Binding NewDepartment}" Background="White" Foreground="Black" PlaceholderText="Opsiyonel"/>
+						<StackPanel Grid.Column="2">
+							<TextBlock Classes="filterLabel" Text="DURUM"/>
+							<ComboBox HorizontalAlignment="Stretch"
+									  ItemsSource="{Binding StatusFilterOptions}" SelectedItem="{Binding SelectedStatusFilter}"/>
+						</StackPanel>
 
-						<TextBlock Text="Rol *" FontWeight="Bold" Foreground="Black" Margin="0,8,0,0"/>
-						<ComboBox ItemsSource="{Binding RoleOptions}" SelectedItem="{Binding NewRole}"
-								  Background="White" Foreground="Black" HorizontalAlignment="Stretch"/>
-
-						<TextBlock Text="Geçici Şifre *" FontWeight="Bold" Foreground="Black" Margin="0,8,0,0"/>
-						<TextBox Text="{Binding NewPassword}" Background="White" Foreground="Black" PasswordChar="•" PlaceholderText="En az 6 karakter"/>
-
-						<Button Classes="flat" Margin="0,12,0,0" HorizontalAlignment="Left"
-								IsEnabled="{Binding !IsBusy}"
-								Command="{Binding CreateUserCommand}">
-							<Border Background="#2D6EA8" CornerRadius="4" Padding="16,8">
-								<TextBlock Text="Kullanıcı Oluştur" Foreground="White"/>
+						<Button Grid.Column="3" Classes="flat" VerticalAlignment="Bottom"
+								IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}">
+							<Border Background="#EEF1F6" BorderBrush="#DFE5EE" BorderThickness="1"
+									CornerRadius="8" Padding="14,10">
+								<TextBlock Text="Temizle" Foreground="#5B6472" FontSize="12.5"/>
 							</Border>
 						</Button>
+
+						<Button Grid.Column="4" Classes="flat" VerticalAlignment="Bottom"
+								Command="{Binding ToggleNewUserFormCommand}">
+							<Border Background="#2D6EA8" CornerRadius="8" Padding="16,10">
+								<StackPanel Orientation="Horizontal" Spacing="8">
+									<Path Stroke="White" StrokeThickness="2" StrokeLineCap="Round" Fill="Transparent"
+										  Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center"
+										  Data="M12 5v14M5 12h14"/>
+									<TextBlock Text="Yeni Kullanıcı" Foreground="White" FontSize="12.5"
+											   FontWeight="SemiBold" VerticalAlignment="Center"/>
+								</StackPanel>
+							</Border>
+						</Button>
+					</Grid>
+				</Border>
+
+				<!-- ========== YENİ KULLANICI FORMU ========== -->
+				<Border IsVisible="{Binding ShowNewUserForm}"
+						Background="White" BorderBrush="#C4DCF2" BorderThickness="1"
+						CornerRadius="12" Padding="24,20">
+					<StackPanel Spacing="16">
+
+						<StackPanel Spacing="1">
+							<TextBlock Classes="display" Text="Yeni Kullanıcı" FontSize="15.5"
+									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+							<TextBlock Text="Yıldızlı (*) alanlar zorunludur. Kullanıcı ilk girişinde şifresini değiştirmelidir."
+									   FontSize="11" Foreground="#A3ABB8"/>
+						</StackPanel>
+						<Border Background="#EDF1F6" Height="1"/>
+
+						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+							<StackPanel Grid.Column="0">
+								<TextBlock Classes="formLabel">
+									<Run Text="KULLANICI ADI"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<TextBox Text="{Binding NewUsername}"/>
+							</StackPanel>
+							<StackPanel Grid.Column="1">
+								<TextBlock Classes="formLabel">
+									<Run Text="AD SOYAD"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<TextBox Text="{Binding NewFullName}"/>
+							</StackPanel>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+							<StackPanel Grid.Column="0">
+								<TextBlock Classes="formLabel" Text="DEPARTMAN"/>
+								<TextBox Text="{Binding NewDepartment}" PlaceholderText="Opsiyonel"/>
+							</StackPanel>
+							<StackPanel Grid.Column="1">
+								<TextBlock Classes="formLabel">
+									<Run Text="ROL"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<!--
+								  Enum doğrudan bağlanınca "SYB", "Mudur" gibi ham adlar
+								  görünüyordu; artık etiketli seçenekler bağlanıyor.
+								-->
+								<ComboBox HorizontalAlignment="Stretch"
+										  ItemsSource="{Binding RoleOptions}" SelectedItem="{Binding NewRoleOption}">
+									<ComboBox.ItemTemplate>
+										<DataTemplate x:DataType="vm:RoleOption">
+											<TextBlock Text="{Binding Label}"/>
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+							</StackPanel>
+						</Grid>
+
+						<StackPanel MaxWidth="360" HorizontalAlignment="Left">
+							<Grid ColumnDefinitions="*,Auto" Margin="0,0,0,5">
+								<TextBlock Grid.Column="0" Classes="formLabel" Margin="0">
+									<Run Text="GEÇİCİ ŞİFRE"/>
+									<Run Text=" *" Foreground="#D14343"/>
+								</TextBlock>
+								<!-- Şifre yazarken Caps Lock uyarısı; diğer şifre ekranlarıyla aynı -->
+								<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5"
+											VerticalAlignment="Center" IsVisible="{Binding ShowNewUserCapsWarning}">
+									<Path Fill="#A32D2D" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
+									<TextBlock Text="Caps Lock açık" FontSize="11" Foreground="#A32D2D" VerticalAlignment="Center"/>
+								</StackPanel>
+							</Grid>
+							<TextBox Text="{Binding NewPassword}" PasswordChar="•" PlaceholderText="En az 6 karakter"
+									 KeyUp="OnNewUserPasswordKeyUp" GotFocus="OnNewUserPasswordFocus"
+									 LostFocus="OnNewUserPasswordLostFocus"/>
+						</StackPanel>
+
+						<StackPanel Orientation="Horizontal" Spacing="10">
+							<Button Classes="flat" IsEnabled="{Binding !IsBusy}" Command="{Binding CreateUserCommand}">
+								<Border Background="#2D6EA8" CornerRadius="8" Padding="18,10">
+									<TextBlock Text="Kullanıcı Oluştur" Foreground="White" FontSize="13" FontWeight="SemiBold"/>
+								</Border>
+							</Button>
+							<Button Classes="flat" Command="{Binding ToggleNewUserFormCommand}">
+								<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+										CornerRadius="8" Padding="18,9">
+									<TextBlock Text="Vazgeç" Foreground="#5B6472" FontSize="13"/>
+								</Border>
+							</Button>
+						</StackPanel>
 					</StackPanel>
 				</Border>
 
-				<!-- Kullanıcı listesi -->
+				<!-- ========== KULLANICI LİSTESİ ========== -->
+				<TextBlock Text="{Binding CountText}" Classes="sectionLabel" Margin="2,4,0,0"/>
+
+				<StackPanel Spacing="10" Margin="0,20,0,0" IsVisible="{Binding IsEmpty}">
+					<TextBlock Text="Bu filtrelerle eşleşen kullanıcı bulunamadı." Foreground="#8A94A6"
+							   FontSize="13" HorizontalAlignment="Center"/>
+					<Button Classes="flat" HorizontalAlignment="Center"
+							IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}">
+						<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+								CornerRadius="8" Padding="14,7">
+							<TextBlock Text="Filtreleri temizle" Foreground="#3D4654" FontSize="12"/>
+						</Border>
+					</Button>
+				</StackPanel>
+
 				<ItemsControl ItemsSource="{Binding Users}">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate x:DataType="vm:UserRowViewModel">
-							<Border Background="White" BorderBrush="#D0D8E4" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,8">
-								<StackPanel Spacing="6">
-									<Grid ColumnDefinitions="*,Auto">
-										<StackPanel Grid.Column="0">
-											<TextBlock FontWeight="Bold" FontSize="14" Foreground="Black">
-												<Run Text="{Binding FullName}"/>
-												<Run Text=" ("/>
+							<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+									CornerRadius="11" Padding="18,14" Margin="0,0,0,8">
+								<StackPanel Spacing="12">
+
+									<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="14">
+
+										<!-- Baş harf rozeti -->
+										<Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
+												Background="#EEF1F6" VerticalAlignment="Center">
+											<TextBlock Text="{Binding Initials}" FontSize="13.5" FontWeight="Bold"
+													   Foreground="#5B6472"
+													   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Border>
+
+										<StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+											<StackPanel Orientation="Horizontal" Spacing="8">
+												<TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="13.5"
+														   Foreground="#1A2E4A"/>
+												<!-- Kendi hesabın: hangi satırın sana ait olduğu belli olsun -->
+												<Border IsVisible="{Binding IsSelf}" Background="#E7EEF7"
+														CornerRadius="8" Padding="7,1" VerticalAlignment="Center">
+													<TextBlock Text="siz" Foreground="#2D6EA8" FontSize="10" FontWeight="Bold"/>
+												</Border>
+											</StackPanel>
+											<TextBlock FontSize="11.5" Foreground="#8A94A6">
 												<Run Text="{Binding Username}"/>
-												<Run Text=")"/>
-											</TextBlock>
-											<TextBlock FontSize="11" Foreground="#888">
+												<Run Text="  ·  "/>
 												<Run Text="{Binding RoleLabel}"/>
-												<Run Text=" · "/>
-												<Run Text="{Binding Department}"/>
+												<Run Text="  ·  "/>
+												<Run Text="{Binding DepartmentText}"/>
 											</TextBlock>
 										</StackPanel>
-										<Border Grid.Column="1" Background="{Binding StatusBgHex}" CornerRadius="10" Padding="8,3">
-											<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}" FontSize="11" FontWeight="Bold"/>
+
+										<Border Grid.Column="2" Background="{Binding StatusBgHex}" CornerRadius="10"
+												Padding="11,4" VerticalAlignment="Center">
+											<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}"
+													   FontSize="10.5" FontWeight="Bold"/>
 										</Border>
+
+										<StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8"
+													VerticalAlignment="Center">
+											<Button Classes="flat"
+													Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ToggleResetPasswordCommand}"
+													CommandParameter="{Binding}">
+												<Border Background="#EEF1F6" BorderBrush="#DFE5EE" BorderThickness="1"
+														CornerRadius="7" Padding="12,6">
+													<TextBlock Text="Şifre Sıfırla" Foreground="#3D4654" FontSize="11.5"/>
+												</Border>
+											</Button>
+
+											<!--
+											  Yönetici kendi hesabını devre dışı bırakamaz; servis de
+											  engelliyor. Buton gösterilip hata vermek yerine gizleniyor.
+											-->
+											<Button Classes="flat" IsVisible="{Binding CanToggleDisabled}"
+													Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ToggleDisabledCommand}"
+													CommandParameter="{Binding}">
+												<Border Background="{Binding ToggleButtonBgHex}" BorderThickness="1"
+														BorderBrush="{Binding ToggleButtonBorderHex}"
+														CornerRadius="7" Padding="12,6">
+													<TextBlock Text="{Binding ToggleButtonLabel}"
+															   Foreground="{Binding ToggleButtonFgHex}" FontSize="11.5"/>
+												</Border>
+											</Button>
+										</StackPanel>
 									</Grid>
 
-									<StackPanel Orientation="Horizontal" Spacing="8">
-										<Button Classes="flat"
-												Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ToggleResetPasswordCommand}"
-												CommandParameter="{Binding}">
-											<Border Background="#4B5563" CornerRadius="4" Padding="10,4">
-												<TextBlock Text="Şifre Sıfırla" Foreground="White" FontSize="11"/>
-											</Border>
-										</Button>
-										<Button Classes="flat"
-												Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ToggleDisabledCommand}"
-												CommandParameter="{Binding}">
-											<Border Background="{Binding ToggleButtonBgHex}" CornerRadius="4" Padding="10,4">
-												<TextBlock Text="{Binding ToggleButtonLabel}" Foreground="White" FontSize="11"/>
-											</Border>
-										</Button>
-									</StackPanel>
-
-									<StackPanel IsVisible="{Binding IsResettingPassword}" Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-										<TextBox Width="220" Text="{Binding NewPasswordText}" Background="White" Foreground="Black"
-												 PasswordChar="•" PlaceholderText="Yeni şifre (en az 6 karakter)"/>
-										<Button Classes="flat" VerticalAlignment="Center"
-												Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ConfirmResetPasswordCommand}"
-												CommandParameter="{Binding}">
-											<Border Background="#2D6EA8" CornerRadius="4" Padding="14,6">
-												<TextBlock Text="Kaydet" Foreground="White"/>
-											</Border>
-										</Button>
-									</StackPanel>
+									<!-- Satır içi şifre sıfırlama -->
+									<Border IsVisible="{Binding IsResettingPassword}"
+											Background="#F7F9FC" BorderBrush="#DFE5EE" BorderThickness="1"
+											CornerRadius="9" Padding="14,12">
+										<StackPanel Spacing="8">
+											<StackPanel Orientation="Horizontal" Spacing="12">
+												<TextBlock Text="Yeni şifre belirle" FontSize="11.5" FontWeight="SemiBold"
+														   Foreground="#5B6472" VerticalAlignment="Center"/>
+												<!--
+												  Uyarı satırın kendi durumundan besleniyor: kutu DataTemplate
+												  içinde tekrar ettiği için x:Name ile tek bir öğeye erişilemiyor.
+												-->
+												<StackPanel Orientation="Horizontal" Spacing="5"
+															VerticalAlignment="Center" IsVisible="{Binding ShowCapsWarning}">
+													<Path Fill="#A32D2D" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
+													<TextBlock Text="Caps Lock açık" FontSize="11" Foreground="#A32D2D" VerticalAlignment="Center"/>
+												</StackPanel>
+											</StackPanel>
+											<StackPanel Orientation="Horizontal" Spacing="10">
+												<TextBox Width="260" Text="{Binding NewPasswordText}"
+														 PasswordChar="•" PlaceholderText="En az 6 karakter"
+														 KeyUp="OnResetPasswordKeyUp" GotFocus="OnResetPasswordFocus"
+														 LostFocus="OnResetPasswordLostFocus"/>
+												<Button Classes="flat" VerticalAlignment="Center"
+														Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ConfirmResetPasswordCommand}"
+														CommandParameter="{Binding}">
+													<Border Background="#2D6EA8" CornerRadius="8" Padding="16,9">
+														<TextBlock Text="Kaydet" Foreground="White" FontSize="12.5"
+																   FontWeight="SemiBold"/>
+													</Border>
+												</Button>
+												<Button Classes="flat" VerticalAlignment="Center"
+														Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ToggleResetPasswordCommand}"
+														CommandParameter="{Binding}">
+													<TextBlock Text="Vazgeç" Foreground="#8A94A6" FontSize="11.5"
+															   VerticalAlignment="Center"/>
+												</Button>
+											</StackPanel>
+										</StackPanel>
+									</Border>
 								</StackPanel>
 							</Border>
 						</DataTemplate>

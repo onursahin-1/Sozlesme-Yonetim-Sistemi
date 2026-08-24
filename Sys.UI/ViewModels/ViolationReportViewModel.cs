@@ -234,6 +234,10 @@ public partial class ViolationReportViewModel : ViewModelBase
         {
             if (!ValidateForm()) return;
 
+            // ValidateForm bunların dolu olduğunu garanti ediyor; derleyici bunu
+            // göremediği için açıkça kontrol ediliyor.
+            if (SelectedContract is null || ViolationDate is null) return;
+
             try
             {
                 var contractId = SelectedContract.Id;

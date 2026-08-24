@@ -242,6 +242,30 @@ public class ContractRepository : IContractRepository
         return await db.Contracts.AsNoTracking().Where(c => c.Stage == stage).ToListAsync();
     }
 
+    // Onay kuyruğu, diğer listelerin aksine tüm kayıtları tek seferde çekiyordu.
+    // En eski bekleyen üstte: onay kuyruğunda sıra beklemede kalma süresine göre
+    // olmalı, aksi halde eski talepler listenin dibinde unutulur.
+    public async Task<(List<Contract> Items, int TotalCount)> GetByStagePagedAsync(int stage, int page, int pageSize)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var query = db.Contracts.AsNoTracking().Where(c => c.Stage == stage);
+
+        var totalCount = await query.CountAsync();
+
+        var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        var items = await query
+            .OrderBy(c => c.CreatedAt)
+            .ThenBy(c => c.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
     public async Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -566,13 +590,20 @@ public class ContractRepository : IContractRepository
             .ToListAsync();
     }
 
-    public async Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate)
+    public async Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(
+        int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate, string? action = null)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
         var query = db.AuditLogs.AsNoTracking().Include(a => a.ActingUser).AsQueryable();
 
         if (!string.IsNullOrEmpty(userText))
             query = query.Where(a => (a.ActingUser != null ? a.ActingUser.FullName : ("Kullanıcı #" + a.ActingUserId)) == userText);
+
+        // İşlem türü filtresi: denetimde "tüm şifre sıfırlamaları" ya da "tüm ek
+        // silmeleri" gibi sorular en sık sorulanlar; kullanıcı ve tarih tek başına
+        // yetmiyordu.
+        if (!string.IsNullOrEmpty(action))
+            query = query.Where(a => a.Action == action);
 
         if (startDate.HasValue)
             query = query.Where(a => a.ActionDate.Date >= startDate.Value.Date);

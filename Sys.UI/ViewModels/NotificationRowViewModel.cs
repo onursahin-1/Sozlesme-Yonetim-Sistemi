@@ -26,11 +26,15 @@ public partial class NotificationRowViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RowBackgroundHex))]
     [NotifyPropertyChangedFor(nameof(TitleWeight))]
+    [NotifyPropertyChangedFor(nameof(UnreadStripHex))]
     public partial bool IsRead { get; set; }
 
-    // Okunmamış bildirimler hafif mavi zeminle ve kalın başlıkla öne çıkar.
-    public string RowBackgroundHex => IsRead ? "#FFFFFF" : "#EAF2FB";
+    // Okunmamış bildirimler hafif mavi zeminle, kalın başlıkla ve sol kenardaki
+    // mavi şeritle öne çıkar. Okunmuşlarda şerit şeffaf kalıp yer kaplamaya devam
+    // eder; böylece satırlar birbirine göre kaymaz.
+    public string RowBackgroundHex => IsRead ? "#FFFFFF" : "#F2F7FC";
     public string TitleWeight => IsRead ? "Normal" : "Bold";
+    public string UnreadStripHex => IsRead ? "#00FFFFFF" : "#2D6EA8";
 
     public string TimeText
     {
@@ -45,13 +49,19 @@ public partial class NotificationRowViewModel : ObservableObject
         }
     }
 
-    public string TypeIcon => _notification.Type switch
+    // Emoji yerine renkli nokta. Emoji her Windows sürümünde farklı çiziliyor,
+    // hizası kayıyor ve boyutu satır yüksekliğini bozuyordu — uygulamanın geri
+    // kalanında da emojileri vektör/renk göstergelere çevirmiştik.
+    //
+    // "Talep sonucu" nötr renkte: bildirim hem onayı hem reddi taşıyabiliyor,
+    // yeşil bir nokta reddedilen talepte yanıltıcı olurdu. Sonucu başlık söylüyor.
+    public string TypeColorHex => _notification.Type switch
     {
-        NotificationType.YaklasanBitis => "⏳",
-        NotificationType.OnayBekliyor => "📝",
-        NotificationType.TalepSonucu => "✅",
-        NotificationType.SozlesmeOlayi => "📄",
-        NotificationType.SifreSifirlamaTalebi => "🔑",
-        _ => "•"
+        NotificationType.YaklasanBitis => "#B06A00",
+        NotificationType.OnayBekliyor => "#2D6EA8",
+        NotificationType.TalepSonucu => "#5B6472",
+        NotificationType.SozlesmeOlayi => "#93A4BC",
+        NotificationType.SifreSifirlamaTalebi => "#A32D2D",
+        _ => "#93A4BC"
     };
 }

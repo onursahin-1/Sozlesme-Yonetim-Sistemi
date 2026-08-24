@@ -192,31 +192,46 @@
 	<!-- Bildirim paneli: zilin altında, sağ üstte açılır -->
 	<Border IsVisible="{Binding IsNotificationPanelOpen}"
             HorizontalAlignment="Right" VerticalAlignment="Top"
-            Margin="0,68,24,0" Width="380" MaxHeight="460"
-            Background="White" BorderBrush="#B9C6D8" BorderThickness="1" CornerRadius="8"
-            BoxShadow="0 6 20 0 #33000000">
+            Margin="0,68,24,0" Width="400" MaxHeight="480"
+            Background="White" BorderBrush="#DFE5EE" BorderThickness="1" CornerRadius="12"
+            BoxShadow="0 10 30 0 #26000000" ClipToBounds="True">
 		<DockPanel>
-			<Border DockPanel.Dock="Top" Background="#F2F5F9" CornerRadius="8,8,0,0" Padding="14,10"
-                    BorderBrush="#E1E7EF" BorderThickness="0,0,0,1">
-				<Grid ColumnDefinitions="*,Auto,Auto">
-					<TextBlock Grid.Column="0" Text="Bildirimler" FontWeight="Bold" Foreground="Black" VerticalAlignment="Center"/>
-					<Button Grid.Column="1" Classes="flat" Margin="0,0,10,0"
-                            IsVisible="{Binding HasUnreadNotifications}"
-                            Command="{Binding MarkAllNotificationsReadCommand}">
-						<TextBlock Text="Tümünü okundu işaretle" FontSize="11" Foreground="#2D6EA8"/>
-					</Button>
-					<Button Grid.Column="2" Classes="flat"
-                            IsVisible="{Binding HasReadNotifications}"
-                            Command="{Binding DeleteReadNotificationsCommand}"
-                            ToolTip.Tip="Okunmuş bildirimlerin hepsini siler">
-						<TextBlock Text="Okunanları sil" FontSize="11" Foreground="#A32D2D"/>
-					</Button>
-				</Grid>
+			<Border DockPanel.Dock="Top" Background="#F7F9FC" Padding="18,13"
+                    BorderBrush="#E7ECF3" BorderThickness="0,0,0,1">
+				<StackPanel Spacing="9">
+					<TextBlock Text="{Binding NotificationPanelTitle}" FontSize="13.5" FontWeight="SemiBold"
+							   Foreground="#1A2E4A"/>
+
+					<!-- Toplu eylemler başlığın altında: üstte yan yana sıkışıyorlardı -->
+					<StackPanel Orientation="Horizontal" Spacing="8"
+								IsVisible="{Binding !HasNoNotifications}">
+						<Button Classes="flat" IsVisible="{Binding HasUnreadNotifications}"
+								Command="{Binding MarkAllNotificationsReadCommand}">
+							<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+									CornerRadius="7" Padding="10,5">
+								<TextBlock Text="Tümünü okundu işaretle" FontSize="11" Foreground="#2D6EA8"/>
+							</Border>
+						</Button>
+						<Button Classes="flat" IsVisible="{Binding HasReadNotifications}"
+								Command="{Binding DeleteReadNotificationsCommand}"
+								ToolTip.Tip="Okunmuş bildirimlerin hepsini siler">
+							<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+									CornerRadius="7" Padding="10,5">
+								<TextBlock Text="Okunanları sil" FontSize="11" Foreground="#A32D2D"/>
+							</Border>
+						</Button>
+					</StackPanel>
+				</StackPanel>
 			</Border>
 
-			<TextBlock DockPanel.Dock="Top" Text="Henüz bildiriminiz yok." Foreground="Gray"
-                       Margin="14,20" HorizontalAlignment="Center"
-                       IsVisible="{Binding HasNoNotifications}"/>
+			<StackPanel DockPanel.Dock="Top" Spacing="6" Margin="18,28"
+						IsVisible="{Binding HasNoNotifications}">
+				<TextBlock Text="Henüz bildiriminiz yok." Foreground="#8A94A6" FontSize="12.5"
+						   HorizontalAlignment="Center"/>
+				<TextBlock Text="Onay, red ve yaklaşan bitiş uyarıları burada görünür."
+						   Foreground="#A3ABB8" FontSize="11" HorizontalAlignment="Center"
+						   TextAlignment="Center" TextWrapping="Wrap"/>
+			</StackPanel>
 
 			<ScrollViewer>
 				<ItemsControl ItemsSource="{Binding Notifications}">
@@ -225,28 +240,42 @@
 							<Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                                     Command="{Binding $parent[UserControl].((vm:ShellViewModel)DataContext).OpenNotificationCommand}"
                                     CommandParameter="{Binding}">
-								<Border Background="{Binding RowBackgroundHex}" Padding="14,10"
-                                        BorderBrush="#EDF1F6" BorderThickness="0,0,0,1">
-									<Grid ColumnDefinitions="Auto,*,Auto">
-										<TextBlock Grid.Column="0" Text="{Binding TypeIcon}" FontSize="15"
-                                                   Margin="0,0,10,0" VerticalAlignment="Top"/>
-										<StackPanel Grid.Column="1" Spacing="2">
-											<TextBlock Text="{Binding Title}" Foreground="Black" FontSize="12"
-                                                       FontWeight="{Binding TitleWeight}"/>
-											<TextBlock Text="{Binding Message}" Foreground="#444" FontSize="11" TextWrapping="Wrap"/>
-											<TextBlock Text="{Binding TimeText}" Foreground="#999" FontSize="10"/>
+								<Border Background="{Binding RowBackgroundHex}" Padding="0,11"
+                                        BorderBrush="#F1F4F8" BorderThickness="0,0,0,1">
+									<Grid ColumnDefinitions="3,Auto,*,Auto" ColumnSpacing="10" Margin="0,0,14,0">
+
+										<!-- Okunmamışı belli eden sol şerit; okunmuşta şeffaf ama yer kaplıyor -->
+										<Border Grid.Column="0" Width="3" Background="{Binding UnreadStripHex}"
+												VerticalAlignment="Stretch"/>
+
+										<!--
+										  Tür göstergesi renkli nokta. Emoji her Windows sürümünde
+										  farklı çiziliyor ve satır yüksekliğini bozuyordu.
+										-->
+										<Border Grid.Column="1" Width="8" Height="8" CornerRadius="4"
+												Background="{Binding TypeColorHex}"
+												VerticalAlignment="Top" Margin="8,6,0,0"/>
+
+										<StackPanel Grid.Column="2" Spacing="3">
+											<TextBlock Text="{Binding Title}" Foreground="#1A2E4A" FontSize="12.5"
+                                                       FontWeight="{Binding TitleWeight}" TextWrapping="Wrap"/>
+											<TextBlock Text="{Binding Message}" Foreground="#5B6472" FontSize="11.5"
+													   TextWrapping="Wrap"/>
+											<TextBlock Text="{Binding TimeText}" Foreground="#A3ABB8" FontSize="10.5"/>
 										</StackPanel>
 
 										<!-- Silme yalnızca okunmuş bildirimlerde görünür.
 										     İç içe buton: tıklama dış satır butonuna geçmez. -->
-										<Button Grid.Column="2" Classes="flat" VerticalAlignment="Top" Margin="8,0,0,0"
+										<Button Grid.Column="3" Classes="flat" VerticalAlignment="Top" Margin="8,0,0,0"
                                                 IsVisible="{Binding IsRead}"
                                                 Command="{Binding $parent[UserControl].((vm:ShellViewModel)DataContext).DeleteNotificationCommand}"
                                                 CommandParameter="{Binding}"
                                                 ToolTip.Tip="Bu bildirimi sil">
-											<Border Background="Transparent" Width="20" Height="20" CornerRadius="10">
-												<TextBlock Text="✕" FontSize="11" Foreground="#8A94A6"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+											<Border Background="Transparent" Width="22" Height="22" CornerRadius="11">
+												<Path Stroke="#A3ABB8" StrokeThickness="1.6" StrokeLineCap="Round"
+													  Fill="Transparent" Width="9" Height="9" Stretch="Uniform"
+													  HorizontalAlignment="Center" VerticalAlignment="Center"
+													  Data="M6 6L18 18M18 6L6 18"/>
 											</Border>
 										</Button>
 									</Grid>

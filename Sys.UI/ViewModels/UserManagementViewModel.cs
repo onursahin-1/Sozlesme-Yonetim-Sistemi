@@ -24,27 +24,54 @@ public partial class UserRowViewModel : ObservableObject
     public string FullName => _user.FullName;
     public string? Department => _user.Department;
 
-    public string RoleLabel => _user.Role switch
+    public UserRole Role => _user.Role;
+    public string RoleLabel => UserRoleHelper.ToLabel(_user.Role);
+
+    // Kullanıcı adının baş harfleri; satırın solundaki yuvarlak rozet.
+    public string Initials
     {
-        UserRole.Personel => "Personel",
-        UserRole.SYB => "SYB Uzmanı",
-        UserRole.Mudur => "Yönetim / Mali İşler",
-        UserRole.Admin => "Sistem Yöneticisi",
-        _ => _user.Role.ToString()
-    };
+        get
+        {
+            var name = FullName.Trim();
+            if (name.Length == 0) return "?";
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0][..1].ToUpperInvariant();
+            return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+        }
+    }
+
+    public string DepartmentText => string.IsNullOrWhiteSpace(Department) ? "Departman belirtilmemiş" : Department!;
+
+    // Yönetici kendi hesabını devre dışı bırakamaz (servis de engelliyor). Buton
+    // gösterilip tıklandığında hata vermek yerine baştan gizleniyor.
+    public bool IsSelf { get; set; }
+    public bool CanToggleDisabled => !IsSelf;
 
     public bool IsDisabled => _user.IsDisabled;
     public string StatusLabel => IsDisabled ? "Devre Dışı" : "Aktif";
     public string StatusColorHex => IsDisabled ? "#A32D2D" : "#1A6B2A";
     public string StatusBgHex => IsDisabled ? "#FDECEA" : "#E6F4E7";
     public string ToggleButtonLabel => IsDisabled ? "Etkinleştir" : "Devre Dışı Bırak";
-    public string ToggleButtonBgHex => IsDisabled ? "#1A6B2A" : "#A32D2D";
+
+    // Dolu renkli buton yerine çerçeveli/soluk zemin: bu iki eylem listede her satırda
+    // tekrar ettiği için dolu kırmızı/yeşil butonlar ekranı gereksiz yere gürültülü
+    // yapıyordu. Renk yine anlamı taşıyor ama arka planda kalıyor.
+    public string ToggleButtonBgHex => IsDisabled ? "#E9F4EB" : "#FBEBE9";
+    public string ToggleButtonBorderHex => IsDisabled ? "#A9D6B0" : "#EFC9C4";
+    public string ToggleButtonFgHex => IsDisabled ? "#1A6B2A" : "#A32D2D";
 
     [ObservableProperty]
     public partial bool IsResettingPassword { get; set; }
 
     [ObservableProperty]
     public partial string NewPasswordText { get; set; } = string.Empty;
+
+    // Şifre kutusu bir DataTemplate içinde olduğu için her satırda tekrar ediyor;
+    // x:Name ile tek bir uyarı öğesine erişilemiyor. Uyarı bu yüzden satırın kendi
+    // durumundan besleniyor.
+    [ObservableProperty]
+    public partial bool ShowCapsWarning { get; set; }
 
     // Devre dışı bırakma/etkinleştirme sonrası güncel kullanıcıyı alıp bağımlı
     // (hesaplanmış) alanların yeniden çizilmesini tetikler.
@@ -57,6 +84,8 @@ public partial class UserRowViewModel : ObservableObject
         OnPropertyChanged(nameof(StatusBgHex));
         OnPropertyChanged(nameof(ToggleButtonLabel));
         OnPropertyChanged(nameof(ToggleButtonBgHex));
+        OnPropertyChanged(nameof(ToggleButtonBorderHex));
+        OnPropertyChanged(nameof(ToggleButtonFgHex));
     }
 }
 
@@ -86,17 +115,100 @@ public class ResetRequestRowViewModel
     public bool IsUnknownUser => MatchedFullName is null;
 }
 
+// Açılır listede etiket görünsün diye rol değeri sarmalanıyor; enum'u doğrudan
+// bağlamak "SYB", "Mudur" gibi ham adları gösteriyordu.
+//
+// Sınıf içinde iç içe tip olarak değil ad alanı seviyesinde duruyor: XAML'de iç içe
+// tiplere başvurmak ("Sınıf+Tip") derleyiciye göre değişken davranıyor.
+public sealed record RoleOption(UserRole Value, string Label);
+
 public partial class UserManagementViewModel : ViewModelBase
 {
     private readonly UserManagementService _userManagementService;
     private readonly User _currentUser;
 
-    public UserRole[] RoleOptions { get; } = Enum.GetValues<UserRole>();
+    public RoleOption[] RoleOptions { get; } =
+        Enum.GetValues<UserRole>().Select(r => new RoleOption(r, UserRoleHelper.ToLabel(r))).ToArray();
+
+    // Filtre listesi: rollere ek olarak "Tüm roller".
+    public string[] RoleFilterOptions { get; } =
+        new[] { TumRoller }.Concat(Enum.GetValues<UserRole>().Select(UserRoleHelper.ToLabel)).ToArray();
+
+    private const string TumRoller = "Tüm roller";
+    private const string TumDurumlar = "Tümü";
+
+    public string[] StatusFilterOptions { get; } = { TumDurumlar, "Aktif", "Devre Dışı" };
+
+    // Kaynak liste; ekranda gösterilen Users bunun filtrelenmiş hâli.
+    private List<UserRowViewModel> _allUsers = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
+    [NotifyPropertyChangedFor(nameof(CountText))]
     public partial ObservableCollection<UserRowViewModel> Users { get; set; } = new();
 
+    // Kullanıcı sayısı arttıkça listede birini bulmak zorlaşıyordu; arama ve iki
+    // filtre eklendi. Liste tamamı bellekte olduğu için süzme yerel yapılıyor.
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SelectedRoleFilter { get; set; } = TumRoller;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SelectedStatusFilter { get; set; } = TumDurumlar;
+
+    partial void OnSearchTextChanged(string value) => ApplyFilters();
+    partial void OnSelectedRoleFilterChanged(string value) => ApplyFilters();
+    partial void OnSelectedStatusFilterChanged(string value) => ApplyFilters();
+
+    public bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(SearchText)
+        || SelectedRoleFilter != TumRoller
+        || SelectedStatusFilter != TumDurumlar;
+
+    public bool IsEmpty => !IsLoading && Users.Count == 0;
+
+    public string CountText => _allUsers.Count == Users.Count
+        ? $"{Users.Count} kullanıcı"
+        : $"{Users.Count} / {_allUsers.Count} kullanıcı";
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        SearchText = string.Empty;
+        SelectedRoleFilter = TumRoller;
+        SelectedStatusFilter = TumDurumlar;
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<UserRowViewModel> query = _allUsers;
+
+        var term = SearchText?.Trim();
+        if (!string.IsNullOrWhiteSpace(term))
+            query = query.Where(u =>
+                u.FullName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || u.Username.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || (u.Department ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase));
+
+        if (SelectedRoleFilter != TumRoller)
+            query = query.Where(u => u.RoleLabel == SelectedRoleFilter);
+
+        if (SelectedStatusFilter == "Aktif")
+            query = query.Where(u => !u.IsDisabled);
+        else if (SelectedStatusFilter == "Devre Dışı")
+            query = query.Where(u => u.IsDisabled);
+
+        Users = new ObservableCollection<UserRowViewModel>(query);
+        OnPropertyChanged(nameof(CountText));
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial bool IsLoading { get; set; } = true;
 
     // Giriş ekranından gelen, henüz karşılanmamış şifre sıfırlama talepleri.
@@ -127,10 +239,14 @@ public partial class UserManagementViewModel : ViewModelBase
     public partial string NewDepartment { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial UserRole NewRole { get; set; } = UserRole.Personel;
+    public partial RoleOption? NewRoleOption { get; set; }
 
     [ObservableProperty]
     public partial string NewPassword { get; set; } = string.Empty;
+
+    // Yeni kullanıcı formundaki geçici şifre alanı için Caps Lock uyarısı.
+    [ObservableProperty]
+    public partial bool ShowNewUserCapsWarning { get; set; }
 
     // Aynı anda birden fazla işlemin (oluşturma/sıfırlama/devre dışı bırakma) tetiklenmesini
     // engeller — diğer ekranlardaki IsBusy koruma desenizle aynı.
@@ -143,6 +259,7 @@ public partial class UserManagementViewModel : ViewModelBase
     {
         _userManagementService = userManagementService;
         _currentUser = currentUser;
+        NewRoleOption = RoleOptions.FirstOrDefault(r => r.Value == UserRole.Personel);
         _ = LoadAsync();
     }
 
@@ -153,7 +270,10 @@ public partial class UserManagementViewModel : ViewModelBase
         try
         {
             var users = await _userManagementService.GetAllUsersAsync(_currentUser);
-            Users = new ObservableCollection<UserRowViewModel>(users.Select(u => new UserRowViewModel(u)));
+            _allUsers = users
+                .Select(u => new UserRowViewModel(u) { IsSelf = u.Id == _currentUser.Id })
+                .ToList();
+            ApplyFilters();
 
             await LoadResetRequestsAsync(users);
         }
@@ -222,7 +342,7 @@ public partial class UserManagementViewModel : ViewModelBase
         NewUsername = string.Empty;
         NewFullName = string.Empty;
         NewDepartment = string.Empty;
-        NewRole = UserRole.Personel;
+        NewRoleOption = RoleOptions.FirstOrDefault(r => r.Value == UserRole.Personel);
         NewPassword = string.Empty;
     }
 
@@ -251,10 +371,15 @@ public partial class UserManagementViewModel : ViewModelBase
             try
             {
                 var created = await _userManagementService.CreateUserAsync(
-                    _currentUser, NewUsername.Trim(), NewFullName.Trim(), NewRole,
+                    _currentUser, NewUsername.Trim(), NewFullName.Trim(),
+                    NewRoleOption?.Value ?? UserRole.Personel,
                     string.IsNullOrWhiteSpace(NewDepartment) ? null : NewDepartment.Trim(), NewPassword);
 
-                Users.Add(new UserRowViewModel(created));
+                // Yeni kullanıcı kaynak listeye eklenip filtreler yeniden uygulanıyor;
+                // doğrudan Users'a eklenirse aktif bir filtre varken liste tutarsız kalırdı.
+                _allUsers.Add(new UserRowViewModel(created) { IsSelf = false });
+                ApplyFilters();
+
                 SuccessMessage = $"{created.FullName} kullanıcısı oluşturuldu.";
                 ShowNewUserForm = false;
             }
@@ -333,6 +458,10 @@ public partial class UserManagementViewModel : ViewModelBase
             {
                 var updated = await _userManagementService.SetDisabledAsync(_currentUser, row.Id, !row.IsDisabled);
                 row.Refresh(updated);
+
+                // Durum filtresi açıksa satır artık listeye uymuyor olabilir.
+                ApplyFilters();
+
                 SuccessMessage = updated.IsDisabled
                     ? $"{updated.FullName} devre dışı bırakıldı."
                     : $"{updated.FullName} yeniden etkinleştirildi.";

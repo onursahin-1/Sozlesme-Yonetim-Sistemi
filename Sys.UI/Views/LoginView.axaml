@@ -84,8 +84,8 @@
                         <TextBlock Grid.Column="0" Text="Şifre" FontSize="12" FontWeight="SemiBold" Foreground="#3D3A34"/>
                         <StackPanel Grid.Column="1" x:Name="CapsLockWarning" IsVisible="False"
                                     Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                            <TextBlock Text="⇪" FontSize="12" Foreground="#B7791F" VerticalAlignment="Center"/>
-                            <TextBlock Text="Caps Lock açık" FontSize="11" Foreground="#B7791F"
+                            <Path Fill="#A32D2D" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
+                            <TextBlock Text="Caps Lock açık" FontSize="11" Foreground="#A32D2D"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>

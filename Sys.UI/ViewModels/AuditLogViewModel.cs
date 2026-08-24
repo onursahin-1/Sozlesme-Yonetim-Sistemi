@@ -19,31 +19,34 @@ public class AuditLogRowViewModel
         _log = log;
     }
 
-    public string DateText => _log.ActionDate.ToString("dd.MM.yyyy HH:mm");
+    public string DateText => _log.ActionDate.ToString("dd.MM.yyyy");
+    public string TimeText => _log.ActionDate.ToString("HH:mm");
     public string UserText => _log.ActingUser?.FullName ?? ("Kullanıcı #" + _log.ActingUserId);
-    public string ActionText => _log.Action switch
-    {
-        "TalepOluşturuldu" => "Talep Oluşturuldu",
-        "TalepGüncellendi" => "Talep Güncellendi",
-        "SözleşmeOluşturuldu" => "Sözleşme Oluşturuldu",
-        "SözleşmeDüzenlendi" => "Sözleşme Düzenlendi",
-        "İhlalBildirildi" => "İhlal Bildirildi",
-        "FesihTalebiOluşturuldu" => "Fesih Talebi Oluşturuldu",
-        "Onaylandı" => "Onaylandı",
-        "Reddedildi" => "Reddedildi",
-        "EkGörüntülendi" => "Ek Görüntülendi",
-        "Ekİndirildi" => "Ek İndirildi",
-        "EkSilindi" => "Ek Silindi",
-        "SözleşmeYazdırıldı" => "Sözleşme Yazdırıldı",
-        "KullanıcıOluşturuldu" => "Kullanıcı Oluşturuldu",
-        "ŞifreSıfırlandı" => "Şifre Sıfırlandı (Yönetici)",
-        "ŞifreDeğiştirildi" => "Şifre Değiştirildi",
-        "HesapDevreDışıBırakıldı" => "Hesap Devre Dışı Bırakıldı",
-        "HesapEtkinleştirildi" => "Hesap Etkinleştirildi",
-        "HesapKilitlendi" => "Hesap Kilitlendi",
-        _ => _log.Action
-    };
+
+    // Etiket ve renkler tek katalogdan geliyor; buradaki switch son eklenen
+    // işlemleri (TalepİadeEdildi, TalepReddedildi, İhlalGiderildi) kaçırıyordu.
+    public string ActionText => AuditActionCatalog.Label(_log.Action);
+    public string ActionColorHex => AuditActionCatalog.ColorHexFor(_log.Action);
+    public string ActionBgHex => AuditActionCatalog.BgHexFor(_log.Action);
+    public string ActionStripHex => AuditActionCatalog.StripHexFor(_log.Action);
+
     public string DetailText => _log.Detail ?? string.Empty;
+    public bool HasDetail => !string.IsNullOrWhiteSpace(_log.Detail);
+
+    // Kullanıcı adının baş harfleri; satırın solundaki yuvarlak rozet.
+    public string UserInitials
+    {
+        get
+        {
+            var name = UserText.Trim();
+            if (name.Length == 0) return "?";
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1) return parts[0][..1].ToUpperInvariant();
+            return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+        }
+    }
+
     public DateTime ActionDate => _log.ActionDate;
 }
 
@@ -58,12 +61,15 @@ public partial class AuditLogViewModel : ViewModelBase
     private bool _isInitializing = true;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial ObservableCollection<AuditLogRowViewModel> FilteredLogs { get; set; } = new();
+
 
     [ObservableProperty]
     public partial ObservableCollection<string> UserOptions { get; set; } = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
     public partial string SelectedUser { get; set; } = "Tümü";
 
     [ObservableProperty]
@@ -71,6 +77,28 @@ public partial class AuditLogViewModel : ViewModelBase
 
     [ObservableProperty]
     public partial DateTimeOffset? EndDate { get; set; }
+
+    // İşlem türü filtresi. "Tüm şifre sıfırlamaları" ya da "tüm ek silmeleri" gibi
+    // denetim soruları kullanıcı ve tarihle cevaplanamıyordu.
+    // Görünen etiketler kataloğdan; seçim ham işlem adına çevriliyor.
+    public ObservableCollection<string> ActionOptions { get; } = new(
+        new[] { TumIslemler }.Concat(AuditActionCatalog.Actions.Select(a => a.Label)));
+
+    private const string TumIslemler = "Tüm işlemler";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SelectedAction { get; set; } = TumIslemler;
+
+    partial void OnSelectedActionChanged(string value) => ReloadFromFirstPage();
+
+    public bool HasActiveFilters =>
+        (SelectedUser is not null && SelectedUser != "Tümü")
+        || SelectedAction != TumIslemler
+        || StartDate is not null
+        || EndDate is not null;
+
+    public bool IsEmpty => !IsLoading && FilteredLogs.Count == 0;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TotalPages), nameof(PageInfoText), nameof(CanGoPrevious), nameof(CanGoNext))]
@@ -83,6 +111,7 @@ public partial class AuditLogViewModel : ViewModelBase
     public partial int TotalCount { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEmpty))]
     public partial bool IsLoading { get; set; } = true;
 
     [ObservableProperty]
@@ -94,14 +123,33 @@ public partial class AuditLogViewModel : ViewModelBase
     public bool CanGoNext => CurrentPage < TotalPages;
 
     partial void OnSelectedUserChanged(string value) => ReloadFromFirstPage();
-    partial void OnStartDateChanged(DateTimeOffset? value) => ReloadFromFirstPage();
-    partial void OnEndDateChanged(DateTimeOffset? value) => ReloadFromFirstPage();
-
-    [RelayCommand]
-    private void ClearDateFilter()
+    partial void OnStartDateChanged(DateTimeOffset? value)
     {
+        OnPropertyChanged(nameof(HasActiveFilters));
+        ReloadFromFirstPage();
+    }
+
+    partial void OnEndDateChanged(DateTimeOffset? value)
+    {
+        OnPropertyChanged(nameof(HasActiveFilters));
+        ReloadFromFirstPage();
+    }
+
+    // Tek tek temizlemek yerine hepsini birden sıfırlar. Her atama ayrı bir yükleme
+    // tetiklemesin diye bayrakla susturulup sonunda tek sorgu atılıyor.
+    [RelayCommand]
+    private async Task ClearFilters()
+    {
+        _isInitializing = true;
+        SelectedUser = "Tümü";
+        SelectedAction = TumIslemler;
         StartDate = null;
         EndDate = null;
+        _isInitializing = false;
+
+        OnPropertyChanged(nameof(HasActiveFilters));
+        CurrentPage = 1;
+        await LoadPageAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanGoNext))]
@@ -164,9 +212,17 @@ public partial class AuditLogViewModel : ViewModelBase
             DateTime? start = StartDate?.Date;
             DateTime? end = EndDate?.Date;
 
-            var (items, totalCount) = await _contractService.GetAuditLogsAsync(_currentUser, CurrentPage, PageSize, userFilter, start, end);
+            // Açılır listede okunabilir etiket görünüyor; sorguya ham işlem adı gider.
+            string? actionFilter = SelectedAction == TumIslemler
+                ? null
+                : AuditActionCatalog.Actions.FirstOrDefault(a => a.Label == SelectedAction)?.Key;
 
-            FilteredLogs = new ObservableCollection<AuditLogRowViewModel>(items.Select(l => new AuditLogRowViewModel(l)));
+            var (items, totalCount) = await _contractService.GetAuditLogsAsync(
+                _currentUser, CurrentPage, PageSize, userFilter, start, end, actionFilter);
+
+            FilteredLogs = new ObservableCollection<AuditLogRowViewModel>(
+                items.Select(l => new AuditLogRowViewModel(l)));
+
             TotalCount = totalCount;
         }
         catch (Exception ex)

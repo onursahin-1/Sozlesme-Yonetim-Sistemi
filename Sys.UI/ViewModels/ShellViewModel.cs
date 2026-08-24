@@ -86,6 +86,7 @@ public partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasUnreadNotifications))]
     [NotifyPropertyChangedFor(nameof(UnreadCountText))]
+    [NotifyPropertyChangedFor(nameof(NotificationPanelTitle))]
     public partial int UnreadNotificationCount { get; set; }
 
     [ObservableProperty]
@@ -99,6 +100,12 @@ public partial class ShellViewModel : ViewModelBase
     public partial bool HasReadNotifications { get; set; }
 
     public bool HasUnreadNotifications => UnreadNotificationCount > 0;
+
+    // Panel başlığı okunmamış sayısını da taşıyor: zildeki rozet panel açıldığında
+    // görüş alanının dışında kalabiliyor.
+    public string NotificationPanelTitle => UnreadNotificationCount > 0
+        ? $"Bildirimler · {UnreadCountText} okunmamış"
+        : "Bildirimler";
     // 99'dan fazlasında rozet genişleyip başlığı bozmasın diye kısaltılır.
     public string UnreadCountText => UnreadNotificationCount > 99 ? "99+" : UnreadNotificationCount.ToString();
 
