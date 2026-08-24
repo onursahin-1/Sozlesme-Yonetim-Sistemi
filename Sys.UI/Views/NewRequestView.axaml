@@ -98,6 +98,37 @@
 					</Grid>
 				</Border>
 
+				<!--
+				  Yenileme bandı. Form kaynak sözleşmenin verisiyle dolu geldiği için
+				  kullanıcının bunun boş bir form OLMADIĞINI bilmesi gerekiyor; aksi
+				  halde dolu alanları kendi girdiği sanılabilir. Kaynak sözleşmenin
+				  numarası ve bitiş tarihi de burada, hangi dönemi yenilediği açık olsun.
+				-->
+				<Border IsVisible="{Binding IsRenewal}"
+						Background="#EAF4EC" BorderBrush="#C3DFC9" BorderThickness="1"
+						CornerRadius="10" Padding="16,12">
+					<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+						<StackPanel Grid.Column="0" Spacing="3">
+							<TextBlock Text="Sözleşme Yenileme" FontSize="14" FontWeight="Bold" Foreground="#2E6B3E"/>
+							<StackPanel Orientation="Horizontal" Spacing="5">
+								<TextBlock Text="Kaynak sözleşme:" FontSize="11.5" Foreground="#3F7A4F"/>
+								<TextBlock Text="{Binding RenewalSourceLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="#2E6B3E"/>
+								<TextBlock Text="·" FontSize="11.5" Foreground="#8FB89A"/>
+								<TextBlock Text="bitiş" FontSize="11.5" Foreground="#3F7A4F"/>
+								<TextBlock Text="{Binding RenewalSourceEndText}" FontSize="11.5" FontWeight="SemiBold" Foreground="#2E6B3E"/>
+							</StackPanel>
+							<TextBlock Text="Alanlar kaynak sözleşmeden dolduruldu. Kontrol edip değişenleri güncelleyin; kaynak sözleşme olduğu gibi kalır."
+									   FontSize="11.5" Foreground="#3F7A4F" TextWrapping="Wrap"/>
+						</StackPanel>
+						<Button Grid.Column="1" Classes="flat" VerticalAlignment="Center" Command="{Binding CancelCommand}">
+							<Border Background="White" BorderBrush="#C3DFC9" BorderThickness="1"
+									CornerRadius="7" Padding="12,6">
+								<TextBlock Text="← Vazgeç" Foreground="#2E6B3E" FontSize="12"/>
+							</Border>
+						</Button>
+					</Grid>
+				</Border>
+
 				<!-- ============ 1 · TALEP BİLGİLERİ ============ -->
 				<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
 						CornerRadius="12" Padding="24,20">

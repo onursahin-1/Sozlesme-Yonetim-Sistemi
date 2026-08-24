@@ -325,6 +325,26 @@ public class ContractService
                 "Bu sözleşmede onay bekleyen bir fesih talebi var; sonuçlanmadan yeni işlem yapılamaz.");
     }
 
+    // Yenilenebilecek sözleşmeler: süresi dolmuş ya da dolmak üzere olanlar.
+    // Feshedilmiş bir sözleşme yenilenmez — taraflar ilişkiyi zaten sonlandırdı.
+    private static readonly ContractStatus[] RenewableStatuses =
+    {
+        ContractStatus.Aktif,
+        ContractStatus.Uyari,
+        ContractStatus.Ihlal,
+        ContractStatus.Tamamlandi
+    };
+
+    public static bool CanRenew(Contract contract, User actingUser)
+        => actingUser.Role is UserRole.Personel or UserRole.SYB
+        && RenewableStatuses.Contains(contract.Status);
+
+    // Bir sözleşmenin hangi sözleşmenin yenilemesi olduğunu göstermek için.
+    // Kaynak kayıt silinmiş ya da erişilemiyorsa null döner; bu durumda ekran
+    // yenileme bilgisini hiç göstermez — yanlış bilgi göstermektense hiç göstermemek.
+    public async Task<(string RefNo, DateTime? EndDate)?> GetRenewalSourceAsync(int sourceContractId)
+        => await _contracts.GetRenewalSourceSummaryAsync(sourceContractId);
+
     public async Task<Contract> CreateRequestAsync(Contract contract, User actingUser)
     {
         EnsureCanCreateRequest(actingUser);
@@ -340,8 +360,15 @@ public class ContractService
         contract.WasRejected = false;
         contract.LastRejectionNote = null;
         contract.LastRejectedAt = null;
+        // RenewedFromContractId'ye dokunulmuyor: yenileme bağı çağırandan geliyor ve
+        // kaydın parçası olarak yazılıyor.
         await _contracts.AddAsync(contract);
-        await LogAuditAsync(contract.Id, "TalepOluşturuldu", contract.CreatedByUserId, $"{contract.Title} için yeni talep oluşturuldu.");
+
+        var detay = contract.RenewedFromContractId is null
+            ? $"{contract.Title} için yeni talep oluşturuldu."
+            : $"{contract.Title} için yenileme talebi oluşturuldu (kaynak sözleşme #{contract.RenewedFromContractId}).";
+
+        await LogAuditAsync(contract.Id, "TalepOluşturuldu", contract.CreatedByUserId, detay);
 
         // Yeni talep henüz onay aşamasında değil (Stage 0), ama sözleşmeyi oluşturacak
         // olan SYB'nin talepten haberi olmalı — aksi halde listeyi elle taramak gerekir.

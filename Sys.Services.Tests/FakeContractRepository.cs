@@ -23,6 +23,9 @@ public class FakeContractRepository : IContractRepository
     public Task<(List<Contract> Items, int TotalCount)> GetByStagePagedAsync(int stage, int page, int pageSize)
         => Task.FromResult((new List<Contract>(), 0));
     public Task<Contract?> GetByIdWithDetailsAsync(int id) => Task.FromResult<Contract?>(null);
+
+    public Task<(string RefNo, DateTime? EndDate)?> GetRenewalSourceSummaryAsync(int id)
+        => Task.FromResult<(string, DateTime?)?>(null);
     public Task AddAsync(Contract contract) => Task.CompletedTask;
     public Task UpdateRequestAsync(Contract contract) => Task.CompletedTask;
 

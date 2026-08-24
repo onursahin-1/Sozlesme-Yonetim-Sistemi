@@ -1,5 +1,6 @@
 ﻿using System;
 using Sys.Domain;
+using Sys.Services;
 
 namespace Sys.UI.ViewModels;
 
@@ -8,15 +9,26 @@ public class ContractCardViewModel
     private readonly Contract _contract;
     private readonly bool _isSyb;
 
-    public ContractCardViewModel(Contract contract, int currentUserId = 0, bool isSyb = false)
+    public ContractCardViewModel(Contract contract, int currentUserId = 0, bool isSyb = false, User? currentUser = null)
     {
         _contract = contract;
         _isSyb = isSyb;
         IsEditable = currentUserId != 0 && contract.CreatedByUserId == currentUserId && contract.Status == ContractStatus.Talep;
+        CanRenew = currentUser is not null && ContractService.CanRenew(contract, currentUser);
     }
 
     public Contract RawContract => _contract;
     public bool IsEditable { get; }
+
+    // Yürürlükteki veya süresi dolmuş bir sözleşmeden yeni dönem talebi açılabilir.
+    // Feshedilen sözleşme yenilenemez: fesih, tarafların ilişkiyi sürdürmeme kararıdır;
+    // yeniden çalışılacaksa bu sıfırdan değerlendirilmesi gereken yeni bir karardır.
+    //
+    // Yalnızca DETAY ekranlarında kullanılır. Liste kartlarında bilinçli olarak yok:
+    // yenileme, önceki dönemin kalemlerine ve koşullarına bakılarak verilen bir karar;
+    // listede tek satır bilgiyle başlatılması doğru olmaz. Ayrıca kart üzerindeki
+    // buton sayısını da artırırdı.
+    public bool CanRenew { get; }
 
     // SYB rolündeki kullanıcı için: bu kart "Sözleşme Yarat" işlemini mi bekliyor?
     public bool NeedsContractCreation => _isSyb && Status == ContractStatus.Talep;

@@ -352,6 +352,7 @@ public partial class ShellViewModel : ViewModelBase
     private void OpenContractFromNotification(Contract contract)
     {
         var detailVm = new ContractDetailViewModel(_contractService!, CurrentUser, contract);
+        detailVm.RenewRequested += OnRenewRequested;
         detailVm.BackRequested += () =>
         {
             var dashboard = NavItems.FirstOrDefault(n => n.Key == "dashboard");
@@ -440,12 +441,12 @@ public partial class ShellViewModel : ViewModelBase
             "talepList" => GetOrCreateContractListViewModel(),
             "yeniTalep" => new NewRequestViewModel(_contractService, CurrentUser, _attachmentsPath),
             "sozlesmeYarat" => new ContractWizardViewModel(_contractService, CurrentUser, _attachmentsPath),
-            "sozlesmeGoruntule" => new ContractDetailViewModel(_contractService, CurrentUser),
+            "sozlesmeGoruntule" => CreateContractDetailViewModel(),
             "sozlesmeKontrol" => CreateApprovalQueueViewModel(),
             "sozlesmeDegistir" => new ContractEditViewModel(_contractService, CurrentUser, _attachmentsPath),
             "ihlal" => new ViolationReportViewModel(_contractService, CurrentUser, _attachmentsPath),
             "fesih" => new ContractTerminationViewModel(_contractService, CurrentUser, _attachmentsPath),
-            "arsiv" => new ArchiveViewModel(_contractService, CurrentUser),
+            "arsiv" => CreateArchiveViewModel(),
             "onayBekleyen" => CreateApprovalQueueViewModel(),
             "auditLog" => new AuditLogViewModel(_contractService, CurrentUser),
             "kullaniciYonetimi" => new UserManagementViewModel(_userManagementService!, CurrentUser),
@@ -494,6 +495,22 @@ public partial class ShellViewModel : ViewModelBase
         {
             // Rozet güncellenemezse sessizce yut — kritik bir işlev değil.
         }
+    }
+
+    private ArchiveViewModel CreateArchiveViewModel()
+    {
+        var vm = new ArchiveViewModel(_contractService!, CurrentUser);
+        vm.RenewRequested += OnRenewRequested;
+        return vm;
+    }
+
+    // Menüden açılan görüntüleme ekranı. Yenileme olayı buradan da bağlanmalı;
+    // kullanıcı sözleşmeye listeden değil doğrudan menüden de ulaşabiliyor.
+    private ContractDetailViewModel CreateContractDetailViewModel()
+    {
+        var vm = new ContractDetailViewModel(_contractService!, CurrentUser);
+        vm.RenewRequested += OnRenewRequested;
+        return vm;
     }
 
     private ContractListViewModel CreateContractListViewModel(string? initialFilter = null)
@@ -550,6 +567,7 @@ public partial class ShellViewModel : ViewModelBase
     private void OnDashboardContractOpened(Contract contract)
     {
         var detailVm = new ContractDetailViewModel(_contractService!, CurrentUser, contract);
+        detailVm.RenewRequested += OnRenewRequested;
         detailVm.BackRequested += () =>
         {
             SetSelectedNavItemSilently("dashboard");
@@ -598,6 +616,31 @@ public partial class ShellViewModel : ViewModelBase
         CurrentPageContent = editVm;
     }
 
+    // Yenileme, düzenlemeyle aynı forma gider ama kaynak sözleşmeye dokunmaz:
+    // sonunda YENİ bir talep doğar.
+    //
+    // Yenileme dört ayrı ekrandan başlatılabiliyor (liste, detay, arşiv, bildirim).
+    // "Vazgeç" kullanıcıyı geldiği ekrana döndürür — sabit bir dönüş noktası,
+    // arşivden gelen birini sözleşme listesine bırakırdı.
+    private void OnRenewRequested(Contract contract)
+    {
+        var originKey = SelectedNavItem?.Key;
+        var originTitle = CurrentPageTitle;
+        var originPage = CurrentPageContent;
+
+        var renewVm = new NewRequestViewModel(_contractService!, CurrentUser, _attachmentsPath, contract, isRenewal: true);
+        renewVm.CancelRequested += () =>
+        {
+            if (originKey is not null) SetSelectedNavItemSilently(originKey);
+            CurrentPageTitle = originTitle;
+            if (originPage is not null) CurrentPageContent = originPage;
+        };
+
+        SetSelectedNavItemSilently("yeniTalep");
+        CurrentPageTitle = "Sözleşmeyi Yenile";
+        CurrentPageContent = renewVm;
+    }
+
     private void OnViewDetailsRequested(Contract contract)
     {
         var detailVm = new ContractDetailViewModel(_contractService!, CurrentUser, contract);
@@ -608,6 +651,7 @@ public partial class ShellViewModel : ViewModelBase
             CurrentPageTitle = listTitle;
             CurrentPageContent = GetOrCreateContractListViewModel();
         };
+        detailVm.RenewRequested += OnRenewRequested;
 
         SetSelectedNavItemSilently("sozlesmeGoruntule");
         CurrentPageTitle = "Sözleşmeleri Görüntüle";

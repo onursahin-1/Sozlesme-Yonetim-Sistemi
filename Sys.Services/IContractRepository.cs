@@ -10,6 +10,9 @@ public interface IContractRepository
     Task UpdateRequestAsync(Contract contract);
     Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog);
     Task<Contract?> GetByIdWithDetailsAsync(int id);
+
+    // Yenileme bağlantısı için kaynak sözleşmenin yalnızca kimlik bilgileri.
+    Task<(string RefNo, DateTime? EndDate)?> GetRenewalSourceSummaryAsync(int id);
     // resolvedRevision / resolvedTermination: karar bir düzenleme ya da fesih talebine
     // aitse, o talebin sonucu (IsApproved/ResolvedAt) sözleşme ve onay kaydıyla AYNI
     // transaction içinde yazılsın diye buraya geçirilir. Ayrı bir çağrıyla yazılsaydı

@@ -87,6 +87,22 @@ public class ContractRepository : IContractRepository
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
+    // Yenileme bağlantısını göstermek için kaynak sözleşmenin yalnızca kimlik
+    // bilgileri gerekiyor. Detay sorgusu yedi tabloyu birden çekiyor; her sözleşme
+    // açılışında bir de onun için çalıştırmanın anlamı yok.
+    public async Task<(string RefNo, DateTime? EndDate)?> GetRenewalSourceSummaryAsync(int id)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        var row = await db.Contracts
+            .AsNoTracking()
+            .Where(c => c.Id == id)
+            .Select(c => new { c.ContractNo, c.RequestRefNo, c.EndDate })
+            .FirstOrDefaultAsync();
+
+        if (row is null) return null;
+        return (string.IsNullOrWhiteSpace(row.ContractNo) ? row.RequestRefNo : row.ContractNo!, row.EndDate);
+    }
+
     public async Task AddAsync(Contract contract)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);

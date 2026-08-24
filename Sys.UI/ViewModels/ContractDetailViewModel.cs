@@ -112,12 +112,32 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
 
+    // Seçili sözleşmeden yeni dönem talebi açılabilir mi?
+    [ObservableProperty]
+    public partial bool CanRenew { get; set; }
+
+    // Bu sözleşme bir başkasının yenilemesiyse, hangi sözleşmeden geldiği burada yazar.
+    // Sözleşme geçmişini takip ederken "bu ilk dönem mi, kaçıncı dönem mi" sorusunun
+    // cevabı aksi halde yalnızca kişilerin hafızasında kalıyordu.
+    [ObservableProperty]
+    public partial bool IsRenewal { get; set; }
+
+    [ObservableProperty]
+    public partial string RenewalSourceText { get; set; } = string.Empty;
+
     // "Sözleşmeler" ekranından belirli bir sözleşme için buraya yönlendirildiysek true olur.
     public bool ShowBackButton { get; }
     public event Action? BackRequested;
+    public event Action<Contract>? RenewRequested;
 
     [RelayCommand]
     private void Back() => BackRequested?.Invoke();
+
+    [RelayCommand]
+    private void Renew()
+    {
+        if (Detail is not null) RenewRequested?.Invoke(Detail);
+    }
 
     // Esc: yalnızca bir yerden yönlendirilerek gelindiyse (Geri butonu görünürken) çalışır.
     public bool CanHandleEscape => ShowBackButton;
@@ -201,7 +221,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
             Detail = full;
 
             var tr = CultureInfo.GetCultureInfo("tr-TR");
-            var card = new ContractCardViewModel(full);
+            var card = new ContractCardViewModel(full, currentUser: _currentUser);
 
             DetailTitle = full.Title;
             DetailNo = string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!;
@@ -217,6 +237,22 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
             DetailRequester = full.CreatedByUser?.FullName ?? "-";
             DetailDepartment = string.IsNullOrWhiteSpace(full.CreatedByUser?.Department) ? "-" : full.CreatedByUser!.Department!;
             DetailPeriod = string.IsNullOrWhiteSpace(full.PaymentPeriod) ? "-" : full.PaymentPeriod!;
+            CanRenew = card.CanRenew;
+
+            IsRenewal = false;
+            RenewalSourceText = string.Empty;
+            if (full.RenewedFromContractId is { } sourceId)
+            {
+                var source = await _contractService.GetRenewalSourceAsync(sourceId);
+                if (requestId != _loadRequestId) return;
+                if (source is { } s)
+                {
+                    IsRenewal = true;
+                    RenewalSourceText = s.EndDate is { } end
+                        ? $"{s.RefNo} numaralı sözleşmenin yenilemesidir (önceki dönem {end.ToString("dd.MM.yyyy", tr)} tarihinde sona erdi)."
+                        : $"{s.RefNo} numaralı sözleşmenin yenilemesidir.";
+                }
+            }
 
             // Durum rozeti için liste kartlarıyla aynı etiket ve renkler.
             DetailStatus = card.StatusLabel;

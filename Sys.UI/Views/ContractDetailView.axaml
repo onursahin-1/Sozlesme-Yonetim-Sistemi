@@ -75,6 +75,25 @@
 				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
 							VerticalAlignment="Bottom" IsVisible="{Binding CanPrint}">
 
+					<!--
+					  Yenile: bu sözleşmenin verisiyle dolu yeni bir dönem talebi açar.
+					  Yazdırma butonlarının solunda duruyor çünkü çıktı almaktan farklı,
+					  sözleşmenin akışını ilerleten bir eylem.
+					-->
+					<Button Classes="flat" IsVisible="{Binding CanRenew}" Command="{Binding RenewCommand}"
+							ToolTip.Tip="Bu sözleşmenin bilgileriyle yeni dönem talebi oluşturur">
+						<Border Background="#EAF4EC" BorderBrush="#C3DFC9" BorderThickness="1"
+								CornerRadius="8" Padding="16,10">
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<Path Stroke="#2E6B3E" StrokeThickness="1.7" Fill="Transparent"
+									  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
+									  Data="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M12 12v5 M9.5 14.5h5"/>
+								<TextBlock Text="Sözleşmeyi Yenile" Foreground="#2E6B3E" FontSize="13"
+										   FontWeight="SemiBold" VerticalAlignment="Center"/>
+							</StackPanel>
+						</Border>
+					</Button>
+
 					<Button Classes="flat" Command="{Binding PrintCommand}"
 							ToolTip.Tip="Sözleşme künyesini varsayılan yazıcıya gönderir">
 						<Border Background="#2D6EA8" CornerRadius="8" Padding="16,11">
@@ -148,6 +167,23 @@
 											   FontSize="11" FontWeight="Bold"/>
 								</Border>
 							</Grid>
+
+							<!--
+							  Yenileme bilgisi künyenin hemen altında: bir sözleşmenin
+							  önceki döneminin olup olmadığı, koşullarını değerlendirirken
+							  ilk bakılması gereken şeylerden biri.
+							-->
+							<Border IsVisible="{Binding IsRenewal}"
+									Background="#F3F8F4" BorderBrush="#D9E9DD" BorderThickness="1"
+									CornerRadius="8" Padding="12,9">
+								<StackPanel Orientation="Horizontal" Spacing="9">
+									<Path Stroke="#2E6B3E" StrokeThickness="1.7" Fill="Transparent"
+										  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
+										  Data="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5"/>
+									<TextBlock Text="{Binding RenewalSourceText}" FontSize="11.5"
+											   Foreground="#3F7A4F" TextWrapping="Wrap" VerticalAlignment="Center"/>
+								</StackPanel>
+							</Border>
 
 							<Border Background="#EDF1F6" Height="1"/>
 

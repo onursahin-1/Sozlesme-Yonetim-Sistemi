@@ -381,6 +381,17 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
                     "Bu talep için daha önce sözleşme oluşturulmuş. Önceki kalemler ve tarihler " +
                     "forma yüklendi; kaydettiğinizde kalemler bu listeyle DEĞİŞTİRİLİR.";
             }
+            else if (full.RenewedFromContractId is { } sourceId)
+            {
+                // Yenileme talebi: kalemleri kaynak sözleşmeden getir. Asıl yazma yükü
+                // burada — bir sözleşmede onlarca kalem olabiliyor ve yenilemede
+                // genellikle yalnızca birim fiyatlar değişiyor.
+                //
+                // TARİHLER kasıtlı olarak taşınmıyor: yeni dönemin başlangıç ve bitişi
+                // her zaman yeniden belirlenir, eski tarihlerin forma gelmesi yanlışlıkla
+                // geçmişe dönük bir sözleşme kaydedilmesine yol açardı.
+                await LoadRenewalSourceItemsAsync(sourceId, token);
+            }
         }
         catch (Exception ex)
         {
@@ -388,6 +399,26 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
             ErrorMessage = "Talebin önceki verileri yüklenemedi: " + ex.Message;
             EnsureAtLeastOneItemRow();
         }
+    }
+
+    private async Task LoadRenewalSourceItemsAsync(int sourceId, int token)
+    {
+        var source = await _contractService.GetContractDetailAsync(sourceId, _currentUser);
+        if (token != _requestLoadToken) return;
+        if (source is null || source.Items.Count == 0) return;
+
+        Items.Clear();
+        foreach (var item in source.Items)
+            AddItem(item.Description, item.Quantity, item.Unit, item.UnitPrice);
+
+        if (!string.IsNullOrWhiteSpace(source.PaymentPeriod))
+            SelectedPaymentPeriod = source.PaymentPeriod!;
+
+        var sourceNo = string.IsNullOrWhiteSpace(source.ContractNo) ? source.RequestRefNo : source.ContractNo!;
+        IsRecreate = true;
+        RecreateNotice =
+            $"Bu bir yenileme talebi. Kalemler {sourceNo} numaralı önceki sözleşmeden yüklendi — " +
+            "birim fiyatları ve miktarları yeni döneme göre kontrol edin. Tarihler kasıtlı olarak boş bırakıldı.";
     }
 
     private void EnsureAtLeastOneItemRow()

@@ -123,6 +123,20 @@ public partial class ArchiveViewModel : ViewModelBase
     [ObservableProperty]
     public partial string DetailStatusBgHex { get; set; } = "#EAECF0";
 
+    // Süresi dolmuş sözleşmeler arşivde durur ve yenilemenin asıl kaynağı burasıdır:
+    // kullanıcı "geçen yılki sözleşme neydi" diye buraya bakar. Yenileme butonunu
+    // yalnızca canlı listeye koymak, en çok ihtiyaç duyulan yerde eksik bırakırdı.
+    [ObservableProperty]
+    public partial bool CanRenew { get; set; }
+
+    public event Action<Contract>? RenewRequested;
+
+    [RelayCommand]
+    private void Renew()
+    {
+        if (Detail is not null) RenewRequested?.Invoke(Detail);
+    }
+
     [ObservableProperty]
     public partial bool HasTerminationInfo { get; set; }
 
@@ -177,7 +191,7 @@ public partial class ArchiveViewModel : ViewModelBase
             if (CurrentPage > TotalPages) CurrentPage = TotalPages;
 
             AvailableContracts = new ObservableCollection<ContractCardViewModel>(
-                contracts.Select(c => new ContractCardViewModel(c)));
+                contracts.Select(c => new ContractCardViewModel(c, currentUser: _currentUser)));
         }
         catch (Exception ex)
         {
@@ -322,7 +336,7 @@ public partial class ArchiveViewModel : ViewModelBase
             }
 
             var tr = CultureInfo.GetCultureInfo("tr-TR");
-            var card = new ContractCardViewModel(full);
+            var card = new ContractCardViewModel(full, currentUser: _currentUser);
 
             Detail = full;
             DetailTitle = full.Title;
@@ -341,6 +355,7 @@ public partial class ArchiveViewModel : ViewModelBase
             DetailStatus = card.StatusLabel;
             DetailStatusColorHex = card.StatusColorHex;
             DetailStatusBgHex = card.StatusBgHex;
+            CanRenew = card.CanRenew;
 
             Items = new ObservableCollection<ContractItem>(full.Items);
             Attachments = new ObservableCollection<Attachment>(full.Attachments);

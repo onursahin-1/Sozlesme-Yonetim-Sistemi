@@ -183,6 +183,24 @@
 				-->
 				<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left"
 							IsVisible="{Binding CanPrint}">
+					<!--
+					  Yenile: süresi dolmuş bir sözleşmeden yeni dönem talebi açar.
+					  Arşiv, yenilemenin en çok başlatılacağı yer — kullanıcı zaten
+					  "geçen dönemki sözleşme neydi" diye buraya bakıyor.
+					-->
+					<Button Classes="flat" IsVisible="{Binding CanRenew}" Command="{Binding RenewCommand}"
+							ToolTip.Tip="Bu sözleşmenin bilgileriyle yeni dönem talebi oluşturur">
+						<Border Background="#EAF4EC" BorderBrush="#C3DFC9" BorderThickness="1"
+								CornerRadius="8" Padding="14,8">
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<Path Stroke="#2E6B3E" StrokeThickness="1.7" Fill="Transparent"
+									  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
+									  Data="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M12 12v5 M9.5 14.5h5"/>
+								<TextBlock Text="Sözleşmeyi Yenile" Foreground="#2E6B3E" FontSize="12.5"
+										   FontWeight="SemiBold" VerticalAlignment="Center"/>
+							</StackPanel>
+						</Border>
+					</Button>
 					<Button Classes="flat" Command="{Binding PrintCommand}"
 							ToolTip.Tip="Sözleşme künyesini varsayılan yazıcıya gönderir">
 						<Border Background="#2D6EA8" CornerRadius="8" Padding="14,9">

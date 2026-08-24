@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -26,7 +27,11 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
     [NotifyPropertyChangedFor(nameof(SubmitButtonText))]
     public partial bool IsBusy { get; set; }
 
-    public string SubmitButtonText => IsBusy ? "Gönderiliyor..." : (IsEditMode ? "Kaydet ve Yeniden Gönder" : "Onaya Gönder");
+    public string SubmitButtonText => IsBusy
+        ? "Gönderiliyor..."
+        : IsEditMode ? "Kaydet ve Yeniden Gönder"
+        : IsRenewal ? "Yenileme Talebini Gönder"
+        : "Onaya Gönder";
 
     public event Action? CancelRequested;
 
@@ -38,7 +43,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
 
     // Esc: yalnızca düzenleme modunda (İptal/Geri butonu görünürken) anlamlı.
     // Yeni talep doldururken Esc'in formu kapatması istenmez — girilen veri kaybolurdu.
-    public bool CanHandleEscape => IsEditMode;
+    public bool CanHandleEscape => IsEditMode || IsRenewal;
     public void HandleEscape() => CancelRequested?.Invoke();
 
     public string[] TypeOptions { get; } = { "Hizmet", "Tedarik", "Eser", "Danışmanlık", "Kira", "Diğer" };
@@ -155,18 +160,61 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
         _editingContractId = editingContract.Id;
         IsEditMode = true;
         RequestRefNo = editingContract.RequestRefNo;
-        Title = editingContract.Title;
-        Type = editingContract.Type;
-        EstimatedAmountText = editingContract.TotalAmount == 0
-            ? string.Empty
-            : editingContract.TotalAmount.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"));
-        Description = editingContract.Description;
-        CompanyName = editingContract.CompanyName;
-        TaxNo = editingContract.TaxNo;
-        SapCariKodu = editingContract.SapCariKodu ?? string.Empty;
-        SelectedCompanyType = editingContract.CompanyType ?? string.Empty;
-        SelectedCurrency = string.IsNullOrWhiteSpace(editingContract.Currency) ? "TRY" : editingContract.Currency;
+        CopyFieldsFrom(editingContract);
     }
+
+    // --- Yenileme ---
+    //
+    // Sözleşmelerin çoğu yenileniyor ve bilgilerin neredeyse tamamı aynı kalıyor.
+    // Yenilemede form kaynak sözleşmenin verisiyle doluyor ama YENİ bir talep
+    // oluşturuluyor: kaynak sözleşmeye dokunulmuyor, kendi döneminde kalıyor.
+    //
+    // Referans numarası taşınmaz — her dönemin kendi referansı olur.
+    // Ekler de taşınmaz; yeni dönemin kendi belgeleri yüklenir.
+    public NewRequestViewModel(ContractService contractService, User currentUser, string attachmentsBasePath,
+                               Contract sourceContract, bool isRenewal)
+        : this(contractService, currentUser, attachmentsBasePath)
+    {
+        if (!isRenewal) throw new ArgumentException("Bu kurucu yalnızca yenileme için kullanılır.", nameof(isRenewal));
+
+        IsRenewal = true;
+        RenewedFromContractId = sourceContract.Id;
+
+        RenewalSourceLabel = string.IsNullOrWhiteSpace(sourceContract.ContractNo)
+            ? sourceContract.RequestRefNo
+            : sourceContract.ContractNo!;
+
+        RenewalSourceEndText = sourceContract.EndDate?.ToString("dd.MM.yyyy", CultureInfo.GetCultureInfo("tr-TR")) ?? "-";
+
+        CopyFieldsFrom(sourceContract);
+    }
+
+    private void CopyFieldsFrom(Contract source)
+    {
+        Title = source.Title;
+        Type = source.Type;
+        EstimatedAmountText = source.TotalAmount == 0
+            ? string.Empty
+            : source.TotalAmount.ToString("N2", CultureInfo.GetCultureInfo("tr-TR"));
+        Description = source.Description;
+        CompanyName = source.CompanyName;
+        TaxNo = source.TaxNo;
+        SapCariKodu = source.SapCariKodu ?? string.Empty;
+        SelectedCompanyType = source.CompanyType ?? string.Empty;
+        SelectedCurrency = string.IsNullOrWhiteSpace(source.Currency) ? "TRY" : source.Currency;
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SubmitButtonText))]
+    public partial bool IsRenewal { get; set; }
+
+    public int? RenewedFromContractId { get; private set; }
+
+    [ObservableProperty]
+    public partial string RenewalSourceLabel { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial string RenewalSourceEndText { get; set; } = string.Empty;
 
     public void SetSelectedFile(string path)
     {
@@ -275,6 +323,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
                     TotalAmount = amount,
                     Currency = SelectedCurrency,
                     CreatedByUserId = _currentUser.Id,
+                    RenewedFromContractId = RenewedFromContractId,
                 };
 
                 var saved = await _contractService.CreateRequestAsync(contract, _currentUser);

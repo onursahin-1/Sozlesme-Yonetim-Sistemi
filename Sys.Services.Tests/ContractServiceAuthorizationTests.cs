@@ -524,4 +524,76 @@ public class ContractServiceAuthorizationTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), syb));
     }
+
+    // ---- Sözleşme yenileme ----
+
+    // Yürürlükteki ve süresi dolmuş sözleşmeler yenilenebilir.
+    [Theory]
+    [InlineData(ContractStatus.Aktif)]
+    [InlineData(ContractStatus.Uyari)]
+    [InlineData(ContractStatus.Ihlal)]
+    [InlineData(ContractStatus.Tamamlandi)]
+    public void CanRenew_LiveOrCompleted_ReturnsTrue(ContractStatus status)
+    {
+        var contract = new Contract { Status = status };
+        var personel = new User { Id = 1, Role = UserRole.Personel };
+
+        Assert.True(ContractService.CanRenew(contract, personel));
+    }
+
+    // Feshedilen sözleşme yenilenemez: taraflar ilişkiyi bilerek sonlandırdı,
+    // yeniden çalışılacaksa bu sıfırdan verilmesi gereken bir karar.
+    // Henüz sözleşmeye dönüşmemiş kayıtlar da yenilenemez — ortada yenilenecek
+    // bir dönem yok.
+    [Theory]
+    [InlineData(ContractStatus.Feshedildi)]
+    [InlineData(ContractStatus.Reddedildi)]
+    [InlineData(ContractStatus.Talep)]
+    [InlineData(ContractStatus.OnayBekliyor)]
+    public void CanRenew_ClosedOrNotYetContract_ReturnsFalse(ContractStatus status)
+    {
+        var contract = new Contract { Status = status };
+        var personel = new User { Id = 1, Role = UserRole.Personel };
+
+        Assert.False(ContractService.CanRenew(contract, personel));
+    }
+
+    // Yenileme yeni bir talep açmak demek; talep açamayan rol yenileme de yapamaz.
+    [Theory]
+    [InlineData(UserRole.Mudur)]
+    [InlineData(UserRole.Admin)]
+    public void CanRenew_RoleCannotCreateRequests_ReturnsFalse(UserRole role)
+    {
+        var contract = new Contract { Status = ContractStatus.Tamamlandi };
+        var user = new User { Id = 1, Role = role };
+
+        Assert.False(ContractService.CanRenew(contract, user));
+    }
+
+    // Yenileme talebi KAYNAK sözleşmeye dokunmaz: yeni bir kayıt doğar, eski
+    // sözleşme kendi durumunda ve kendi döneminde kalır.
+    [Fact]
+    public async Task CreateRequestAsync_Renewal_LinksSourceAndLeavesItUntouched()
+    {
+        var service = CreateService(out var repo);
+        var source = new Contract { Id = 41, Status = ContractStatus.Tamamlandi, TotalAmount = 5000m };
+        var personel = new User { Id = 1, Role = UserRole.Personel };
+
+        var renewal = new Contract
+        {
+            Title = "Temizlik Hizmeti 2027",
+            CompanyName = "ABC A.Ş.",
+            RenewedFromContractId = source.Id,
+        };
+
+        var saved = await service.CreateRequestAsync(renewal, personel);
+
+        Assert.Equal(source.Id, saved.RenewedFromContractId);
+        Assert.Equal(ContractStatus.Talep, saved.Status);
+        Assert.NotEqual(source.Id, saved.Id);
+
+        // Kaynak sözleşme değişmedi.
+        Assert.Equal(ContractStatus.Tamamlandi, source.Status);
+        Assert.Equal(5000m, source.TotalAmount);
+    }
 }

@@ -33,6 +33,16 @@ public class Contract
     public User? CreatedByUser { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    // Bu talep/sözleşme hangi sözleşmenin yenilenmesiyle doğdu?
+    //
+    // Sözleşmelerin çoğu yenileniyor ve bilgilerin neredeyse tamamı aynı kalıyor.
+    // Yenileme, kaynak sözleşmenin verisiyle dolu bir talep formu açar; bu alan da
+    // iki kaydı birbirine bağlar. Böylece bir sözleşmenin kaçıncı dönem olduğu ve
+    // önceki döneme ait koşulların ne olduğu izlenebiliyor.
+    //
+    // null = yenileme değil, sıfırdan açılmış talep.
+    public int? RenewedFromContractId { get; set; }
+
     public List<ContractItem> Items { get; set; } = new();
     public List<Attachment> Attachments { get; set; } = new();
     public List<ApprovalLog> ApprovalLogs { get; set; } = new();

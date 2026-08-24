@@ -55,6 +55,15 @@ public class SysDbContext : DbContext
             .HasIndex(u => u.Username)
             .IsUnique();
 
+        // Yenileme zinciri. Gezinme özelliği tanımlanmıyor: kendine referans veren
+        // bir Contract navigation'ı, zaten yedi tabloyu birden çeken detay sorgusunda
+        // istemeden zincirleme yükleme riski taşırdı. Bağlantı, gerektiğinde kimlik
+        // üzerinden ayrıca sorgulanıyor. Yalnızca null olmayanlar indeksleniyor;
+        // sözleşmelerin çoğu yenileme değil.
+        modelBuilder.Entity<Contract>()
+            .HasIndex(c => c.RenewedFromContractId)
+            .HasFilter("[RenewedFromContractId] IS NOT NULL");
+
         // ContractNo yalnızca sözleşme oluşturulduğunda ("SYBSA..." formatında) atanır;
         // Talep aşamasındaki sözleşmelerde null'dır. Bu yüzden filtreli (yalnızca
         // null olmayanlar için) bir unique index kullanılıyor — aksi halde SQL Server
