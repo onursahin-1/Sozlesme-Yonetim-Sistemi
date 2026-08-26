@@ -86,11 +86,14 @@ public class FakeContractRepository : IContractRepository
     public int? LastStatusQueryUserId { get; private set; }
     public ContractStatus[]? LastStatusQueryStatuses { get; private set; }
 
+    // Bildirim testleri bu listeden besleniyor; varsayılan boş.
+    public List<Contract> StatusQueryResult { get; set; } = new();
+
     public Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
     {
         LastStatusQueryUserId = createdByUserId;
         LastStatusQueryStatuses = statuses;
-        return Task.FromResult(new List<Contract>());
+        return Task.FromResult(StatusQueryResult);
     }
 
     public Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)

@@ -5,7 +5,20 @@ oluşturulması, onay zincirinden geçirilmesi, yürürlükteki sözleşmelerin
 izlenmesi (revizyon, ihlal, fesih) ve arşivlenmesi için.
 
 **Teknolojiler:** .NET 10 · Avalonia 12 · CommunityToolkit.Mvvm · EF Core ·
-SQL Server Express · PDFsharp
+SQL Server Express · PDFsharp (PDF) · ClosedXML (Excel) · BCrypt.Net
+
+## Başlıca İşlevler
+
+- Talep → SYB son kontrolü → yönetim onayı şeklinde iki aşamalı onay zinciri
+- Yürürlükteki sözleşmelerde düzenleme, fesih ve ihlal yönetimi (ihlaller
+  giderilebilir; sözleşme durumu kendiliğinden geri döner)
+- **Sözleşme yenileme** — süresi dolan sözleşmeden yeni dönem talebi
+- Arşiv (tamamlanan, feshedilen, reddedilen kayıtlar), arama ve sayfalama
+- Excel'e aktarma, yazdırma ve PDF çıktısı — üçü de denetim kaydına yazılır
+- Bildirimler: yaklaşan bitiş (30/15/7 gün), onay bekleyen iş, karar sonucu
+- Şifre politikası ve yönetici tarafından belirlenen şifreler için zorunlu ilk
+  değişim
+- Denetim kaydı (kim, ne zaman, ne yaptı) ve filtrelenebilir işlem geçmişi
 
 ## Katman Yapısı
 
@@ -31,14 +44,18 @@ doğrulama yaparlar ama yetki ve durum geçişi kararı servistedir.
    ```
    Update-Database
    ```
-4. Uygulama ilk çalıştırmada `DbSeeder` ile bir yönetici hesabı oluşturur.
+4. Uygulama ilk çalıştırmada (yalnızca `Users` tablosu boşsa) `DbSeeder` ile üç
+   örnek hesap oluşturur: `personel`, `syb`, `mudur`.
+
+> **Admin hesabı seed edilmez.** Kullanıcı yönetimi ekranına erişmek için
+> veritabanında elle bir Admin kaydı oluşturulması gerekir (`Role = 3`).
 
 ## Roller
 
 | Rol | Yetki |
 |---|---|
-| **Personel** | Kendi taleplerini oluşturur, düzenler ve görüntüler |
-| **SYB** | Talepleri sözleşmeye dönüştürür, son kontrolü yapar, düzenleme/fesih talebi açar, ihlal bildirir ve giderir |
+| **Personel** | Kendi taleplerini oluşturur, düzenler ve görüntüler; ihlal bildirir; sözleşme yeniler |
+| **SYB** | Talepleri sözleşmeye dönüştürür, son kontrolü yapar, düzenleme/fesih talebi açar, ihlal bildirir ve giderir, sözleşme yeniler |
 | **Müdür** | Onay zincirinin ikinci aşaması; işlem geçmişini görür |
 | **Admin** | Kullanıcı yönetimi ve şifre sıfırlama; sözleşme akışına katılmaz |
 

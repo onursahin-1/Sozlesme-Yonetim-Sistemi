@@ -74,6 +74,19 @@ sabit panel (özet + gönder butonu) durur. Liste ekranlarında `DockPanel`
 kullanılır — `StackPanel` çocuklarına sınırsız yükseklik verdiği için içindeki
 `ListBox` kendi kaydırma çubuğunu hiç açmaz.
 
+**Stil mi, yerel değer mi.** Avalonia'da öğenin üzerine doğrudan yazılan değer,
+stil setter'ını **ezer**. Bir özellik duruma göre değişecekse (örn. Şifre
+Değiştir ekranının zorunlu modda ortalanması) her iki hâli de stilde tanımlanır;
+biri yerel biri stil olursa stil hiç uygulanmaz. Sınıf, `Classes.ad="{Binding …}"`
+ile koşullu bağlanır.
+
+**Sınırsız sorgu yazılmaz.** Sözleşme tablosunun tamamını çeken bir sorgu bilerek
+bırakılmadı; bu tür sorgular az veriyle test edilirken doğru çalışıyor görünür ve
+yalnızca kayıt sayısı arttıkça ısırır. Sayfalı listeler, durum bazlı sorgular,
+`COUNT` sorguları ve sonuç sınırlı seçici sorguları kullanılır. Aynı sebeple
+`GetAllAsync` / `GetByCreatedUserAsync` gibi yardımcılar, son çağıranları
+kaldırıldıktan sonra **silindi** — dururlarsa er ya da geç yeniden kullanılırlar.
+
 ## İş Kuralları
 
 ### Yetki
@@ -88,6 +101,7 @@ kullanılır — `StackPanel` çocuklarına sınırsız yükseklik verdiği içi
 | Düzenleme / fesih talebi | SYB |
 | İhlal bildir | Personel, SYB |
 | İhlal gider | SYB |
+| Sözleşme yenile | Personel, SYB |
 | Ek sil | SYB |
 | İşlem geçmişi | Müdür |
 | Kullanıcı yönetimi | Admin |
@@ -124,6 +138,58 @@ gösterebiliyor.
 bittiğinde işaretlenir — Stage 1 onayı talebi bir sonraki aşamaya taşır,
 sonuçlandırmaz. Karar, sözleşme durumu ve onay kaydıyla **aynı transaction'da**
 yazılır.
+
+### Sözleşme yenileme
+
+Süresi dolan bir sözleşmeden yeni dönem talebi açılır. Yenileme, kaynak
+sözleşmenin verisiyle **dolu bir talep formu** açar ama kaynağa hiç dokunmaz:
+sonunda yeni bir kayıt doğar, eski sözleşme kendi durumunda ve kendi döneminde
+kalır. Bağlantı `Contract.RenewedFromContractId` ile kurulur.
+
+Yenilenebilir durumlar: **Aktif, Uyarı, İhlal, Tamamlandı**. Feshedilen sözleşme
+yenilenemez — fesih, tarafların ilişkiyi sürdürmeme kararıdır; yeniden
+çalışılacaksa bu sıfırdan verilecek yeni bir karardır. Talep ve onay
+aşamasındaki kayıtlar da dışarıdadır: ortada yenilenecek bir dönem yoktur.
+
+Taşınan ve taşınmayanlar bilinçli seçildi:
+
+| | Taşınır mı? | Neden |
+|---|---|---|
+| Firma, vergi no, SAP cari, tür, para birimi | **Evet** | Yenilemede neredeyse hep aynı |
+| Bedel kalemleri (sihirbazda) | **Evet** | Asıl yazma yükü burada; genelde yalnızca birim fiyatlar değişir |
+| Referans numarası | Hayır | Her dönemin kendi referansı olur |
+| Ekler | Hayır | Yeni dönemin kendi belgeleri yüklenir |
+| Başlangıç / bitiş tarihi | **Hayır** | Eski tarihlerin forma gelmesi yanlışlıkla geçmişe dönük bir sözleşme kaydedilmesine yol açardı |
+
+Yenileme yalnızca **detay ekranlarından** başlatılır (sözleşme detayı ve arşiv
+detayı). Liste kartlarına konmadı: yenileme, önceki dönemin kalemlerine ve
+koşullarına bakılarak verilen bir karardır; listedeki tek satır bilgiyle
+başlatılması doğru olmaz.
+
+### Şifre politikası
+
+Şifre üç yoldan belirlenebilir: yönetici yeni kullanıcı oluştururken, yönetici
+şifre sıfırlarken ve kullanıcı kendi şifresini değiştirirken. Kural üçünde de
+tek kaynaktan (`PasswordPolicy`) gelir — eskiden yalnızca üçüncü yolda vardı,
+yönetici yolları hiçbir doğrulama yapmadan doğrudan hash'liyordu.
+
+Kural: en az 8 karakter, en az bir harf, en az bir rakam. Özel karakter
+zorunluluğu yok — insanları tahmin edilebilir kalıplara itiyor.
+
+Politika yalnızca şifre **belirlenirken** çalışır, girişte değil. Eski ve artık
+kurala uymayan şifrelerle giriş yapılmaya devam edilir; aksi halde politika
+değişikliği mevcut kullanıcıları sistemden kilitlerdi.
+
+**Zorunlu ilk değişim:** yönetici şifre belirlediğinde `MustChangePassword`
+kalkar. Bayraklı kullanıcı kabuğa hiç girmez — `MainViewModel` onu giriş
+ekranıyla uygulama arasında tutar. Kabuk içinde kilitlenseydi bildirimler,
+kısayollar ve arka plan yüklemeleri zaten çalışmaya başlamış olurdu. O ekranda
+"giriş ekranına dön" bırakıldı: yanlış hesaba girmiş ya da geçici şifreyi
+hatırlamayan biri uygulamayı kapatmak zorunda kalmasın.
+
+Gerekçe denetimle ilgili: yöneticinin belirlediği şifreyi iki kişi bilir.
+Kullanıcı onu değiştirmezse denetim kaydındaki "X — Son Kontrol onaylandı"
+satırının gerçekten X'i mi gösterdiği ayırt edilemez.
 
 ### Eşzamanlılık
 
@@ -181,9 +247,32 @@ kendiliğinden düşer.
 
 ## Testler
 
-`Sys.Services.Tests`, xUnit. `FakeContractRepository` ve
-`FakeAttachmentRepository` ile servis katmanı veritabanısız sınanır. Kapsam
-ağırlıklı olarak **yetki** ve **durum geçişi** kurallarıdır: yanlış rolün işlem
-yapamaması, zorunlu gerekçe, kapatılmış talebin yeniden gönderilememesi,
-reddedilen düzenlemenin geri alınması, ihlal kapandığında sözleşmenin doğru
-duruma dönmesi.
+`Sys.Services.Tests`, xUnit. Servis katmanı veritabanısız sınanır; her depo
+arayüzünün bir sahtesi var (`FakeContractRepository`, `FakeAttachmentRepository`,
+`FakeUserRepository`, `FakeAuthRepositories.cs` içindekiler).
+
+| Dosya | Kapsam |
+|---|---|
+| `ContractServiceAuthorizationTests` | Yetki ve doğrulama kuralları |
+| `ContractServiceApprovalTests` | Onay zinciri ve durum geçişleri |
+| `ContractQueryScopeTests` | Sorguların ne kadar veri çektiği |
+| `PasswordPolicyTests` | Şifre kuralı ve zorunlu ilk değişim |
+| `AuthServiceTests` | Giriş, hesap kilitleme |
+| `PasswordResetRequestTests` | "Şifremi unuttum" akışı |
+| `NotificationServiceTests` | Yaklaşan bitiş eşikleri ve tekrar engeli |
+
+Üç test grubu, "çıktıyı doğrula" kalıbının dışında bir şey ölçüyor:
+
+- **Sorgu kapsamı** — sonuca değil, servisin depoya **hangi daraltmayla
+  gittiğine** bakar. Sınırsız sorgu hatasında sonuç doğru görünüyordu; sorun
+  yalnızca çekilen veri miktarındaydı, o yüzden çıktıya bakan bir test bunu
+  yakalayamazdı.
+- **Şifre politikası** — asıl kritik test `LoginAsync_LegacyWeakPassword_StillWorks`:
+  politika değişikliğinin mevcut kullanıcıları sistemden kilitlememesi gerekiyor.
+- **Gizlilik kuralları** — var olmayan bir kullanıcı adıyla yanlış şifrenin aynı
+  mesajı vermesi ve bulunamayan kullanıcı adının da kaydedilmesi. Bunlar
+  görünmeyen davranışlar; test edilmezse ileride biri "daha yardımcı" bir hata
+  mesajı yazarak sessizce bozar.
+
+Kapsam dışı: `MaintenanceService` (kilit alma ve durum güncelleme) ile
+`Sys.UI` katmanı henüz test edilmiyor.

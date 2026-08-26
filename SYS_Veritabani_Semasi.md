@@ -21,8 +21,24 @@ Tüm enum alanları veritabanına **int** olarak yazılır. Yeni bir enum değer
 | `FailedLoginCount` | int | Ardışık başarısız giriş sayısı |
 | `LockedUntil` | datetime2, null | Geçici kilit bitiş zamanı |
 | `IsDisabled` | bit | Hesap devre dışı |
+| `MustChangePassword` | bit | Şifreyi yönetici belirledi; kullanıcı ilk girişinde değiştirmeli |
+| `PasswordChangedAt` | datetime2, null | Şifrenin son değiştiği an. Mevcut kayıtlarda null — geçmişte ne zaman değiştiği bilinmiyor |
 
 **UserRole:** `0 Personel · 1 SYB · 2 Mudur · 3 Admin`
+
+**Şifre kuralları** (`PasswordPolicy`): en az 8 karakter, en az bir harf, en az
+bir rakam. Kural üç yolda da (yeni kullanıcı, şifre sıfırlama, kendi şifresini
+değiştirme) aynı kaynaktan uygulanır.
+
+Kural yalnızca şifre **belirlenirken** çalışır, girişte değil: eski ve artık
+kurala uymayan şifrelerle giriş yapılmaya devam edilir. Aksi halde politika
+değişikliği mevcut kullanıcıları sistemden kilitlerdi.
+
+`MustChangePassword` neden var: yöneticinin belirlediği şifreyi iki kişi bilir.
+Kullanıcı onu değiştirmezse, denetim kaydındaki "X — Son Kontrol onaylandı"
+satırının gerçekten X'i mi yoksa yöneticiyi mi gösterdiği ayırt edilemez.
+Bayraklı kullanıcı kabuğa hiç girmez; giriş ekranıyla uygulama arasında
+tutulur.
 
 ---
 
@@ -52,7 +68,20 @@ Bir kayıt `Talep` olarak doğar, SYB sözleşmeye dönüştürünce `ContractNo
 | `PreviousStatusBeforeTermination` | int, null | Fesih reddedilirse dönülecek durum |
 | `CreatedByUserId` | int, FK → Users | |
 | `CreatedAt` | datetime2 | |
+| `RenewedFromContractId` | int, null | Bu kayıt hangi sözleşmenin yenilenmesiyle doğdu. null = sıfırdan açılmış talep |
 | `RowVersion` | rowversion | Eşzamanlılık denetimi (`[Timestamp]`) |
+
+**RenewedFromContractId için gezinme özelliği tanımlanmadı.** Kendine referans
+veren bir `Contract` navigation'ı, zaten yedi tabloyu birden çeken detay
+sorgusunda istemeden zincirleme yükleme riski taşırdı. Bağlantı gerektiğinde
+kimlik üzerinden ayrıca sorgulanır (`GetRenewalSourceSummaryAsync`, yalnızca
+`ContractNo`/`RequestRefNo`/`EndDate` çeker). Bu yüzden veritabanı seviyesinde
+foreign key kısıtı da yoktur; yalnızca filtreli bir index vardır.
+
+**Yenilenebilir durumlar:** Aktif, Uyari, Ihlal, Tamamlandi. Feshedilen
+sözleşme yenilenemez — fesih, tarafların ilişkiyi sürdürmeme kararıdır;
+yeniden çalışılacaksa bu, eski sözleşmenin devamı değil sıfırdan verilecek
+yeni bir karardır.
 
 **ContractStatus:**
 `0 Talep · 1 OnayBekliyor · 2 Aktif · 3 Uyari · 4 Ihlal · 5 Tamamlandi · 6 Feshedildi · 7 Reddedildi`
@@ -214,6 +243,14 @@ birden fazla null serbest.
 **NotificationType:**
 `0 YaklasanBitis · 1 OnayBekliyor · 2 TalepSonucu · 3 SozlesmeOlayi · 4 SifreSifirlamaTalebi`
 
+**Yaklaşan bitiş eşikleri:** 30 · 15 · 7 gün (`NotificationService.EndingThresholds`).
+Geçilen en küçük eşik seçilir: bitişe 10 gün kalmışsa 15'lik uyarı üretilir, 30'luk
+zaten daha önce üretilmiştir. Bildirim, sözleşmeyi oluşturan kişiye ve tüm aktif SYB
+kullanıcılarına gider.
+
+> Bu eşikleri, gösterge panelindeki **bitiş takvimiyle** (30/60/90 gün dilimleri)
+> karıştırmamak gerekir. Takvim bir görüntüleme aracı, eşikler ise bildirim üretiyor.
+
 ---
 
 ## PasswordResetRequests
@@ -272,6 +309,25 @@ bitişi 30 günden yakın olanları `Uyari`'ya çeker.
 `Contracts (CreatedByUserId, Status)` · `AuditLog.ActionDate` ·
 `Notifications (UserId, IsRead)` · `Notifications.CreatedAt` ·
 `PasswordResetRequests (IsHandled, RequestedAt)` · `PasswordResetRequests.Username`
+
+`Contracts.RenewedFromContractId` — filtreli (`IS NOT NULL`); sözleşmelerin çoğu
+yenileme değil, bu yüzden tamamı indekslenmiyor.
+
+---
+
+## Sorgu sınırları
+
+Sözleşme tablosunu **sınırsız** çeken sorgu bilerek bırakılmadı. Bu tür sorgular az
+veriyle test edilirken doğru çalışıyor görünür; sorun yalnızca kayıt sayısı arttıkça
+ortaya çıkar.
+
+| Amaç | Yöntem |
+|---|---|
+| Liste ekranları | `GetContractsPagedAsync` — filtre, arama ve sayfalama veritabanında |
+| Durum bazlı listeler (düzenleme/fesih/ihlal, bekleyen talepler) | `GetByStatusesAsync` |
+| Sözleşme seçici (Görüntüle ekranı) | `GetContractsForPickerAsync` — arama veritabanında, en fazla 30 sonuç |
+| Sayaçlar ve rozetler | `CountByStageAsync`, `CountByStatusesAsync` — kayıt çekilmez |
+| Excel'e aktarma | Sayfalanmaz (analiz için tüm eşleşenler gerekli) ama **10.000 satır** üst sınırı var |
 
 **Ondalık alanlar** `decimal(18,2)` olarak tanımlıdır:
 `Contracts.TotalAmount`, `ContractItems.UnitPrice`,
