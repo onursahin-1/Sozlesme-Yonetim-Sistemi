@@ -260,6 +260,8 @@ arayüzünün bir sahtesi var (`FakeContractRepository`, `FakeAttachmentReposito
 | `AuthServiceTests` | Giriş, hesap kilitleme |
 | `PasswordResetRequestTests` | "Şifremi unuttum" akışı |
 | `NotificationServiceTests` | Yaklaşan bitiş eşikleri ve tekrar engeli |
+| `AttachmentFileNameTests` | Ek dosyası adının diske yazılmadan temizlenmesi |
+| `MaintenanceServiceTests` | Bakım işinin kilit ve hata davranışı |
 
 Üç test grubu, "çıktıyı doğrula" kalıbının dışında bir şey ölçüyor:
 
@@ -273,6 +275,32 @@ arayüzünün bir sahtesi var (`FakeContractRepository`, `FakeAttachmentReposito
   mesajı vermesi ve bulunamayan kullanıcı adının da kaydedilmesi. Bunlar
   görünmeyen davranışlar; test edilmezse ileride biri "daha yardımcı" bir hata
   mesajı yazarak sessizce bozar.
+- **Bakım işi** — en kritik testi `Run_OnError_StillReleasesLock`: hata olsa bile
+  kilidin bırakılması gerekiyor. Bırakılmazsa iş, kilit süresi dolana kadar
+  (10 dk) askıda kalır ve bu da ekranda hiçbir belirti vermez.
 
-Kapsam dışı: `MaintenanceService` (kilit alma ve durum güncelleme) ile
-`Sys.UI` katmanı henüz test edilmiyor.
+Test projesi `Sys.Infrastructure`'a da referans veriyor ama **depo sınıfları
+test edilmiyor** — onlar veritabanı gerektirir. Yalnızca veritabanına dokunmayan
+saf yardımcılar (dosya adı temizleme) sınanıyor.
+
+Kapsam dışı: depo sınıfları ve `Sys.UI` katmanı.
+
+## Ek Dosyaları
+
+Yükleme üç aşamada doğrulanır:
+
+1. **Uzantı** — yalnızca pdf, docx, xlsx, jpg, png
+2. **Boyut** — en fazla 10 MB
+3. **Dosya imzası** — ilk baytlara bakılıp içeriğin gerçekten o tür olduğu
+   doğrulanır. Sadece uzantıya bakmak yetmez; bir dosya kolayca yeniden
+   adlandırılabilir (`zararli.exe` → `sozlesme.pdf`)
+
+Diske yazılacak ad ayrıca **temizlenir** (`SanitizeFileName`): geçersiz
+karakterler, yol ayırıcıları, Windows'un ayrılmış aygıt adları (`CON`, `PRN`,
+`COM1`…), sondaki nokta/boşluk ve aşırı uzun adlar. Ardından bir de hedef yolun
+sözleşme klasörünün içinde kaldığı doğrulanır — temizleyici ileride değişirse
+sessiz bir açık kalmasın diye ikinci bir savunma hattı.
+
+Kullanıcıya gösterilen ad (`Attachment.FileName`) değişmez; temizlik yalnızca
+dosya sistemindeki adı ilgilendirir. Böylece ekranda okunaklı ad korunurken
+diske güvenli yazılır.

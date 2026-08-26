@@ -44,11 +44,19 @@ doğrulama yaparlar ama yetki ve durum geçişi kararı servistedir.
    ```
    Update-Database
    ```
-4. Uygulama ilk çalıştırmada (yalnızca `Users` tablosu boşsa) `DbSeeder` ile üç
-   örnek hesap oluşturur: `personel`, `syb`, `mudur`.
+4. Örnek hesapları isterseniz `appsettings.Local.json` içine
+   `"EnableDevSeed": true` ekleyin. Bu satır olmadan **hiçbir hesap
+   oluşturulmaz** — paylaşılan bir kurulumda bilinen şifreli hesaplar
+   açılmasın diye varsayılan `false`.
 
-> **Admin hesabı seed edilmez.** Kullanıcı yönetimi ekranına erişmek için
-> veritabanında elle bir Admin kaydı oluşturulması gerekir (`Role = 3`).
+   Açıksa ve `Users` tablosu boşsa üç hesap oluşur: `personel`, `syb`, `mudur`.
+
+> **Admin hesabı hiçbir durumda seed edilmez.** Kullanıcı yönetimi ekranına
+> erişmek için veritabanında elle bir Admin kaydı oluşturulması gerekir
+> (`Role = 3`, `PasswordHash` bir BCrypt özeti olmalı).
+
+Migration'lar uygulama her açılışta otomatik olarak da çalışır
+(`Database.MigrateAsync`); 3. adım yalnızca ilk kurulumu hızlandırmak için.
 
 ## Roller
 

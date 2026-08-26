@@ -17,6 +17,13 @@
   <ItemGroup>
     <ProjectReference Include="..\Sys.Domain\Sys.Domain.csproj" />
     <ProjectReference Include="..\Sys.Services\Sys.Services.csproj" />
+
+    <!--
+      Altyapı katmanındaki saf yardımcılar (dosya adı temizleme gibi) için.
+      Depo sınıfları buradan test EDİLMİYOR — onlar veritabanı gerektirir;
+      yalnızca veritabanına dokunmayan yardımcılar sınanıyor.
+    -->
+    <ProjectReference Include="..\Sys.Infrastructure\Sys.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

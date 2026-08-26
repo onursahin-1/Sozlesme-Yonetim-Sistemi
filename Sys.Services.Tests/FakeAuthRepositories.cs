@@ -83,6 +83,37 @@ public class FakeNotificationRepository : INotificationRepository
     public Task<int> DeleteAllReadAsync(int userId) => Task.FromResult(0);
 }
 
+public class FakeScheduledJobRepository : IScheduledJobRepository
+{
+    // Gerçek depoda kilit tek bir koşullu UPDATE ile alınıyor; testte o kararı
+    // taklit etmek yerine sonucu doğrudan veriyoruz.
+    public bool CanAcquire { get; set; } = true;
+
+    public int EnsureCallCount { get; private set; }
+    public int AcquireCallCount { get; private set; }
+    public int ReleaseCallCount { get; private set; }
+    public string? LastResult { get; private set; }
+
+    public Task EnsureJobExistsAsync(string jobName)
+    {
+        EnsureCallCount++;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> TryAcquireAsync(string jobName, TimeSpan interval, TimeSpan lease, string owner)
+    {
+        AcquireCallCount++;
+        return Task.FromResult(CanAcquire);
+    }
+
+    public Task ReleaseAsync(string jobName, string? result)
+    {
+        ReleaseCallCount++;
+        LastResult = result;
+        return Task.CompletedTask;
+    }
+}
+
 public class FakeAuditLogRepository : IAuditLogRepository
 {
     public List<AuditLog> Logs { get; } = new();

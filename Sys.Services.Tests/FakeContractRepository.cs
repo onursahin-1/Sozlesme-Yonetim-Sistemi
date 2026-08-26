@@ -72,7 +72,17 @@ public class FakeContractRepository : IContractRepository
         return Task.CompletedTask;
     }
     public Task ApplyTerminationRequestAsync(Contract contract, ContractTermination termination, AuditLog auditLog) => Task.CompletedTask;
-    public Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold) => Task.FromResult(0);
+    // Bakım işi testleri için: kaç kaydın güncellendiği ve hata yolunun sınanması.
+    public int ReconcileResult { get; set; }
+    public bool ThrowOnReconcile { get; set; }
+    public int ReconcileCallCount { get; private set; }
+
+    public Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)
+    {
+        ReconcileCallCount++;
+        if (ThrowOnReconcile) throw new InvalidOperationException("veritabanına ulaşılamadı");
+        return Task.FromResult(ReconcileResult);
+    }
     public Task AddAuditLogAsync(AuditLog log) => Task.CompletedTask;
     public Task<List<string>> GetAuditLogUserOptionsAsync() => Task.FromResult(new List<string>());
 
