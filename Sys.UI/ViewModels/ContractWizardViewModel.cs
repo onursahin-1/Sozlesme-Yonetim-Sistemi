@@ -242,8 +242,8 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         IsLoading = true;
         try
         {
-            var all = await _contractService.GetContractsAsync(_currentUser);
-            PendingRequests = new ObservableCollection<Contract>(all.Where(c => c.Status == ContractStatus.Talep));
+            var pending = await _contractService.GetPendingRequestsAsync(_currentUser);
+            PendingRequests = new ObservableCollection<Contract>(pending);
         }
         catch (Exception ex)
         {

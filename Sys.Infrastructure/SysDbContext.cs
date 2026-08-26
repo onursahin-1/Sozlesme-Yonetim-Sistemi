@@ -75,7 +75,7 @@ public class SysDbContext : DbContext
             .IsUnique()
             .HasFilter("[ContractNo] IS NOT NULL");
 
-        // GetByStageAsync, ReconcileStatusesAsync ve dashboard/liste sorguları sık sık
+        // Onay kuyruğu, ReconcileStatusesAsync ve dashboard/liste sorguları sık sık
         // Status/Stage/EndDate üzerinden filtreliyor; şu ana kadar yalnızca foreign-key'ler
         // (örn. CreatedByUserId) ve Username için index vardı. Composite index, Personel
         // rolünün "kendi sözleşmelerim + belirli durumlar" sorgusunu (GetByStatusesAsync)

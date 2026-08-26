@@ -8,9 +8,8 @@ public class FakeContractRepository : IContractRepository
     public Contract? LastAppliedContract { get; private set; }
     public ApprovalLog? LastAppliedLog { get; private set; }
 
-    public Task<List<Contract>> GetAllAsync() => Task.FromResult(new List<Contract>());
-    public Task<List<Contract>> GetByCreatedUserAsync(int userId) => Task.FromResult(new List<Contract>());
-    public Task<List<Contract>> GetByStageAsync(int stage) => Task.FromResult(new List<Contract>());
+    public int StageCount { get; set; }
+    public Task<int> CountByStageAsync(int stage) => Task.FromResult(StageCount);
 
     public Task<List<Contract>> GetContractsForExportAsync(
         int? createdByUserId, ContractStatus[]? includeStatuses, ContractStatus[]? excludeStatuses,
@@ -26,6 +25,21 @@ public class FakeContractRepository : IContractRepository
 
     public Task<(string RefNo, DateTime? EndDate)?> GetRenewalSourceSummaryAsync(int id)
         => Task.FromResult<(string, DateTime?)?>(null);
+
+    // Seçici sorguları. Testlerde asıl ilgilenilen şey servisin hangi parametrelerle
+    // çağırdığı — özellikle Personel için kullanıcı kısıtının uygulanıp uygulanmadığı.
+    public int? LastPickerUserId { get; private set; }
+    public string? LastPickerSearchText { get; private set; }
+    public int LastPickerTake { get; private set; }
+    public List<Contract> PickerResult { get; set; } = new();
+
+    public Task<List<Contract>> GetContractsForPickerAsync(int? createdByUserId, string? searchText, int take)
+    {
+        LastPickerUserId = createdByUserId;
+        LastPickerSearchText = searchText;
+        LastPickerTake = take;
+        return Task.FromResult(PickerResult);
+    }
     public Task AddAsync(Contract contract) => Task.CompletedTask;
     public Task UpdateRequestAsync(Contract contract) => Task.CompletedTask;
 
@@ -66,8 +80,18 @@ public class FakeContractRepository : IContractRepository
         int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate, string? action = null)
         => Task.FromResult((new List<AuditLog>(), 0));
 
+    // Servisin sorguyu hangi durumlarla ve hangi kullanıcı kısıtıyla daralttığı
+    // testlerde doğrulanıyor: eskiden bu daraltma veritabanında değil bellekte
+    // yapılıyordu ve fark edilmiyordu.
+    public int? LastStatusQueryUserId { get; private set; }
+    public ContractStatus[]? LastStatusQueryStatuses { get; private set; }
+
     public Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
-        => Task.FromResult(new List<Contract>());
+    {
+        LastStatusQueryUserId = createdByUserId;
+        LastStatusQueryStatuses = statuses;
+        return Task.FromResult(new List<Contract>());
+    }
 
     public Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)
         => Task.FromResult(new Dictionary<ContractStatus, int>());
@@ -84,8 +108,6 @@ public class FakeContractRepository : IContractRepository
 
     public Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId)
         => Task.FromResult(new List<TypeCount>());
-
-    public Task<int> CountByStageAsync(int stage) => Task.FromResult(0);
 
     public Task<int> CountByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses)
         => Task.FromResult(0);

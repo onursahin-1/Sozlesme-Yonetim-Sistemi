@@ -4,8 +4,6 @@ namespace Sys.Services;
 
 public interface IContractRepository
 {
-    Task<List<Contract>> GetAllAsync();
-    Task<List<Contract>> GetByCreatedUserAsync(int userId);
     Task AddAsync(Contract contract);
     Task UpdateRequestAsync(Contract contract);
     Task FinalizeCreationAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, AuditLog auditLog);
@@ -20,7 +18,6 @@ public interface IContractRepository
     Task ApplyDecisionAsync(Contract contract, ApprovalLog log, AuditLog auditLog,
                             ContractRevision? resolvedRevision = null,
                             ContractTermination? resolvedTermination = null);
-    Task<List<Contract>> GetByStageAsync(int stage);
 
     // Onay kuyruğu için sayfalanmış hâli; en eski bekleyen üstte.
     Task<(List<Contract> Items, int TotalCount)> GetByStagePagedAsync(int stage, int page, int pageSize);
@@ -37,6 +34,9 @@ public interface IContractRepository
     Task<(List<AuditLog> Items, int TotalCount)> GetAuditLogsPagedAsync(
         int page, int pageSize, string? userText, DateTime? startDate, DateTime? endDate, string? action = null);
     Task<List<Contract>> GetByStatusesAsync(int? createdByUserId, params ContractStatus[] statuses);
+
+    // Sözleşme seçici: aramayı veritabanına taşıyıp yalnızca ilk "take" kaydı döner.
+    Task<List<Contract>> GetContractsForPickerAsync(int? createdByUserId, string? searchText, int take);
     Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId);
 
     // --- Gösterge paneli toplamları ---

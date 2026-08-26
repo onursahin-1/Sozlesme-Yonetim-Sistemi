@@ -59,17 +59,10 @@ public class ContractRepository : IContractRepository
         }
     }
 
-    public async Task<List<Contract>> GetAllAsync()
-    {
-        using var db = DbConnectionFactory.CreateContext(_connectionString);
-        return await db.Contracts.AsNoTracking().ToListAsync();
-    }
-
-    public async Task<List<Contract>> GetByCreatedUserAsync(int userId)
-    {
-        using var db = DbConnectionFactory.CreateContext(_connectionString);
-        return await db.Contracts.AsNoTracking().Where(c => c.CreatedByUserId == userId).ToListAsync();
-    }
+    // GetAllAsync ve GetByCreatedUserAsync burada duruyordu; ikisi de sınır olmadan
+    // sözleşme tablosunun tamamını çekiyordu. Tek çağıranları kaldırıldıktan sonra
+    // silindiler — dururlarsa er ya da geç yeniden kullanılırlar.
+    // Yerlerine: GetContractsPagedAsync, GetByStatusesAsync, GetContractsForPickerAsync.
 
     public async Task<Contract?> GetByIdWithDetailsAsync(int id)
     {
@@ -252,11 +245,9 @@ public class ContractRepository : IContractRepository
         await SaveWithConcurrencyCheckAsync(db);
     }
 
-    public async Task<List<Contract>> GetByStageAsync(int stage)
-    {
-        using var db = DbConnectionFactory.CreateContext(_connectionString);
-        return await db.Contracts.AsNoTracking().Where(c => c.Stage == stage).ToListAsync();
-    }
+    // Aşamaya göre sayım için CountByStageAsync kullanılıyor (gösterge paneli
+    // bölümünde). Buradaki GetByStageAsync kayıtların TAMAMINI çekiyordu ve tek
+    // çağıranı sol menüdeki rozetti — yalnızca bir sayı göstermek için.
 
     // Onay kuyruğu, diğer listelerin aksine tüm kayıtları tek seferde çekiyordu.
     // En eski bekleyen üstte: onay kuyruğunda sıra beklemede kalma süresine göre
@@ -289,6 +280,24 @@ public class ContractRepository : IContractRepository
         if (createdByUserId.HasValue)
             query = query.Where(c => c.CreatedByUserId == createdByUserId.Value);
         return await query.ToListAsync();
+    }
+
+    // Sözleşme seçici listesi (Görüntüle ekranındaki açılır kutu).
+    //
+    // Eskiden bu kutu TÜM sözleşmeleri belleğe çekiyordu; kayıt sayısı arttıkça
+    // ekranın açılışı yavaşlıyordu ve kullanıcı yüzlerce satır arasında kaydırarak
+    // arıyordu. Artık aynı arama ifadesi veritabanına gidiyor ve yalnızca ilk
+    // "take" kadar sonuç dönüyor. Sıralama en yeniden eskiye: arama yokken
+    // kullanıcının aradığı sözleşme büyük ihtimalle son girilenlerden biridir.
+    public async Task<List<Contract>> GetContractsForPickerAsync(int? createdByUserId, string? searchText, int take)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        return await BuildContractQuery(db, createdByUserId, null, null, searchText)
+            .OrderByDescending(c => c.CreatedAt)
+            .ThenByDescending(c => c.Id)
+            .Take(take)
+            .ToListAsync();
     }
 
     public async Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)

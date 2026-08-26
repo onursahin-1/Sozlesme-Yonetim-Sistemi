@@ -100,11 +100,37 @@ public class ContractService
         };
         await _contracts.AddAuditLogAsync(log);
     }
-    public async Task<List<Contract>> GetContractsAsync(User currentUser)
+    // NOT: Burada eskiden GetContractsAsync vardı — kullanıcının TÜM sözleşmelerini
+    // sınırsız çekiyordu ve iki ekran onu kullanıyordu. İkisi de daraltılmış
+    // sorgulara geçirildikten sonra metot kaldırıldı; depodaki GetAllAsync ve
+    // GetByCreatedUserAsync de onunla birlikte gitti.
+    //
+    // Bilerek silindi: dururken "hazır varmış" diye yeniden kullanılırdı. Kayıt
+    // sayısı arttıkça ısıran, ama az veriyle test edilirken hiç fark edilmeyen
+    // türden bir sorun.
+
+    // "Sözleşme Yarat" sihirbazının bekleyen talep listesi.
+    //
+    // Eskiden bu ekran GetContractsAsync ile TÜM sözleşmeleri çekip bellekte
+    // "Status == Talep" diye süzüyordu. 500 sözleşmelik bir veritabanında 495'i
+    // boşuna geliyordu; üstelik süzme veritabanında değil istemcide yapıldığı için
+    // durum indeksi de hiç kullanılmıyordu.
+    public async Task<List<Contract>> GetPendingRequestsAsync(User currentUser)
     {
-        return currentUser.Role == UserRole.Personel
-            ? await _contracts.GetByCreatedUserAsync(currentUser.Id)
-            : await _contracts.GetAllAsync();
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetByStatusesAsync(userId, ContractStatus.Talep);
+    }
+
+    // Seçici listede en fazla kaç kayıt gösterilir. Açılır kutuda kaydırarak
+    // gezilebilecek makul bir üst sınır; fazlası zaten aramayla daraltılmalı.
+    public const int PickerResultLimit = 30;
+
+    // "Sözleşmeleri Görüntüle" ekranındaki seçici. Arama veritabanında yapılıyor;
+    // eskiden tüm sözleşmeler belleğe çekilip kullanıcı kaydırarak arıyordu.
+    public async Task<List<Contract>> GetContractPickerAsync(User currentUser, string? searchText)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetContractsForPickerAsync(userId, searchText, PickerResultLimit);
     }
 
     // Gösterge panelinin tamamını tek çağrıda doldurur. Kutu başına ayrı servis
@@ -809,16 +835,21 @@ public class ContractService
         }
     }
 
-    public async Task<List<Contract>> GetPendingApprovalsAsync(User currentUser)
+    // Kullanıcının onay kuyruğu hangi aşamaya bakıyor? Rol dışındakiler için -1.
+    private static int ApprovalStageFor(User currentUser) => currentUser.Role switch
     {
-        int stage = currentUser.Role switch
-        {
-            UserRole.SYB => 1,
-            UserRole.Mudur => 2,
-            _ => -1
-        };
-        if (stage == -1) return new List<Contract>();
-        return await _contracts.GetByStageAsync(stage);
+        UserRole.SYB => 1,
+        UserRole.Mudur => 2,
+        _ => -1
+    };
+
+    // Sol menüdeki rozet için yalnızca SAYI gerekiyor. Eskiden bekleyen sözleşmelerin
+    // tamamı çekilip .Count alınıyordu; rozet her yenilendiğinde bütün kayıtlar
+    // ağdan geçiyordu.
+    public async Task<int> GetPendingApprovalCountAsync(User currentUser)
+    {
+        var stage = ApprovalStageFor(currentUser);
+        return stage == -1 ? 0 : await _contracts.CountByStageAsync(stage);
     }
 
     // Onay kuyruğunun sayfalanmış hâli. Diğer listeler sayfalanırken bu ekran tüm
@@ -826,12 +857,7 @@ public class ContractService
     public async Task<(List<Contract> Items, int TotalCount)> GetPendingApprovalsPagedAsync(
         User currentUser, int page, int pageSize)
     {
-        int stage = currentUser.Role switch
-        {
-            UserRole.SYB => 1,
-            UserRole.Mudur => 2,
-            _ => -1
-        };
+        var stage = ApprovalStageFor(currentUser);
         if (stage == -1) return (new List<Contract>(), 0);
         return await _contracts.GetByStagePagedAsync(stage, page, pageSize);
     }

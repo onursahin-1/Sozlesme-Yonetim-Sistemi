@@ -367,6 +367,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
             }
 
             PendingContracts = new ObservableCollection<Contract>(list);
+            NotifyAdvanceLabels();
         }
         catch (Exception ex)
         {
@@ -554,12 +555,19 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         IsBusy = true;
         try
         {
+            // Karar verilen sözleşme kuyruktan çıkacak; yerine geçecek kaydı bulmak
+            // için önce sıradaki konumu not ediyoruz.
+            var decidedTitle = Detail.Title;
+            var decidedIndex = IndexOfSelectedInQueue();
+
             await _contractService.DecideApprovalAsync(Detail, _currentUser, decision, string.IsNullOrWhiteSpace(Note) ? null : Note);
-            SuccessMessage = decision == ApprovalDecision.Onay ? "Sözleşme onaylandı." : "Sözleşme reddedildi.";
+
             ErrorMessage = string.Empty;
             SelectedContract = null;
             await LoadQueueAsync();
             DecisionMade?.Invoke();
+
+            AdvanceToNext(decision, decidedTitle, decidedIndex);
         }
         catch (Exception ex)
         {
@@ -571,6 +579,73 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
             IsBusy = false;
         }
     }
+    // --- Karardan sonra sıradakine geçme ---
+    //
+    // Eskiden karar verilince seçim temizleniyor ve kullanıcı listeye dönüyordu;
+    // sıradaki sözleşmeyi elle bulup tıklaması gerekiyordu. Kuyrukta 20 kayıt varken
+    // bu 20 kez tekrarlanan boş bir gezinme adımıydı.
+    //
+    // Kontrol listesine DOKUNULMUYOR: her sözleşme için yeniden karşıya çıkıyor,
+    // hiçbir madde atlanmıyor. Kaldırılan tek şey aradaki gezinme.
+
+    // Buton metni davranışı önceden söylüyor. Kuyrukta tek kayıt kaldığında ya da
+    // tek bir sözleşme için yönlendirilerek gelindiğinde geçilecek bir "sıradaki"
+    // yok; metnin o durumda da öyle demesi kullanıcıyı yanıltırdı.
+    public bool WillAdvanceAfterDecision => !ShowBackButton && PendingContracts.Count > 1;
+
+    public string ApproveButtonText => WillAdvanceAfterDecision ? "Onayla ve Sıradakine Geç" : "Onayla";
+    public string RejectButtonText => WillAdvanceAfterDecision ? "Reddet ve Sıradakine Geç" : "Reddet";
+
+    private void NotifyAdvanceLabels()
+    {
+        OnPropertyChanged(nameof(WillAdvanceAfterDecision));
+        OnPropertyChanged(nameof(ApproveButtonText));
+        OnPropertyChanged(nameof(RejectButtonText));
+    }
+
+    private int IndexOfSelectedInQueue()
+    {
+        if (SelectedContract is null) return -1;
+        for (var i = 0; i < PendingContracts.Count; i++)
+            if (PendingContracts[i].Id == SelectedContract.Id) return i;
+        return -1;
+    }
+
+    private void AdvanceToNext(ApprovalDecision decision, string decidedTitle, int decidedIndex)
+    {
+        var verb = decision == ApprovalDecision.Onay ? "onaylandı" : "reddedildi";
+
+        // Başka bir ekrandan ("Son Kontrol'e Git") tek bir sözleşme için gelindiyse
+        // sıradakine geçilmiyor: kullanıcı kuyruğu işlemeye değil o kaydı halletmeye
+        // geldi, ilgisiz bir sözleşmenin karşısına çıkması şaşırtıcı olurdu.
+        //
+        // Ayrıca o durumda seçili sözleşme kuyruk listesinde hiç bulunmayabiliyor
+        // (yönlendirme kaydı doğrudan veriyor); konum -1 kalır ve "sıradaki" diye
+        // listenin başındaki alakasız kayıt açılırdı.
+        if (ShowBackButton || decidedIndex < 0)
+        {
+            SuccessMessage = $"\"{decidedTitle}\" {verb}.";
+            return;
+        }
+
+        if (PendingContracts.Count == 0)
+        {
+            SuccessMessage = $"\"{decidedTitle}\" {verb}. Kuyrukta bekleyen başka sözleşme kalmadı.";
+            return;
+        }
+
+        // Karar verilen kayıt listeden düştüğü için, onun bulunduğu konumda artık
+        // SIRADAKİ sözleşme duruyor. Listenin sonundaydıysa (ya da sayfa küçüldüyse)
+        // son kayda geçiliyor — kuyruk boşalana kadar hep bir sonrakine ilerlenir.
+        var next = PendingContracts[Math.Min(decidedIndex, PendingContracts.Count - 1)];
+
+        // Bu atama OnSelectedContractChanged'i tetikliyor ve orası SuccessMessage'ı
+        // temizliyor; bu yüzden mesaj SONRA yazılmalı.
+        SelectedContract = next;
+
+        SuccessMessage = $"\"{decidedTitle}\" {verb}. Sıradaki sözleşme açıldı: {next.Title}";
+    }
+
     [RelayCommand]
     private void OpenAttachment(Attachment attachment)
     {

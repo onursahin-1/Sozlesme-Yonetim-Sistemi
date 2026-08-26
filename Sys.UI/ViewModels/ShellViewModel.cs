@@ -488,8 +488,7 @@ public partial class ShellViewModel : ViewModelBase
 
         try
         {
-            var pending = await _contractService.GetPendingApprovalsAsync(CurrentUser);
-            navItem.Count = pending.Count;
+            navItem.Count = await _contractService.GetPendingApprovalCountAsync(CurrentUser);
         }
         catch
         {

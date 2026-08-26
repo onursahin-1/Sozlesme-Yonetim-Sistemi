@@ -479,7 +479,7 @@
 						<Button Classes="flat" HorizontalAlignment="Stretch"
 								Click="OnApproveClick" IsEnabled="{Binding AllChecked}">
 							<Border Background="#16A34A" CornerRadius="9" Padding="18,12">
-								<TextBlock Text="Onayla" Foreground="White" FontSize="13"
+								<TextBlock Text="{Binding ApproveButtonText}" Foreground="White" FontSize="13"
 										   FontWeight="SemiBold" HorizontalAlignment="Center"/>
 							</Border>
 						</Button>
@@ -491,7 +491,7 @@
 						<Button Classes="flat" HorizontalAlignment="Stretch" Click="OnRejectClick">
 							<Border Background="White" BorderBrush="#E5A8A0" BorderThickness="1"
 									CornerRadius="9" Padding="18,11">
-								<TextBlock Text="Reddet" Foreground="#A32D2D" FontSize="13"
+								<TextBlock Text="{Binding RejectButtonText}" Foreground="#A32D2D" FontSize="13"
 										   FontWeight="SemiBold" HorizontalAlignment="Center"/>
 							</Border>
 						</Button>

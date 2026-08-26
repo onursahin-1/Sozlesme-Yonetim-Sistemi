@@ -51,20 +51,33 @@
 				-->
 				<StackPanel Grid.Column="1" Spacing="6">
 					<TextBlock Classes="summaryLabel" Text="GÖRÜNTÜLENEN SÖZLEŞME"/>
-					<ComboBox HorizontalAlignment="Stretch" FontSize="14" Padding="14,11"
-							  ItemsSource="{Binding AvailableContracts}"
-							  SelectedItem="{Binding SelectedContract}"
-							  PlaceholderText="Listeden bir sözleşme seçin...">
-						<ComboBox.ItemTemplate>
-							<DataTemplate x:DataType="domain:Contract">
-								<TextBlock TextTrimming="CharacterEllipsis" FontSize="14">
-									<Run Text="{Binding Title}"/>
-									<Run Text="  ·  " Foreground="#A3ABB8"/>
-									<Run Text="{Binding CompanyName}" Foreground="#8A94A6"/>
-								</TextBlock>
-							</DataTemplate>
-						</ComboBox.ItemTemplate>
-					</ComboBox>
+
+					<!--
+					  Arama kutusu açılır listenin YANINDA, içinde değil: liste artık
+					  tüm sözleşmeleri değil aramaya uyan ilk kayıtları getiriyor, bu
+					  yüzden arama listeyi açmadan önce yapılabilmeli.
+					-->
+					<Grid ColumnDefinitions="220,*" ColumnSpacing="10">
+						<TextBox Grid.Column="0" Text="{Binding PickerSearchText}"
+								 FontSize="13" Padding="12,11" CornerRadius="8"
+								 BorderBrush="#DFE5EE" Background="#FBFCFE"
+								 Watermark="Ara: no, başlık, firma"/>
+
+						<ComboBox Grid.Column="1" HorizontalAlignment="Stretch" FontSize="14" Padding="14,11"
+								  ItemsSource="{Binding AvailableContracts}"
+								  SelectedItem="{Binding SelectedContract}"
+								  PlaceholderText="Listeden bir sözleşme seçin...">
+							<ComboBox.ItemTemplate>
+								<DataTemplate x:DataType="domain:Contract">
+									<TextBlock TextTrimming="CharacterEllipsis" FontSize="14">
+										<Run Text="{Binding Title}"/>
+										<Run Text="  ·  " Foreground="#A3ABB8"/>
+										<Run Text="{Binding CompanyName}" Foreground="#8A94A6"/>
+									</TextBlock>
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
+					</Grid>
 				</StackPanel>
 
 				<!--

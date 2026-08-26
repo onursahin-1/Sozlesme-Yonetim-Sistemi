@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -162,8 +163,55 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         if (initialContract is not null)
         {
             var match = AvailableContracts.FirstOrDefault(c => c.Id == initialContract.Id);
+
+            // Liste artık sınırlı sayıda kayıt getiriyor; yönlendirilerek gelinen
+            // sözleşme ilk sonuçlar arasında olmayabilir. Listeye eklenmezse
+            // ComboBox'ta seçili görünmez ve kullanıcı hangi sözleşmeye baktığını
+            // üstteki kutudan okuyamazdı.
+            if (match is null) AvailableContracts.Insert(0, initialContract);
+
             SelectedContract = match ?? initialContract;
         }
+    }
+
+    // --- Sözleşme seçici ---
+    //
+    // Eskiden bu liste TÜM sözleşmeleri belleğe çekiyordu ve kullanıcı yüzlerce satır
+    // arasında kaydırarak arıyordu. Artık arama veritabanına gidiyor ve yalnızca ilk
+    // PickerResultLimit kadar sonuç geliyor.
+
+    [ObservableProperty]
+    public partial string PickerSearchText { get; set; } = string.Empty;
+
+    partial void OnPickerSearchTextChanged(string value) => DebouncedReloadList();
+
+    private CancellationTokenSource? _searchDebounceCts;
+
+    private void DebouncedReloadList()
+    {
+        _searchDebounceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+
+        // Task.Run KULLANILMIYOR: bu metot UI thread'inde çağrıldığı için await sonrası
+        // da UI thread'ine dönülür. Arka plana atılsaydı ObservableProperty'leri UI
+        // thread'i dışından güncellemiş olurduk ve Avalonia hata fırlatırdı.
+        _ = DelayThenReloadListAsync(cts.Token);
+    }
+
+    private async Task DelayThenReloadListAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(350, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return; // kullanıcı yazmaya devam etti
+        }
+
+        if (token.IsCancellationRequested) return;
+        await LoadListAsync();
     }
 
     private async Task LoadListAsync()
@@ -171,8 +219,16 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         ErrorMessage = string.Empty;
         try
         {
-            var contracts = await _contractService.GetContractsAsync(_currentUser);
-            AvailableContracts = new ObservableCollection<Contract>(contracts);
+            var items = await _contractService.GetContractPickerAsync(_currentUser, PickerSearchText);
+
+            // Seçili sözleşme arama sonucunun dışında kalabilir; o kayıt listeden
+            // düşerse ComboBox seçimi kendiliğinden temizlenir ve ekranın altındaki
+            // künye boşalırdı. Kullanıcı yalnızca arama kutusuna yazmışken
+            // görüntülediği sözleşmenin kaybolması beklenmedik olur.
+            if (SelectedContract is { } selected && items.All(c => c.Id != selected.Id))
+                items.Insert(0, selected);
+
+            AvailableContracts = new ObservableCollection<Contract>(items);
         }
         catch (Exception ex)
         {
