@@ -130,12 +130,19 @@
 								<Border Grid.Column="0" Width="3" CornerRadius="2"
 										Background="#A32D2D" Margin="0,2,14,2"/>
 								<StackPanel Grid.Column="1" Spacing="3">
-									<TextBlock Classes="display" Text="{Binding Ihlal}"
+									<!--
+									  Kart artık SÖZLEŞME değil AÇIK İHLAL sayısını gösteriyor:
+									  bir sözleşmede birden fazla açık ihlal olabilir ve kart "1"
+									  derken aslında üç iş bekliyor olabilirdi. Alt satır kaç
+									  sözleşmeye yayıldığını söylüyor.
+									-->
+									<TextBlock Classes="display" Text="{Binding OpenViolations}"
 											   FontSize="34" FontWeight="SemiBold" Foreground="#A32D2D"
 											   LetterSpacing="-0.5"/>
-									<TextBlock Text="İhlal" FontSize="12.5" FontWeight="SemiBold"
+									<TextBlock Text="Açık İhlal" FontSize="12.5" FontWeight="SemiBold"
 											   Foreground="#3D4654"/>
-									<TextBlock Text="bildirilmiş ihlal" FontSize="10.5" Foreground="#9CA3AF"/>
+									<TextBlock Text="{Binding IhlalSubtitle}" FontSize="10.5"
+											   Foreground="#9CA3AF" TextWrapping="Wrap"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -166,6 +173,17 @@
 															   Foreground="#1A2E4A"/>
 													<TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#8A94A6"
 															   TextWrapping="Wrap"/>
+													<!--
+													  Bekleme süresi: "12 iş bekliyor" ile "12 iş
+													  bekliyor, en eskisi 21 gündür" arasında dağlar
+													  kadar fark var. İlki liste uzunluğu, ikincisi
+													  gecikme uyarısı.
+													-->
+													<TextBlock Text="{Binding WaitingText}" FontSize="10.5"
+															   FontWeight="SemiBold"
+															   Foreground="{Binding WaitingColorHex}"
+															   IsVisible="{Binding HasWaitingInfo}"
+															   Margin="0,2,0,0"/>
 												</StackPanel>
 												<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
 															VerticalAlignment="Center">
@@ -236,44 +254,32 @@
 
 				</Grid>
 
-				<!-- İki sütun: solda bitiş takvimi + tür dağılımı, sağda yaklaşan bitişler -->
+				<!--
+				  Bitiş takvimi (30/60/90) kaldırıldı: "Bitiş Uyarısı" kartı ve aşağıdaki
+				  liste zaten aynı bilgiyi veriyordu, takvim üçüncü tekrardı. 60/90 günlük
+				  dilimler de bugün yapılacak bir işe karşılık gelmiyordu.
+				-->
 				<Grid ColumnDefinitions="340,*" ColumnSpacing="14">
 
-					<StackPanel Grid.Column="0" Spacing="14">
-
-						<Border Classes="card" IsVisible="{Binding ShowPortfolioStats}">
-							<StackPanel Spacing="12">
-								<TextBlock Classes="cardTitle" Text="BİTİŞ TAKVİMİ"/>
-								<TextBlock Text="Önümüzdeki 90 günde biten sözleşme yok." FontSize="12"
-										   Foreground="#9CA3AF" TextWrapping="Wrap" IsVisible="{Binding !HasEndings}"/>
-
-								<StackPanel Spacing="10" IsVisible="{Binding HasEndings}">
-									<Grid ColumnDefinitions="*,Auto">
-										<TextBlock Grid.Column="0" Text="0 – 30 gün" FontSize="12.5" Foreground="#4B5563"/>
-										<TextBlock Grid.Column="1" Text="{Binding Ending30}" FontSize="14"
-												   FontWeight="Bold" Foreground="#B06A00"/>
-									</Grid>
-									<Grid ColumnDefinitions="*,Auto">
-										<TextBlock Grid.Column="0" Text="31 – 60 gün" FontSize="12.5" Foreground="#4B5563"/>
-										<TextBlock Grid.Column="1" Text="{Binding Ending60}" FontSize="14"
-												   FontWeight="Bold" Foreground="#8A94A6"/>
-									</Grid>
-									<Grid ColumnDefinitions="*,Auto">
-										<TextBlock Grid.Column="0" Text="61 – 90 gün" FontSize="12.5" Foreground="#4B5563"/>
-										<TextBlock Grid.Column="1" Text="{Binding Ending90}" FontSize="14"
-												   FontWeight="Bold" Foreground="#8A94A6"/>
-									</Grid>
-								</StackPanel>
-							</StackPanel>
-						</Border>
-
-						<Border Classes="card" IsVisible="{Binding HasTypeBreakdown}">
-							<StackPanel Spacing="12">
-								<TextBlock Classes="cardTitle" Text="TÜR DAĞILIMI"/>
-								<ItemsControl ItemsSource="{Binding TypeBreakdown}">
-									<ItemsControl.ItemTemplate>
-										<DataTemplate x:DataType="vm:TypeBreakdownRowViewModel">
-											<StackPanel Spacing="4" Margin="0,0,0,10">
+					<!--
+					  Tür dağılımı artık TIKLANABİLİR: bir türe basınca sözleşme listesi
+					  o türe filtrelenmiş olarak açılıyor. Eskiden yalnızca sayı
+					  gösteriyordu ve hiçbir aksiyona bağlanmıyordu.
+					-->
+					<Border Grid.Column="0" Classes="card" VerticalAlignment="Top"
+							IsVisible="{Binding HasTypeBreakdown}">
+						<StackPanel Spacing="12">
+							<TextBlock Classes="cardTitle" Text="TÜR DAĞILIMI"/>
+							<ItemsControl ItemsSource="{Binding TypeBreakdown}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:TypeBreakdownRowViewModel">
+										<Button Classes="flat" HorizontalAlignment="Stretch"
+												HorizontalContentAlignment="Stretch" Margin="0,0,0,8"
+												ToolTip.Tip="Bu türdeki sözleşmeleri listele"
+												IsEnabled="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).TypeRowsClickable}"
+												Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenTypeCommand}"
+												CommandParameter="{Binding}">
+											<StackPanel Spacing="4">
 												<Grid ColumnDefinitions="*,Auto">
 													<TextBlock Grid.Column="0" Text="{Binding Type}" FontSize="12"
 															   Foreground="#4B5563"/>
@@ -287,13 +293,12 @@
 															Width="{Binding BarRatio, Converter={x:Static vm:RatioToWidthConverter.Instance}, ConverterParameter=280}"/>
 												</Border>
 											</StackPanel>
-										</DataTemplate>
-									</ItemsControl.ItemTemplate>
-								</ItemsControl>
-							</StackPanel>
-						</Border>
-
-					</StackPanel>
+										</Button>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</StackPanel>
+					</Border>
 
 					<StackPanel Grid.Column="1" Spacing="14">
 
@@ -322,9 +327,28 @@
 																<Run Text="{Binding CompanyName}"/>
 															</TextBlock>
 														</StackPanel>
-														<TextBlock Grid.Column="1" Text="{Binding GunKalanText}"
-																   FontSize="11.5" FontWeight="SemiBold"
-																   Foreground="#B06A00" VerticalAlignment="Center"/>
+														<StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center"
+																	HorizontalAlignment="Right">
+															<TextBlock Text="{Binding GunKalanText}"
+																	   FontSize="11.5" FontWeight="SemiBold"
+																	   Foreground="#B06A00"
+																	   HorizontalAlignment="Right"/>
+
+															<!--
+															  Yenileme rozeti YALNIZCA yenilenmişlerde çıkar.
+															  "Yenilenmedi" rozeti de denendi ama listedeki her
+															  satırda kırmızı bir etiket belirdiği için gürültü
+															  yapıyordu; rozetin yokluğu zaten "yenilenmedi"
+															  anlamına geliyor.
+															-->
+															<Border Background="#EAF4EC" BorderBrush="#C3DFC9"
+																	BorderThickness="1" CornerRadius="9"
+																	Padding="8,2" HorizontalAlignment="Right"
+																	IsVisible="{Binding IsRenewed}">
+																<TextBlock Text="Yenilendi" FontSize="10"
+																		   FontWeight="SemiBold" Foreground="#2E6B3E"/>
+															</Border>
+														</StackPanel>
 													</Grid>
 												</Border>
 											</Button>

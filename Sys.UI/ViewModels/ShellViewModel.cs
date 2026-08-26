@@ -464,14 +464,15 @@ public partial class ShellViewModel : ViewModelBase
     // özellikle istenmediyse önbellekteki mevcut liste (filtre/arama durumuyla birlikte)
     // döndürülür; istendiyse (örn. dashboard kartından) yeni bir liste oluşturulup
     // önbelleğin yerini alır.
-    private ContractListViewModel GetOrCreateContractListViewModel(string? initialFilter = null)
+    private ContractListViewModel GetOrCreateContractListViewModel(string? initialFilter = null, string? initialType = null)
     {
         var key = ListNavInfo.Key;
 
-        if (initialFilter is null && _pageCache.TryGetValue(key, out var cached) && cached is ContractListViewModel cachedList)
+        if (initialFilter is null && initialType is null
+            && _pageCache.TryGetValue(key, out var cached) && cached is ContractListViewModel cachedList)
             return cachedList;
 
-        var vm = CreateContractListViewModel(initialFilter);
+        var vm = CreateContractListViewModel(initialFilter, initialType);
         _pageCache[key] = vm;
         return vm;
     }
@@ -512,9 +513,9 @@ public partial class ShellViewModel : ViewModelBase
         return vm;
     }
 
-    private ContractListViewModel CreateContractListViewModel(string? initialFilter = null)
+    private ContractListViewModel CreateContractListViewModel(string? initialFilter = null, string? initialType = null)
     {
-        var vm = new ContractListViewModel(_contractService!, CurrentUser, initialFilter);
+        var vm = new ContractListViewModel(_contractService!, CurrentUser, initialFilter, initialType);
         vm.EditRequested += OnEditRequested;
         vm.ViewDetailsRequested += OnViewDetailsRequested;
         vm.ContractCreationRequested += OnContractCreationRequested;
@@ -529,6 +530,7 @@ public partial class ShellViewModel : ViewModelBase
         vm.FilterCardClicked += OnDashboardFilterClicked;
         vm.QuickActionClicked += OnDashboardQuickActionClicked;
         vm.UpcomingContractClicked += OnDashboardContractOpened;
+        vm.TypeClicked += OnDashboardTypeClicked;
         return vm;
     }
 
@@ -537,6 +539,22 @@ public partial class ShellViewModel : ViewModelBase
     // nerede olduğunu görsün ve dashboard'a dönmek istediğinde menüden bulabilsin.
     // Müdür rolünde genel bir "tüm sözleşmeler" listesi olmadığından yalnızca
     // "Onay Bekliyor" kartı (var olan Onay Bekleyenler ekranına) çalışır.
+    // Tür dağılımından bir türe tıklandığında sözleşme listesi o türe filtrelenmiş
+    // açılır. Durum filtresi "tümü" kalır: kullanıcı o türdeki HER sözleşmeyi
+    // görmek istiyor, yalnızca yürürlükte olanları değil.
+    //
+    // Müdür için bu ekran yok (genel sözleşme listesi yalnızca Personel ve SYB'de),
+    // bu yüzden panelde de tür kutusu ona bir yere gitmez — tıklama sessizce geçer.
+    private void OnDashboardTypeClicked(string type)
+    {
+        var (key, title) = ListNavInfo;
+        if (CurrentUser.Role is not (UserRole.Personel or UserRole.SYB)) return;
+
+        SetSelectedNavItemSilently(key);
+        CurrentPageTitle = title;
+        CurrentPageContent = GetOrCreateContractListViewModel(initialType: type);
+    }
+
     private void OnDashboardFilterClicked(string filterKey)
     {
         switch (CurrentUser.Role)

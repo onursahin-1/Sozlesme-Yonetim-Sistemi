@@ -262,6 +262,7 @@ arayüzünün bir sahtesi var (`FakeContractRepository`, `FakeAttachmentReposito
 | `NotificationServiceTests` | Yaklaşan bitiş eşikleri ve tekrar engeli |
 | `AttachmentFileNameTests` | Ek dosyası adının diske yazılmadan temizlenmesi |
 | `MaintenanceServiceTests` | Bakım işinin kilit ve hata davranışı |
+| `DashboardTests` | Panel göstergelerinin neyi saydığı |
 
 Üç test grubu, "çıktıyı doğrula" kalıbının dışında bir şey ölçüyor:
 
@@ -284,6 +285,61 @@ test edilmiyor** — onlar veritabanı gerektirir. Yalnızca veritabanına dokun
 saf yardımcılar (dosya adı temizleme) sınanıyor.
 
 Kapsam dışı: depo sınıfları ve `Sys.UI` katmanı.
+
+## Gösterge Paneli
+
+Panel tek bir servis çağrısıyla doldurulur (`GetDashboardSummaryAsync`); kutu
+başına ayrı çağrı hem yavaş olur hem de ekran parça parça dolardı. Sorguların
+hepsi veritabanı tarafında sayı/özet döner, sözleşme kayıtları belleğe çekilmez.
+
+Panelin ölçüsü **aksiyona dönüp dönmediği**. Bu ölçüyle iki kutu değişti:
+
+- **Bitiş takvimi (30/60/90) kaldırıldı.** "Bitiş Uyarısı" kartı ve "Yaklaşan
+  Bitişler" listesi zaten aynı bilgiyi veriyordu; takvim üçüncü tekrardı. 60 ve
+  90 günlük dilimler de bugün yapılacak bir işe karşılık gelmiyordu.
+- **Tür dağılımı tıklanabilir oldu.** Eskiden yalnızca sayı gösteriyordu ve
+  hiçbir yere gitmiyordu. Artık bir türe basınca sözleşme listesi o türe
+  filtrelenmiş açılır. Bunun için tür filtresi uçtan uca eklendi (sorgu, servis,
+  liste ekranındaki açılır seçici). Müdür'de genel sözleşme listesi ekranı
+  olmadığı için satırlar orada tıklanamaz kalır.
+
+Üç gösterge, "neyi saydığı" düzeltilerek eklendi:
+
+| Gösterge | Eskiden | Şimdi |
+|---|---|---|
+| İhlal kartı | Durumu `Ihlal` olan **sözleşme** sayısı | **Açık ihlal adedi** — bir sözleşmede birden fazla açık ihlal olabilir |
+| | | (yalnızca yürürlükteki sözleşmelerde) |
+| Yaklaşan bitişler | Yalnızca sözleşme ve kalan gün | Ayrıca **yenilenmiş mi** rozeti |
+| Sizi bekleyen işler | Yalnızca adet | Ayrıca **en eskisi kaç gündür bekliyor** |
+
+Yenileme rozeti ayrı bir sorgudan gelir: bağlantı ters yönde tutuluyor (yeni
+kayıt eskisini işaret ediyor), bu yüzden "bu sözleşme yenilendi mi" sorusu
+sözleşmenin kendisinden okunamıyor. Sorgu yalnızca ekranda görünecek kayıtlar
+için çalışır. Reddedilmiş ve feshedilmiş yenilemeler sayılmaz — yenileme
+borcunu kapatmazlar.
+
+Bekleme süresi kritik olmayan bir ek bilgidir: sorgusu başarısız olursa panel
+yine açılır, yalnızca o satır boş kalır. Bilinmiyorsa hiç gösterilmez;
+uydurulmuş bir "0 gün" yanlış bilgi olurdu.
+
+Açık ihlal sayımı **yalnızca durumu `Ihlal` olan sözleşmeleri** kapsar. Kural
+şu: kartın sayısı ile kartın götürdüğü liste **aynı kümeyi** göstermeli. Kart
+"ihlal" filtresine gidiyor, o filtre de `Status == Ihlal` olanları listeliyor;
+sayım daha geniş olsaydı kullanıcı "3 açık ihlal" görüp tıklar, listede iki
+sözleşme bulur ve üçüncüyü arardı.
+
+Kapsam dışında kalan iki durum:
+
+- **Kapanmış sözleşme** (Tamamlandı/Feshedildi) — ihlal kaydı açık kalmış
+  olabilir ama artık bir aksiyon gerektirmiyor.
+- **Onay zincirindeki sözleşme** (OnayBekliyor) — düzenleme ya da fesih talebi
+  karara bağlanana kadar durum geçici olarak `OnayBekliyor`'dur, ihlal "donmuş"
+  sayılır. Talep reddedilirse sözleşme `Ihlal`'e döner ve ihlal yeniden sayıma
+  girer.
+
+Yenileme rozeti yalnızca **yenilenmişlerde** gösterilir. "Yenilenmedi" etiketi de
+denendi ama listedeki her satırda kırmızı bir rozet belirdiği için gürültü
+yapıyordu; rozetin yokluğu zaten aynı anlama geliyor.
 
 ## Ek Dosyaları
 

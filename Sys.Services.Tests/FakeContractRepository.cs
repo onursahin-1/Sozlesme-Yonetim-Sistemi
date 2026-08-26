@@ -13,7 +13,7 @@ public class FakeContractRepository : IContractRepository
 
     public Task<List<Contract>> GetContractsForExportAsync(
         int? createdByUserId, ContractStatus[]? includeStatuses, ContractStatus[]? excludeStatuses,
-        string? searchText, int maxRows) => Task.FromResult(new List<Contract>());
+        string? searchText, string? type, int maxRows) => Task.FromResult(new List<Contract>());
 
     public Task<List<AuditLog>> GetAuditLogsForExportAsync(
         string? userText, DateTime? startDate, DateTime? endDate, string? action, int maxRows)
@@ -116,9 +116,6 @@ public class FakeContractRepository : IContractRepository
     public Task<MonthlyStats> GetMonthlyStatsAsync(int? createdByUserId, DateTime monthStart, DateTime monthEnd)
         => Task.FromResult(new MonthlyStats());
 
-    public Task<EndingCalendar> GetEndingCalendarAsync(int? createdByUserId, DateTime today)
-        => Task.FromResult(new EndingCalendar());
-
     public Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId)
         => Task.FromResult(new List<TypeCount>());
 
@@ -127,12 +124,54 @@ public class FakeContractRepository : IContractRepository
 
     public Task<int> CountRejectedRequestsAsync(int? createdByUserId) => Task.FromResult(0);
 
+    // --- Panel: açık ihlal, yenileme durumu, bekleme süresi ---
+
+    public int OpenViolationCount { get; set; }
+    public int? LastOpenViolationUserId { get; private set; }
+
+    public Task<int> CountOpenViolationsAsync(int? createdByUserId)
+    {
+        LastOpenViolationUserId = createdByUserId;
+        return Task.FromResult(OpenViolationCount);
+    }
+
+    // Testte "hangi sözleşmeler yenilenmiş" cevabı doğrudan veriliyor;
+    // ayrıca hangi kimliklerin SORULDUĞU da doğrulanabiliyor.
+    public HashSet<int> RenewedIds { get; set; } = new();
+    public List<int>? LastRenewalQueryIds { get; private set; }
+
+    public Task<HashSet<int>> GetRenewedContractIdsAsync(IEnumerable<int> sourceContractIds)
+    {
+        LastRenewalQueryIds = sourceContractIds.ToList();
+        return Task.FromResult(RenewedIds);
+    }
+
+    public DateTime? OldestPendingCreatedAt { get; set; }
+    public bool ThrowOnOldestPending { get; set; }
+
+    public Task<DateTime?> GetOldestPendingCreatedAtAsync(int stage)
+    {
+        if (ThrowOnOldestPending) throw new InvalidOperationException("veritabanına ulaşılamadı");
+        return Task.FromResult(OldestPendingCreatedAt);
+    }
+
+    // Liste sorgusunun hangi daraltmayla gittigi testlerde dogrulaniyor.
+    public string? LastPagedType { get; private set; }
+
     public Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
         int? createdByUserId,
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
         string? searchText,
+        string? type,
         int page,
         int pageSize)
-        => Task.FromResult((new List<Contract>(), 0));
+    {
+        LastPagedType = type;
+        return Task.FromResult((new List<Contract>(), 0));
+    }
+
+    public List<string> TypeOptions { get; set; } = new();
+    public Task<List<string>> GetContractTypeOptionsAsync(int? createdByUserId)
+        => Task.FromResult(TypeOptions);
 }

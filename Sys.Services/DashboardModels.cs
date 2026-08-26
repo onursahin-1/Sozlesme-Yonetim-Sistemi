@@ -23,6 +23,11 @@ public class PendingWorkItem
     public string Subtitle { get; }
     public int Count { get; }
 
+    // En eski bekleyen işin kaç gündür beklediği. Adetten daha anlamlı bir metrik:
+    // "12 iş bekliyor" ile "12 iş bekliyor, en eskisi 21 gündür" arasında dağlar
+    // kadar fark var. Bekleyen yoksa ya da tarih okunamadıysa null.
+    public int? OldestWaitingDays { get; init; }
+
     // Tıklanınca gidilecek sol menü öğesi.
     public string NavKey { get; }
     public string ColorHex { get; }
@@ -52,15 +57,10 @@ public class MonthlyStats
     public int Terminated { get; set; }
 }
 
-// Önümüzdeki dönemde biten sözleşme sayıları. Kümülatif değil, aralık başına:
-// 0-30, 31-60, 61-90 gün.
-public class EndingCalendar
-{
-    public int Within30 { get; set; }
-    public int Within60 { get; set; }
-    public int Within90 { get; set; }
-    public int Total => Within30 + Within60 + Within90;
-}
+// NOT: Burada EndingCalendar (30/60/90 günlük bitiş dilimleri) vardı. Panelde
+// "Bitiş Uyarısı" kartı ve "Yaklaşan Bitişler" listesi zaten aynı bilgiyi
+// veriyordu; takvim üçüncü tekrardı. 60/90 günlük dilimler de bugün yapılacak
+// bir işe karşılık gelmediği için kaldırıldı.
 
 public class TypeCount
 {
@@ -74,6 +74,22 @@ public class TypeCount
     public int Count { get; }
 }
 
+// "Yaklaşan Bitişler" listesindeki bir sözleşme ve o sözleşmenin yenilenip
+// yenilenmediği. Sözleşmenin kendisi yeterli değildi: yenileme bağlantısı ters
+// yönde tutuluyor (yeni kayıt eskisini işaret ediyor), bu yüzden ayrıca sorgulanıp
+// burada birleştiriliyor.
+public class UpcomingEndingItem
+{
+    public UpcomingEndingItem(Contract contract, bool isRenewed)
+    {
+        Contract = contract;
+        IsRenewed = isRenewed;
+    }
+
+    public Contract Contract { get; }
+    public bool IsRenewed { get; }
+}
+
 public class DashboardSummary
 {
     public int Aktif { get; set; }
@@ -84,9 +100,11 @@ public class DashboardSummary
     public List<PendingWorkItem> PendingWork { get; set; } = new();
     public List<CurrencyTotal> ActiveValue { get; set; } = new();
     public MonthlyStats ThisMonth { get; set; } = new();
-    public EndingCalendar Endings { get; set; } = new();
     public List<TypeCount> TypeBreakdown { get; set; } = new();
 
-    public List<Contract> UpcomingEndings { get; set; } = new();
+    // Açık ihlal ADEDİ (sözleşme sayısı değil).
+    public int OpenViolations { get; set; }
+
+    public List<UpcomingEndingItem> UpcomingEndings { get; set; } = new();
     public List<AuditLog> RecentActivity { get; set; } = new();
 }

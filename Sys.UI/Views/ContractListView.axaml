@@ -75,6 +75,18 @@
 			<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
 
 				<!--
+				  Tür filtresi. Durum filtresi butonlarından AYRI bir boyut olduğu için
+				  onların yanında değil, sağdaki araç çubuğunda duruyor. Seçenekler
+				  veriden geliyor; sabit liste kullanılsaydı serbest metin olarak
+				  girilmiş bir tür filtreyle hiç bulunamazdı.
+				-->
+				<ComboBox ItemsSource="{Binding TypeOptions}"
+						  SelectedItem="{Binding SelectedType}"
+						  MinWidth="150" FontSize="12.5" Padding="12,8"
+						  CornerRadius="8" BorderBrush="#DDE3EC"
+						  ToolTip.Tip="Sözleşme türüne göre filtrele"/>
+
+				<!--
 				  Ekrandaki filtreler aynen uygulanır ama görünen sayfa değil, eşleşen
 				  TÜM kayıtlar aktarılır — aktarmanın amacı analiz.
 				-->

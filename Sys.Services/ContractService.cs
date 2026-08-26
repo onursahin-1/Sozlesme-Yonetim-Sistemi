@@ -145,14 +145,14 @@ public class ContractService
         var countsTask = _contracts.GetStatusCountsAsync(userId);
         var valueTask = _contracts.GetActiveValueByCurrencyAsync(userId);
         var monthlyTask = _contracts.GetMonthlyStatsAsync(userId, monthStart, monthEnd);
-        var endingsTask = _contracts.GetEndingCalendarAsync(userId, today);
         var typesTask = _contracts.GetTypeBreakdownAsync(userId);
         var upcomingTask = GetUpcomingEndingsAsync(currentUser);
         var activityTask = GetRecentActivityAsync(currentUser);
         var pendingTask = BuildPendingWorkAsync(currentUser, userId);
+        var openViolationsTask = _contracts.CountOpenViolationsAsync(userId);
 
-        await Task.WhenAll(countsTask, valueTask, monthlyTask, endingsTask,
-                           typesTask, upcomingTask, activityTask, pendingTask);
+        await Task.WhenAll(countsTask, valueTask, monthlyTask, typesTask,
+                           upcomingTask, activityTask, pendingTask, openViolationsTask);
 
         var counts = countsTask.Result;
 
@@ -163,9 +163,13 @@ public class ContractService
             Uyari = counts.GetValueOrDefault(ContractStatus.Uyari),
             Ihlal = counts.GetValueOrDefault(ContractStatus.Ihlal),
 
+            // Kart artık SÖZLEŞME değil AÇIK İHLAL sayısını gösteriyor: bir
+            // sözleşmede birden fazla açık ihlal olabilir ve kart "1" derken
+            // aslında üç iş bekliyor olabilirdi.
+            OpenViolations = openViolationsTask.Result,
+
             ActiveValue = valueTask.Result,
             ThisMonth = monthlyTask.Result,
-            Endings = endingsTask.Result,
             TypeBreakdown = typesTask.Result,
             UpcomingEndings = upcomingTask.Result,
             RecentActivity = activityTask.Result,
@@ -195,7 +199,8 @@ public class ContractService
                     items.Add(new PendingWorkItem(
                         "Son kontrolünüzde bekleyenler",
                         "SYB onayı verilmemiş sözleşmeler",
-                        sonKontrol, "sozlesmeKontrol", "#B06A00"));
+                        sonKontrol, "sozlesmeKontrol", "#B06A00")
+                    { OldestWaitingDays = await OldestWaitingDaysAsync(1) });
                 break;
 
             case UserRole.Mudur:
@@ -204,7 +209,8 @@ public class ContractService
                     items.Add(new PendingWorkItem(
                         "Onayınızda bekleyenler",
                         "Yönetim onayı verilmemiş sözleşmeler",
-                        mudurOnay, "onayBekleyen", "#2D6EA8"));
+                        mudurOnay, "onayBekleyen", "#2D6EA8")
+                    { OldestWaitingDays = await OldestWaitingDaysAsync(2) });
                 break;
 
             case UserRole.Personel:
@@ -220,15 +226,37 @@ public class ContractService
         return items;
     }
 
+    // En eski bekleyen işin kaç gündür beklediği.
+    //
+    // "12 iş bekliyor" ile "12 iş bekliyor, en eskisi 21 gündür" arasında dağlar
+    // kadar fark var: ilki bir liste uzunluğu, ikincisi bir gecikme uyarısı.
+    // Tarih okunamazsa null döner ve ekran yalnızca sayıyı gösterir — bu bilgi
+    // panelin çalışması için kritik değil.
+    private async Task<int?> OldestWaitingDaysAsync(int stage)
+    {
+        try
+        {
+            var oldest = await _contracts.GetOldestPendingCreatedAtAsync(stage);
+            if (oldest is null) return null;
+
+            var days = (DateTime.Today - oldest.Value.Date).Days;
+            return days < 0 ? 0 : days;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     // Sözleşme listesi ekranı için sunucu taraflı filtre + arama + sayfalama.
     // filterKey, ekrandaki filtre butonlarının CommandParameter değerleriyle aynıdır.
     // Personel yalnızca kendi oluşturduğu sözleşmeleri görebilir (GetContractsAsync ile aynı kural).
     public async Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
-        User currentUser, string filterKey, string? searchText, int page, int pageSize)
+        User currentUser, string filterKey, string? searchText, int page, int pageSize, string? type = null)
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
         var (include, exclude) = MapFilter(filterKey);
-        return await _contracts.GetContractsPagedAsync(userId, include, exclude, searchText, page, pageSize);
+        return await _contracts.GetContractsPagedAsync(userId, include, exclude, searchText, type, page, pageSize);
     }
 
     // Excel'e aktarmada tek seferde çekilecek azami satır sayısı. Filtresiz bir
@@ -236,19 +264,27 @@ public class ContractService
     // kullanıcı uyarılıp filtreyi daraltması isteniyor.
     public const int MaxExportRows = 10_000;
 
+    // Tür filtresi açılır listesi. Personel yalnızca kendi kayıtlarındaki türleri görür;
+    // hiç sözleşmesi olmayan bir türü listede görmesi kafa karıştırırdı.
+    public async Task<List<string>> GetContractTypeOptionsAsync(User currentUser)
+    {
+        int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
+        return await _contracts.GetContractTypeOptionsAsync(userId);
+    }
+
     // Ekrandaki filtrelerin aynısıyla, ama sayfalamadan. Dışa aktarmanın amacı tüm
     // eşleşen kayıtları analiz edebilmek; yalnızca görünen sayfayı aktarmak işe yaramaz.
-    public async Task<List<Contract>> GetContractsForExportAsync(User currentUser, string filterKey, string? searchText)
+    public async Task<List<Contract>> GetContractsForExportAsync(User currentUser, string filterKey, string? searchText, string? type = null)
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
         var (include, exclude) = MapFilter(filterKey);
-        return await _contracts.GetContractsForExportAsync(userId, include, exclude, searchText, MaxExportRows);
+        return await _contracts.GetContractsForExportAsync(userId, include, exclude, searchText, type, MaxExportRows);
     }
 
     public async Task<List<Contract>> GetArchivedContractsForExportAsync(User currentUser, string filterKey, string? searchText)
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
-        return await _contracts.GetContractsForExportAsync(userId, MapArchiveFilter(filterKey), null, searchText, MaxExportRows);
+        return await _contracts.GetContractsForExportAsync(userId, MapArchiveFilter(filterKey), null, searchText, null, MaxExportRows);
     }
 
     public async Task<List<AuditLog>> GetAuditLogsForExportAsync(
@@ -287,16 +323,28 @@ public class ContractService
     // Gösterge panelindeki "Yaklaşan Bitişler" kutusu için: belirtilen gün içinde
     // (varsayılan 30) bitecek Aktif/Uyarı durumundaki sözleşmeler, bitiş tarihine
     // göre en yakından uzağa sıralı olarak döner.
-    public async Task<List<Contract>> GetUpcomingEndingsAsync(User currentUser, int days = 30, int take = 5)
+    public async Task<List<UpcomingEndingItem>> GetUpcomingEndingsAsync(User currentUser, int days = 30, int take = 5)
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
         var contracts = await _contracts.GetByStatusesAsync(userId, ContractStatus.Aktif, ContractStatus.Uyari);
         var today = DateTime.Today;
         var threshold = today.AddDays(days);
-        return contracts
+
+        var upcoming = contracts
             .Where(c => c.EndDate.HasValue && c.EndDate.Value.Date >= today && c.EndDate.Value.Date <= threshold)
             .OrderBy(c => c.EndDate)
             .Take(take)
+            .ToList();
+
+        if (upcoming.Count == 0) return new List<UpcomingEndingItem>();
+
+        // Yenileme bağlantısı ters yönde tutuluyor (yeni kayıt eskisini işaret
+        // ediyor), bu yüzden ayrı bir sorguyla soruluyor. Yalnızca ekranda
+        // görünecek kayıtlar için: tüm sözleşmeler için sormanın anlamı yok.
+        var renewedIds = await _contracts.GetRenewedContractIdsAsync(upcoming.Select(c => c.Id));
+
+        return upcoming
+            .Select(c => new UpcomingEndingItem(c, renewedIds.Contains(c.Id)))
             .ToList();
     }
 
@@ -1062,7 +1110,9 @@ public class ContractService
     {
         int? userId = currentUser.Role == UserRole.Personel ? currentUser.Id : null;
         var include = MapArchiveFilter(filterKey);
-        return await _contracts.GetContractsPagedAsync(userId, include, null, searchText, page, pageSize);
+        // Arşivde tür filtresi yok: arşiv ekranının kendi filtre kümesi var
+        // (Tamamlandı/Feshedildi/Reddedildi) ve tür orada bir aksiyona bağlanmıyor.
+        return await _contracts.GetContractsPagedAsync(userId, include, null, searchText, null, page, pageSize);
     }
 
     private static ContractStatus[] MapArchiveFilter(string filterKey) => filterKey switch

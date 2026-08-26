@@ -15,7 +15,18 @@ public class DashboardUpcomingRowViewModel
 {
     private readonly Contract _contract;
 
-    public DashboardUpcomingRowViewModel(Contract contract) => _contract = contract;
+    public DashboardUpcomingRowViewModel(UpcomingEndingItem item)
+    {
+        _contract = item.Contract;
+        IsRenewed = item.IsRenewed;
+    }
+
+    // Bu sözleşme için zaten bir yenileme talebi açılmış mı? Eskiden liste bunu
+    // söylemiyordu; SYB aynı sözleşmeyi her gün görüp "bunu yenilemiş miydik"
+    // diye tek tek kontrol etmek zorundaydı.
+    // Rozet yalnızca yenilenmişlerde gösteriliyor; "Yenilenmedi" etiketi listedeki
+    // her satırda belirip gürültü yapıyordu. Rozetin yokluğu zaten yeterli.
+    public bool IsRenewed { get; }
 
     public Contract RawContract => _contract;
     public string Title => _contract.Title;
@@ -45,6 +56,21 @@ public class PendingWorkRowViewModel
     public string CountText => _item.Count.ToString();
     public string NavKey => _item.NavKey;
     public string ColorHex => _item.ColorHex;
+
+    // "En eski 21 gündür bekliyor". Bilgi yoksa hiç gösterilmez — uydurulmuş bir
+    // "0 gün" yazmaktansa satırı boş bırakmak doğru.
+    public bool HasWaitingInfo => _item.OldestWaitingDays is not null;
+
+    public string WaitingText => _item.OldestWaitingDays switch
+    {
+        null => string.Empty,
+        0 => "Bugün geldi",
+        1 => "En eskisi 1 gündür bekliyor",
+        var d => $"En eskisi {d} gündür bekliyor"
+    };
+
+    // Bir haftayı aşan bekleme dikkat çekmeli; altındakiler nötr kalır.
+    public string WaitingColorHex => _item.OldestWaitingDays >= 7 ? "#A32D2D" : "#8A94A6";
 }
 
 // Para birimi başına toplam değer satırı.
@@ -93,7 +119,21 @@ public partial class DashboardViewModel : ViewModelBase
     public partial int Uyari { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IhlalSubtitle))]
     public partial int Ihlal { get; set; }
+
+    // Kart artık sözleşme değil AÇIK İHLAL sayısını gösteriyor: bir sözleşmede
+    // birden fazla açık ihlal olabilir ve kart "1" derken üç iş bekliyor olabilir.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IhlalSubtitle))]
+    public partial int OpenViolations { get; set; }
+
+    // Alt satır, KARTTAKİ sayının neyi saydığını açıkça yazıyor. "3 ihlal" ile
+    // "3 sözleşmede ihlal" farklı şeyler; kart ihlal adedini gösterdiği için
+    // sözleşme sayısı burada belirtiliyor.
+    public string IhlalSubtitle => OpenViolations == 0
+        ? "açık ihlal yok"
+        : $"{Ihlal} sözleşmede, giderilmeyi bekliyor";
 
     [ObservableProperty]
     public partial ObservableCollection<DashboardUpcomingRowViewModel> UpcomingEndings { get; set; } = new();
@@ -129,20 +169,9 @@ public partial class DashboardViewModel : ViewModelBase
     public partial int MonthTerminated { get; set; }
 
     // --- Bitiş takvimi ---
-    [ObservableProperty]
-    public partial int Ending30 { get; set; }
-
-    [ObservableProperty]
-    public partial int Ending60 { get; set; }
-
-    [ObservableProperty]
-    public partial int Ending90 { get; set; }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasEndings))]
-    public partial int EndingTotal { get; set; }
-
-    public bool HasEndings => EndingTotal > 0;
+    // NOT: Burada bitiş takvimi (Ending30/60/90) alanları vardı. Panelde
+    // "Bitiş Uyarısı" kartı ve "Yaklaşan Bitişler" listesi zaten aynı bilgiyi
+    // veriyordu; takvim üçüncü tekrardı.
 
     // --- Tür dağılımı ---
     [ObservableProperty]
@@ -150,6 +179,11 @@ public partial class DashboardViewModel : ViewModelBase
     public partial ObservableCollection<TypeBreakdownRowViewModel> TypeBreakdown { get; set; } = new();
 
     public bool HasTypeBreakdown => TypeBreakdown.Count > 0;
+
+    // Müdür'de genel bir sözleşme listesi ekranı yok, dolayısıyla tıklamanın
+    // gideceği bir yer de yok. Durum kartlarındaki desenin aynısı: kutu görünür
+    // kalır ama tıklanamaz — tıklanıp hiçbir şey olmaması daha kötü olurdu.
+    public bool TypeRowsClickable => _currentUser.Role is UserRole.Personel or UserRole.SYB;
 
     // --- Karşılama başlığı ---
     // Günün saatine göre selam; küçük bir dokunuş ama panelin "kişisel" hissini veriyor.
@@ -218,6 +252,11 @@ public partial class DashboardViewModel : ViewModelBase
     // "Yaklaşan Bitişler" listesinden bir sözleşmeye tıklandığında fırlatılır.
     public event Action<Contract>? UpcomingContractClicked;
 
+    // Tür dağılımından bir türe tıklandığında sözleşme listesi o türe filtrelenmiş
+    // olarak açılır. Eskiden kutu yalnızca sayı gösteriyordu ve hiçbir aksiyona
+    // bağlanmıyordu.
+    public event Action<string>? TypeClicked;
+
     public DashboardViewModel() : this(null!, new User()) { } // tasarımcı önizlemesi için
 
     public DashboardViewModel(ContractService contractService, User currentUser)
@@ -240,6 +279,7 @@ public partial class DashboardViewModel : ViewModelBase
             OnayBekliyor = summary.OnayBekliyor;
             Uyari = summary.Uyari;
             Ihlal = summary.Ihlal;
+            OpenViolations = summary.OpenViolations;
 
             PendingWork = new ObservableCollection<PendingWorkRowViewModel>(
                 summary.PendingWork.Select(p => new PendingWorkRowViewModel(p)));
@@ -252,11 +292,6 @@ public partial class DashboardViewModel : ViewModelBase
             MonthNewRequests = summary.ThisMonth.NewRequests;
             MonthActivated = summary.ThisMonth.Activated;
             MonthTerminated = summary.ThisMonth.Terminated;
-
-            Ending30 = summary.Endings.Within30;
-            Ending60 = summary.Endings.Within60;
-            Ending90 = summary.Endings.Within90;
-            EndingTotal = summary.Endings.Total;
 
             var maxTypeCount = summary.TypeBreakdown.Count == 0 ? 0 : summary.TypeBreakdown.Max(x => x.Count);
             TypeBreakdown = new ObservableCollection<TypeBreakdownRowViewModel>(
@@ -286,6 +321,9 @@ public partial class DashboardViewModel : ViewModelBase
 
     [RelayCommand]
     private void OpenUpcoming(DashboardUpcomingRowViewModel row) => UpcomingContractClicked?.Invoke(row.RawContract);
+
+    [RelayCommand]
+    private void OpenType(TypeBreakdownRowViewModel row) => TypeClicked?.Invoke(row.Type);
 
     // Bekleyen iş satırına tıklandığında ilgili ekrana götürür; hızlı aksiyonlarla
     // aynı yönlendirme mekanizmasını kullanır.

@@ -300,6 +300,24 @@ public class ContractRepository : IContractRepository
             .ToListAsync();
     }
 
+    // Tür filtresi açılır listesi. Sabit bir liste yerine VERİDEN besleniyor:
+    // sözleşme türü serbest metin olarak da girilebiliyor ve sabit listede olmayan
+    // bir tür kaydedilirse filtreyle hiç bulunamaz hâle gelirdi.
+    public async Task<List<string>> GetContractTypeOptionsAsync(int? createdByUserId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var query = db.Contracts.AsNoTracking().Where(c => c.Type != "");
+        if (createdByUserId.HasValue)
+            query = query.Where(c => c.CreatedByUserId == createdByUserId.Value);
+
+        return await query
+            .Select(c => c.Type)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+    }
+
     public async Task<Dictionary<ContractStatus, int>> GetStatusCountsAsync(int? createdByUserId)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -321,11 +339,12 @@ public class ContractRepository : IContractRepository
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
         string? searchText,
+        string? type,
         int maxRows)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
-        var query = BuildContractQuery(db, createdByUserId, includeStatuses, excludeStatuses, searchText);
+        var query = BuildContractQuery(db, createdByUserId, includeStatuses, excludeStatuses, searchText, type);
 
         return await query
             .Include(c => c.CreatedByUser)
@@ -355,7 +374,8 @@ public class ContractRepository : IContractRepository
         int? createdByUserId,
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
-        string? searchText)
+        string? searchText,
+        string? type = null)
     {
         var query = db.Contracts.AsNoTracking().AsQueryable();
 
@@ -367,6 +387,12 @@ public class ContractRepository : IContractRepository
 
         if (excludeStatuses is { Length: > 0 })
             query = query.Where(c => !excludeStatuses.Contains(c.Status));
+
+        // Tür filtresi. Gösterge panelindeki tür dağılımından tıklanarak gelinir;
+        // ekranda da bir açılır listeyle seçilebilir. Durum filtresinden BAĞIMSIZ
+        // bir boyut: "Aktif + Hizmet" gibi birleşimler mümkün olmalı.
+        if (!string.IsNullOrWhiteSpace(type))
+            query = query.Where(c => c.Type == type);
 
         if (!string.IsNullOrWhiteSpace(searchText))
         {
@@ -411,13 +437,14 @@ public class ContractRepository : IContractRepository
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
         string? searchText,
+        string? type,
         int page,
         int pageSize)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
 
         // Filtre mantığı dışa aktarma sorgusuyla paylaşılıyor.
-        var query = BuildContractQuery(db, createdByUserId, includeStatuses, excludeStatuses, searchText);
+        var query = BuildContractQuery(db, createdByUserId, includeStatuses, excludeStatuses, searchText, type);
 
         var totalCount = await query.CountAsync();
 
@@ -493,27 +520,6 @@ public class ContractRepository : IContractRepository
         };
     }
 
-    public async Task<EndingCalendar> GetEndingCalendarAsync(int? createdByUserId, DateTime today)
-    {
-        using var db = DbConnectionFactory.CreateContext(_connectionString);
-
-        var d30 = today.AddDays(30);
-        var d60 = today.AddDays(60);
-        var d90 = today.AddDays(90);
-
-        var query = ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
-            .Where(c => LiveStatuses.Contains(c.Status))
-            .Where(c => c.EndDate != null && c.EndDate >= today && c.EndDate <= d90);
-
-        // Dilimler kümülatif değil: bir sözleşme yalnızca bir aralıkta sayılır.
-        return new EndingCalendar
-        {
-            Within30 = await query.CountAsync(c => c.EndDate <= d30),
-            Within60 = await query.CountAsync(c => c.EndDate > d30 && c.EndDate <= d60),
-            Within90 = await query.CountAsync(c => c.EndDate > d60),
-        };
-    }
-
     public async Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId)
     {
         using var db = DbConnectionFactory.CreateContext(_connectionString);
@@ -548,6 +554,86 @@ public class ContractRepository : IContractRepository
         using var db = DbConnectionFactory.CreateContext(_connectionString);
         return await ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
             .CountAsync(c => c.Status == ContractStatus.Talep && c.WasRejected);
+    }
+
+    // Verilen sözleşmelerden hangileri için zaten bir yenileme talebi açılmış?
+    //
+    // "Yaklaşan Bitişler" listesi, o sözleşmenin yenilenip yenilenmediğini
+    // söylemiyordu; SYB aynı sözleşmeyi her gün listede görüp "bunu yenilemiş
+    // miydik" diye tek tek kontrol etmek zorundaydı.
+    //
+    // Fesih ve red edilmiş yenileme talepleri sayılmıyor: onlar yenileme borcunu
+    // kapatmaz, sözleşmenin hâlâ yenilenmesi gerekir.
+    public async Task<HashSet<int>> GetRenewedContractIdsAsync(IEnumerable<int> sourceContractIds)
+    {
+        var ids = sourceContractIds.Distinct().ToList();
+        if (ids.Count == 0) return new HashSet<int>();
+
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        var found = await db.Contracts
+            .AsNoTracking()
+            .Where(c => c.RenewedFromContractId != null
+                        && ids.Contains(c.RenewedFromContractId.Value)
+                        && c.Status != ContractStatus.Reddedildi
+                        && c.Status != ContractStatus.Feshedildi)
+            .Select(c => c.RenewedFromContractId!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        return found.ToHashSet();
+    }
+
+    // Belirli bir aşamada bekleyen en ESKİ kaydın oluşturulma tarihi.
+    //
+    // Onay kuyruğunda "12 iş bekliyor" yazıyor ama bunlardan birinin üç haftadır
+    // beklediği hiçbir yerde görünmüyordu. Sözleşme onaylayan bir sistemde bekleme
+    // süresi, adetten daha anlamlı bir metrik.
+    public async Task<DateTime?> GetOldestPendingCreatedAtAsync(int stage)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+        return await db.Contracts
+            .AsNoTracking()
+            .Where(c => c.Stage == stage)
+            .OrderBy(c => c.CreatedAt)
+            .Select(c => (DateTime?)c.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
+    // Açık (henüz giderilmemiş) ihlal SAYISI.
+    //
+    // Gösterge panelindeki ihlal kartı, durumu "Ihlal" olan SÖZLEŞME sayısını
+    // gösteriyordu. İhlal giderme özelliği eklendikten sonra asıl anlamlı sayı bu:
+    // bir sözleşmede üç açık ihlal olabilir ve kart "1" derken aslında üç iş bekliyor.
+    //
+    // ÖNEMLİ: Yalnızca durumu "Ihlal" olan sözleşmelerin ihlalleri sayılır.
+    //
+    // Sebep, kartın SAYISI ile TIKLANINCA GİDİLEN YER'in aynı kümeyi göstermesi.
+    // Kart "ihlal" filtresine götürüyor, o filtre de Status == Ihlal olanları
+    // listeliyor. Sayım daha geniş bir küme kullansaydı kullanıcı "3 açık ihlal"
+    // görüp tıklıyor, listede iki sözleşme buluyor ve üçüncüyü arıyor olurdu.
+    //
+    // Kapsam dışında kalan iki durum ve neden sorun olmadıkları:
+    //
+    //   - Kapanmış sözleşme (Tamamlandı/Feshedildi): ihlal kaydı açık kalmış
+    //     olabilir ama artık bir aksiyon gerektirmiyor.
+    //   - Onay zincirindeki sözleşme (OnayBekliyor): düzenleme ya da fesih talebi
+    //     karara bağlanana kadar durum geçici olarak OnayBekliyor'dur; ihlal
+    //     "donmuş" sayılır. Talep reddedilirse sözleşme Ihlal'e geri döner ve
+    //     ihlal yeniden sayıma girer.
+    public async Task<int> CountOpenViolationsAsync(int? createdByUserId)
+    {
+        using var db = DbConnectionFactory.CreateContext(_connectionString);
+
+        // Personel yalnızca kendi sözleşmelerindeki ihlalleri görür. Violation'da
+        // kullanıcı alanı yok, bu yüzden sözleşme üzerinden daraltılıyor.
+        var contracts = ScopeToUser(db.Contracts.AsNoTracking(), createdByUserId)
+            .Where(c => c.Status == ContractStatus.Ihlal);
+
+        return await db.Violations
+            .AsNoTracking()
+            .Where(v => v.ResolvedAt == null && contracts.Any(c => c.Id == v.ContractId))
+            .CountAsync();
     }
 
     public async Task<int> ReconcileStatusesAsync(DateTime today, DateTime warningThreshold)

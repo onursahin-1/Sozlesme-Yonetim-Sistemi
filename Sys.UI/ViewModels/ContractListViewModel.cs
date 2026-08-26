@@ -41,6 +41,31 @@ public partial class ContractListViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
     public partial string SearchText { get; set; } = string.Empty;
 
+    // Tür filtresi. Durum filtresinden BAĞIMSIZ bir boyut: "Aktif + Hizmet" gibi
+    // birleşimler kurulabilir. Gösterge panelindeki tür dağılımından tıklanarak da
+    // buraya gelinir.
+    //
+    // Seçenekler sabit bir listeden değil VERİDEN geliyor: sözleşme türü serbest
+    // metin olarak da girilebiliyor ve sabit listede olmayan bir tür filtreyle hiç
+    // bulunamaz hâle gelirdi.
+    public const string AllTypes = "Tüm türler";
+
+    [ObservableProperty]
+    public partial ObservableCollection<string> TypeOptions { get; set; } = new() { AllTypes };
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
+    public partial string SelectedType { get; set; } = AllTypes;
+
+    partial void OnSelectedTypeChanged(string value)
+    {
+        CurrentPage = 1;
+        _ = LoadAsync();
+    }
+
+    // Servise gönderilen değer: "Tüm türler" seçiliyken filtre uygulanmamalı.
+    private string? TypeFilter => SelectedType == AllTypes ? null : SelectedType;
+
     // Arama metni değiştiğinde sayfa 1'e döner — aksi halde kullanıcı 3. sayfadayken
     // arama yaptığında sonuç 3 sayfadan azsa boş bir ekranla karşılaşırdı.
     partial void OnSearchTextChanged(string value) => DebouncedReloadFirstPage();
@@ -85,7 +110,7 @@ public partial class ContractListViewModel : ViewModelBase
     // Filtre butonlarında hangisinin seçili olduğunu görsel olarak belirtmek ve
     // sonuç bulunamadığında "filtreleri temizle" aksiyonunu göstermek için kullanılır.
     public bool IsEmpty => !IsLoading && FilteredContracts.Count == 0;
-    public bool HasActiveFilters => SelectedFilter != "tumu" || !string.IsNullOrWhiteSpace(SearchText);
+    public bool HasActiveFilters => SelectedFilter != "tumu" || !string.IsNullOrWhiteSpace(SearchText) || TypeFilter is not null;
 
     public event Action<Contract>? EditRequested;
     public event Action<Contract>? ViewDetailsRequested;
@@ -94,13 +119,48 @@ public partial class ContractListViewModel : ViewModelBase
 
     // Gösterge panelindeki durum kartlarından ("Aktif", "Onay Bekliyor" vb.) bu ekrana
     // geçilirken belirli bir filtrenin baştan uygulanmış gelmesi için opsiyonel parametre.
-    public ContractListViewModel(ContractService contractService, User currentUser, string? initialFilter = null)
+    public ContractListViewModel(ContractService contractService, User currentUser,
+                                 string? initialFilter = null, string? initialType = null)
     {
         _contractService = contractService;
         _currentUser = currentUser;
         if (!string.IsNullOrEmpty(initialFilter))
             SelectedFilter = initialFilter;
-        _ = LoadAsync();
+
+        // Panelden tür dağılımına tıklanarak gelindiyse, durum filtresi "tümü"
+        // kalır: kullanıcı o türdeki HER sözleşmeyi görmek istiyor.
+        _initialType = initialType;
+
+        _ = InitializeAsync();
+    }
+
+    private readonly string? _initialType;
+
+    private async Task InitializeAsync()
+    {
+        await LoadTypeOptionsAsync();
+
+        // Tür ataması seçenekler geldikten SONRA yapılıyor; aksi halde ComboBox
+        // listesinde bulunmayan bir değer atanır ve seçim boş görünürdü.
+        if (!string.IsNullOrEmpty(_initialType) && TypeOptions.Contains(_initialType))
+            SelectedType = _initialType;   // OnSelectedTypeChanged yüklemeyi tetikler
+        else
+            await LoadAsync();
+    }
+
+    private async Task LoadTypeOptionsAsync()
+    {
+        try
+        {
+            var types = await _contractService.GetContractTypeOptionsAsync(_currentUser);
+            TypeOptions = new ObservableCollection<string>(new[] { AllTypes }.Concat(types));
+        }
+        catch
+        {
+            // Tür listesi alınamazsa filtre yalnızca "Tüm türler" ile çalışır;
+            // ekranın geri kalanı etkilenmemeli.
+            TypeOptions = new ObservableCollection<string> { AllTypes };
+        }
     }
 
     [RelayCommand]
@@ -171,7 +231,7 @@ public partial class ContractListViewModel : ViewModelBase
         ErrorMessage = string.Empty;
         try
         {
-            var rows = await _contractService.GetContractsForExportAsync(_currentUser, SelectedFilter, SearchText);
+            var rows = await _contractService.GetContractsForExportAsync(_currentUser, SelectedFilter, SearchText, TypeFilter);
 
             Exporting.ExcelExporter.ExportContracts(rows, destinationPath, "Sözleşmeler");
             await _contractService.LogExportAsync(_currentUser, "Sözleşme listesi", rows.Count);
@@ -214,6 +274,15 @@ public partial class ContractListViewModel : ViewModelBase
         SelectedFilter = "tumu";
         SearchText = string.Empty;
         _searchDebounceCts?.Cancel();
+
+        // SelectedType'ı doğrudan atamak OnSelectedTypeChanged üzerinden ikinci bir
+        // yükleme tetikler; arama kutusundaki desenin aynısı.
+        if (SelectedType != AllTypes)
+        {
+            SelectedType = AllTypes;
+            return;
+        }
+
         CurrentPage = 1;
         await LoadAsync();
     }
@@ -271,7 +340,7 @@ public partial class ContractListViewModel : ViewModelBase
         try
         {
             var (contracts, totalCount) = await _contractService.GetContractsPagedAsync(
-                _currentUser, SelectedFilter, SearchText, CurrentPage, PageSize);
+                _currentUser, SelectedFilter, SearchText, CurrentPage, PageSize, TypeFilter);
 
             // Bu sorgu başlatıldıktan sonra yenisi başlatıldıysa sonucu yok say.
             if (token != _loadToken) return;

@@ -49,9 +49,6 @@ public interface IContractRepository
     // Belirtilen ayda açılan talep / yürürlüğe giren / feshedilen sözleşme sayıları.
     Task<MonthlyStats> GetMonthlyStatsAsync(int? createdByUserId, DateTime monthStart, DateTime monthEnd);
 
-    // Önümüzdeki 90 gün içinde biten sözleşmelerin 30 günlük dilimlere dağılımı.
-    Task<EndingCalendar> GetEndingCalendarAsync(int? createdByUserId, DateTime today);
-
     // Yürürlükteki sözleşmelerin türe göre dağılımı (çoktan aza).
     Task<List<TypeCount>> GetTypeBreakdownAsync(int? createdByUserId);
 
@@ -63,6 +60,18 @@ public interface IContractRepository
 
     // Reddedilmiş (düzeltme bekleyen) talep sayısı.
     Task<int> CountRejectedRequestsAsync(int? createdByUserId);
+
+    // Açık (giderilmemiş) ihlal sayısı. Sözleşme sayısından farklıdır: bir
+    // sözleşmede birden fazla açık ihlal olabilir.
+    Task<int> CountOpenViolationsAsync(int? createdByUserId);
+
+    // Verilenlerden hangileri için zaten yenileme talebi açılmış?
+    // Reddedilmiş/feshedilmiş yenilemeler sayılmaz — yenileme borcunu kapatmazlar.
+    Task<HashSet<int>> GetRenewedContractIdsAsync(IEnumerable<int> sourceContractIds);
+
+    // Belirli bir aşamada bekleyen en eski kaydın oluşturulma tarihi ("kaç gündür
+    // bekliyor" göstergesi için). Bekleyen yoksa null.
+    Task<DateTime?> GetOldestPendingCreatedAtAsync(int stage);
 
     // Sözleşme listesi ekranı için: filtreleme, arama ve sayfalama veritabanı tarafında
     // yapılır. Böylece kayıt sayısı arttığında tüm tablo belleğe çekilmez.
@@ -79,6 +88,7 @@ public interface IContractRepository
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
         string? searchText,
+        string? type,
         int maxRows);
 
     Task<List<AuditLog>> GetAuditLogsForExportAsync(
@@ -89,6 +99,10 @@ public interface IContractRepository
         ContractStatus[]? includeStatuses,
         ContractStatus[]? excludeStatuses,
         string? searchText,
+        string? type,
         int page,
         int pageSize);
+
+    // Tür filtresi açılır listesini doldurmak için: kullanımdaki sözleşme türleri.
+    Task<List<string>> GetContractTypeOptionsAsync(int? createdByUserId);
 }
