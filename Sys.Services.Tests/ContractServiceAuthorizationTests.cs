@@ -141,9 +141,15 @@ public class ContractServiceAuthorizationTests
     }
 
     // Sözleşmeye dönüştürülmeye hazır talep: tarihleri ve en az bir kalemi var.
+    //
+    // Talebi PERSONEL (Id = 7) açmış sayılıyor. Kimin açtığı burada önemli, çünkü
+    // talebi sözleşmeyi oluşturan SYB'nin kendisi açtıysa Son Kontrol atlanıyor.
+    // Alan atanmadan bırakılsaydı 0 kalır ve Id'si atanmamış bir test kullanıcısıyla
+    // tesadüfen eşleşirdi — test, ölçmek istemediği yolu ölçerdi.
     private static Contract HazirTalep() => new()
     {
         Status = ContractStatus.Talep,
+        CreatedByUserId = 7,
         StartDate = DateTime.Today,
         EndDate = DateTime.Today.AddYears(1)
     };
@@ -158,7 +164,7 @@ public class ContractServiceAuthorizationTests
     {
         var service = CreateService(out _);
         var contract = HazirTalep();
-        var syb = new User { Role = UserRole.SYB };
+        var syb = new User { Id = 3, Role = UserRole.SYB };
 
         await service.FinalizeContractAsync(contract, BirKalem(), new List<Attachment>(), syb);
 
@@ -595,5 +601,224 @@ public class ContractServiceAuthorizationTests
         // Kaynak sözleşme değişmedi.
         Assert.Equal(ContractStatus.Tamamlandi, source.Status);
         Assert.Equal(5000m, source.TotalAmount);
+    }
+
+    // ---- Son Kontrol'ün atlanması ----
+    //
+    // Kural: talebi açan kişi ile sözleşmeyi oluşturan AYNI SYB ise Son Kontrol
+    // atlanır. Aksi halde aynı kişi kendi girdiği veriyi kendisi onaylamış olurdu.
+    // Talep başkasından geldiyse akış değişmez.
+
+    private static (Contract Contract, List<ContractItem> Items) HazirTalep(int createdByUserId)
+    {
+        var contract = new Contract
+        {
+            Id = 5,
+            Title = "Temizlik Hizmeti",
+            Status = ContractStatus.Talep,
+            Stage = 0,
+            CreatedByUserId = createdByUserId,
+            StartDate = new DateTime(2026, 1, 1),
+            EndDate = new DateTime(2026, 12, 31),
+        };
+        var items = new List<ContractItem>
+        {
+            new() { Description = "Aylık hizmet", Quantity = 12, Unit = "Ay", UnitPrice = 1000m }
+        };
+        return (contract, items);
+    }
+
+    [Fact]
+    public async Task FinalizeContractAsync_OwnRequest_SkipsFinalCheck()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: syb.Id);
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        Assert.Equal(2, contract.Stage);   // doğrudan yönetim onayı
+        Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
+    }
+
+    // Personel'in açtığı talepten doğan sözleşme Son Kontrol'e uğramaya devam eder.
+    [Fact]
+    public async Task FinalizeContractAsync_RequestFromSomeoneElse_KeepsFinalCheck()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: 7); // Personel
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        Assert.Equal(1, contract.Stage);   // Son Kontrol
+    }
+
+    // Başka bir SYB'nin talebi de "kendi talebi" sayılmaz: kararı veren kişi
+    // veriyi girenden farklıysa kontrol anlamlıdır.
+    [Fact]
+    public async Task FinalizeContractAsync_RequestFromAnotherSyb_KeepsFinalCheck()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: 4); // başka bir SYB
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        Assert.Equal(1, contract.Stage);
+    }
+
+    // ---- Reddedilen sözleşme nereye döner? ----
+    //
+    // Son Kontrol ekranında düzeltme yapılamaz; orada yalnızca onay ve red vardır.
+    // Bu yüzden Müdür reddi ancak Son Kontrol'ü BAŞKASI yapacaksa Stage 1'e döner.
+    // Atlanmış bir sözleşmede öyle bir mercii yok: Stage 1'e dönmek SYB'yi kendi
+    // sözleşmesini onaylayan bir ekrana düşürüyor, düzeltebilmek için kendi
+    // talebini reddetmek zorunda bırakıyordu.
+
+    [Fact]
+    public async Task FinalizeContractAsync_OwnRequest_RecordsSkipOnContract()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: syb.Id);
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        // Karar sözleşmede saklanmalı: red anında yeniden hesaplanamıyor, çünkü
+        // o an işlemi yapan kişi Müdür.
+        Assert.True(contract.FinalCheckSkipped);
+    }
+
+    [Fact]
+    public async Task FinalizeContractAsync_RequestFromSomeoneElse_DoesNotRecordSkip()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: 7);
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        Assert.False(contract.FinalCheckSkipped);
+    }
+
+    [Fact]
+    public async Task DecideApprovalAsync_MudurRejects_SkippedContract_ReturnsToTalep()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Id = 5,
+            Title = "Temizlik Hizmeti",
+            Status = ContractStatus.OnayBekliyor,
+            Stage = 2,
+            CreatedByUserId = 3,
+            FinalCheckSkipped = true
+        };
+        var mudur = new User { Id = 9, Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Red, "bedel yüksek");
+
+        Assert.Equal(0, contract.Stage);
+        Assert.Equal(ContractStatus.Talep, contract.Status);
+        Assert.True(contract.WasRejected);
+        Assert.Equal("bedel yüksek", contract.LastRejectionNote);
+    }
+
+    [Fact]
+    public async Task DecideApprovalAsync_MudurRejects_NormalContract_ReturnsToFinalCheck()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Id = 5,
+            Title = "Temizlik Hizmeti",
+            Status = ContractStatus.OnayBekliyor,
+            Stage = 2,
+            CreatedByUserId = 7,
+            FinalCheckSkipped = false
+        };
+        var mudur = new User { Id = 9, Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Red, "bedel yüksek");
+
+        Assert.Equal(1, contract.Stage);
+        Assert.Equal(ContractStatus.OnayBekliyor, contract.Status);
+    }
+
+    // Reddin HANGİ aşamadan geldiği kayda geçmeli. Bu bilgi olmadan üç farklı olay
+    // ekranda aynı görünüyor: SYB'nin iadesi, Müdür'ün geri göndermesi ve kişinin
+    // kendi talebini geri çekmesi — üçü de "Talep + reddedilmiş".
+    [Fact]
+    public async Task DecideApprovalAsync_MudurRejects_RecordsRejectingStage()
+    {
+        var service = CreateService(out _);
+        var contract = new Contract
+        {
+            Id = 5,
+            Title = "Temizlik Hizmeti",
+            Status = ContractStatus.OnayBekliyor,
+            Stage = 2,
+            CreatedByUserId = 3,
+            FinalCheckSkipped = true
+        };
+        var mudur = new User { Id = 9, Role = UserRole.Mudur };
+
+        await service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Red, "bedel yüksek");
+
+        Assert.Equal(2, contract.LastRejectedStage);
+    }
+
+    [Fact]
+    public async Task RejectRequestAsync_RecordsStageZero()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var contract = new Contract
+        {
+            Id = 5,
+            Title = "Temizlik Hizmeti",
+            Status = ContractStatus.Talep,
+            CreatedByUserId = syb.Id,
+            FinalCheckSkipped = true   // daha önce Müdür'den dönmüş bir kayıt
+        };
+
+        await service.RejectRequestAsync(contract, syb, "vazgeçtim", allowResubmit: true);
+
+        // Müdür'ün reddi değil, kişinin kendi geri çekmesi. FinalCheckSkipped hâlâ
+        // true — o alan bu soruya cevap vermiyor, ekran ondan okumamalı.
+        Assert.Equal(0, contract.LastRejectedStage);
+    }
+
+    [Fact]
+    public async Task FinalizeContractAsync_ClearsRejectingStage()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: syb.Id);
+        contract.WasRejected = true;
+        contract.LastRejectedStage = 2;
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        Assert.Null(contract.LastRejectedStage);
+    }
+
+    // Reddedilen sözleşme yeniden gönderildiğinde Müdür'e dönmeli; atlama kararı
+    // yeniden hesaplanıyor, eski değere yapışıp kalmıyor.
+    [Fact]
+    public async Task FinalizeContractAsync_AfterRejection_SkipsFinalCheckAgain()
+    {
+        var service = CreateService(out _);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+        var (contract, items) = HazirTalep(createdByUserId: syb.Id);
+        contract.WasRejected = true;
+        contract.LastRejectionNote = "bedel yüksek";
+
+        await service.FinalizeContractAsync(contract, items, new List<Attachment>(), syb);
+
+        Assert.Equal(2, contract.Stage);
+        Assert.True(contract.FinalCheckSkipped);
+        Assert.False(contract.WasRejected);   // yeniden gönderildi, red izi temizlendi
     }
 }

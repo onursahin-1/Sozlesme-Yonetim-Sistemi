@@ -1,4 +1,4 @@
-# SYS — Sözleşme Yönetim Sistemi
+﻿# SYS — Sözleşme Yönetim Sistemi
 
 Şirket içi, çok kullanıcılı masaüstü uygulaması. Sözleşme taleplerinin
 oluşturulması, onay zincirinden geçirilmesi, yürürlükteki sözleşmelerin
@@ -9,7 +9,8 @@ SQL Server Express · PDFsharp (PDF) · ClosedXML (Excel) · BCrypt.Net
 
 ## Başlıca İşlevler
 
-- Talep → SYB son kontrolü → yönetim onayı şeklinde iki aşamalı onay zinciri
+- Talep → SYB son kontrolü → yönetim onayı şeklinde onay zinciri (son kontrol,
+  talebi açan ile sözleşmeyi oluşturan aynı SYB ise atlanır)
 - Yürürlükteki sözleşmelerde düzenleme, fesih ve ihlal yönetimi (ihlaller
   giderilebilir; sözleşme durumu kendiliğinden geri döner)
 - **Sözleşme yenileme** — süresi dolan sözleşmeden yeni dönem talebi
@@ -72,12 +73,23 @@ Migration'lar uygulama her açılışta otomatik olarak da çalışır
 ```
 Talep (Stage 0)
    ↓ SYB sözleşmeyi oluşturur
-SYB Son Kontrol (Stage 1)
+SYB Son Kontrol (Stage 1)          ← talebi SYB'nin KENDİSİ açtıysa ATLANIR
    ↓ onay                    ↘ red → talep sahibine döner
 Yönetim (YK) Onayı (Stage 2)
    ↓ onay                    ↘ red → SYB son kontrolüne döner
 Yürürlükte (Stage 3)
 ```
+
+Son Kontrol, talebi açan kişi ile sözleşmeyi oluşturan aynı SYB olduğunda
+atlanır: aynı kişinin kendi girdiği veriyi onaylaması denetim değeri üretmez.
+O durumda kontrol listesi sözleşme oluşturma sihirbazının son adımında sorulur.
+Personel'in açtığı talepten doğan sözleşmelerde akış değişmez.
+
+Müdür reddettiğinde sözleşme **düzeltilebileceği** yere döner: Son Kontrol
+yapılıyorsa oraya, atlanmışsa doğrudan Talep durumuna (Sözleşme Yarat ekranına,
+verileri dolu olarak). Son Kontrol ekranında düzeltme yapılamadığı için,
+atlanmış bir sözleşmeyi oraya döndürmek SYB'yi kendi sözleşmesini onaylayan bir
+ekrana düşürürdü.
 
 Düzenleme ve fesih talepleri de aynı zincirden geçer; sözleşme onay sürecinde
 `PendingEdit` / `PendingTermination` bayrağıyla işaretlenir ve karar verilene

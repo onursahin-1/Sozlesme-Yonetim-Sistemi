@@ -21,6 +21,7 @@ public class ContractRepository : IContractRepository
     {
         tracked.Status = source.Status;
         tracked.Stage = source.Stage;
+        tracked.FinalCheckSkipped = source.FinalCheckSkipped;
         tracked.PendingTermination = source.PendingTermination;
         tracked.PendingEdit = source.PendingEdit;
         tracked.PreviousStatusBeforeEdit = source.PreviousStatusBeforeEdit;
@@ -28,6 +29,7 @@ public class ContractRepository : IContractRepository
         tracked.WasRejected = source.WasRejected;
         tracked.LastRejectionNote = source.LastRejectionNote;
         tracked.LastRejectedAt = source.LastRejectedAt;
+        tracked.LastRejectedStage = source.LastRejectedStage;
         // Düzenleme (edit) reddedildiğinde ContractService bedeli/bitiş tarihini (ve artık
         // kapsam/firma/ödeme koşulları alanlarını da) eski revizyon değerlerine geri alıyor;
         // bu geri alma işleminin kalıcı olması için bu alanlar da durum makinesiyle birlikte
@@ -122,6 +124,7 @@ public class ContractRepository : IContractRepository
         tracked.WasRejected = false;
         tracked.LastRejectionNote = null;
         tracked.LastRejectedAt = null;
+        tracked.LastRejectedStage = null;
 
         await db.SaveChangesAsync();
     }

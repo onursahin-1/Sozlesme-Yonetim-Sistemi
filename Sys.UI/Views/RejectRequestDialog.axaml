@@ -11,10 +11,9 @@
 				   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
 
 		<StackPanel Spacing="6">
-			<TextBlock Text="Red gerekçesi" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyAlt}"/>
+			<TextBlock x:Name="NoteLabel" Text="Red gerekçesi" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyAlt}"/>
 			<TextBox x:Name="NoteBox" AcceptsReturn="True" TextWrapping="Wrap"
-					 Height="110" MaxLength="500"
-					 PlaceholderText="Talebin neden reddedildiğini yazın. Bu metin talep sahibine bildirim olarak iletilir."/>
+					 Height="110" MaxLength="500"/>
 			<TextBlock x:Name="ErrorText" FontSize="11.5" Foreground="{DynamicResource DangerBase}"
 					   IsVisible="False" TextWrapping="Wrap"/>
 		</StackPanel>

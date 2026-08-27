@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sys.Infrastructure;
 
@@ -11,9 +12,11 @@ using Sys.Infrastructure;
 namespace Sys.Infrastructure.Migrations
 {
     [DbContext(typeof(SysDbContext))]
-    partial class SysDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827121538_AddFinalCheckSkipped")]
+    partial class AddFinalCheckSkipped
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -174,9 +177,6 @@ namespace Sys.Infrastructure.Migrations
 
                     b.Property<DateTime?>("LastRejectedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<int?>("LastRejectedStage")
-                        .HasColumnType("int");
 
                     b.Property<string>("LastRejectionNote")
                         .HasColumnType("nvarchar(max)");

@@ -345,16 +345,13 @@ public partial class ContractListViewModel : ViewModelBase
             // Bu sorgu başlatıldıktan sonra yenisi başlatıldıysa sonucu yok say.
             if (token != _loadToken) return;
 
-            var editableUserId = _currentUser.Role == UserRole.Personel ? _currentUser.Id : 0;
-            var isSyb = _currentUser.Role == UserRole.SYB;
-
             TotalCount = totalCount;
 
             // Filtre daralıp sayfa sayısı azaldıysa geçerli sayfayı sınıra çek.
             if (CurrentPage > TotalPages) CurrentPage = TotalPages;
 
             FilteredContracts = new ObservableCollection<ContractCardViewModel>(
-                contracts.Select(c => new ContractCardViewModel(c, editableUserId, isSyb)));
+                contracts.Select(c => new ContractCardViewModel(c, _currentUser)));
         }
         catch (Exception ex)
         {

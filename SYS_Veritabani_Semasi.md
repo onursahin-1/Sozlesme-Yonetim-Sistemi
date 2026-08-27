@@ -1,4 +1,4 @@
-# SYS — Veritabanı Şeması
+﻿# SYS — Veritabanı Şeması
 
 Veritabanı: `SysDb` (SQL Server Express). Şema EF Core migration'larıyla yönetilir;
 elle DDL çalıştırılmaz.
@@ -58,6 +58,8 @@ Bir kayıt `Talep` olarak doğar, SYB sözleşmeye dönüştürünce `ContractNo
 | `PaymentPeriod` | nvarchar, null | Ödeme periyodu |
 | `Status` | int | `ContractStatus` |
 | `Stage` | int | 0 talep · 1 SYB son kontrol · 2 yönetim onayı · 3 zincir bitti |
+| `FinalCheckSkipped` | bit | Sözleşme oluşturulurken Son Kontrol atlandı mı (talebi de aynı SYB açtıysa). Müdür reddinde sözleşmenin nereye döneceğini belirler; o an yeniden hesaplanamaz |
+| `LastRejectedStage` | int? | Son red hangi aşamadan geldi: 0 talep incelemesi / geri çekme · 1 Son Kontrol · 2 Yönetim. `WasRejected` "reddedildi mi", bu alan "kim geri gönderdi" sorusuna cevap verir |
 | `StartDate`, `EndDate` | datetime2, null | |
 | `TotalAmount` | decimal | Kalemlerin toplamı (sözleşmeye dönüştükten sonra) |
 | `Currency` | nvarchar | ISO kodu (TRY/EUR/USD). **Kur dönüşümü yapılmaz**, toplamlar para birimi başına ayrı hesaplanır |

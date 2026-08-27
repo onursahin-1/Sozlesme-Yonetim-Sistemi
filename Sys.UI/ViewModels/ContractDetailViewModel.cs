@@ -277,7 +277,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
             Detail = full;
 
             var tr = CultureInfo.GetCultureInfo("tr-TR");
-            var card = new ContractCardViewModel(full, currentUser: _currentUser);
+            var card = new ContractCardViewModel(full, _currentUser);
 
             DetailTitle = full.Title;
             DetailNo = string.IsNullOrEmpty(full.ContractNo) ? full.RequestRefNo : full.ContractNo!;

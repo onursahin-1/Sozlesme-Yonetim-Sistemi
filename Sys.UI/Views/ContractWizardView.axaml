@@ -278,6 +278,53 @@
 				<StackPanel IsVisible="{Binding IsStep3}" Spacing="16">
 
 					<!--
+					  KONTROL LİSTESİ. Yalnızca talebi de aynı SYB açtıysa görünür: o
+					  durumda sözleşme Son Kontrol'e uğramadan doğrudan yönetim onayına
+					  gidiyor ve bu maddeler başka hiçbir yerde sorulmuyor.
+
+					  Maddeler veri girişini doğruluyor (SAP cari kodu, kalemler,
+					  tarihler), kararı değil — bu yüzden asıl yerleri burası, veri
+					  girişinin sonu. Talep Personel'den geldiyse liste burada
+					  gösterilmez; o akışta Son Kontrol duruyor ve maddeler orada
+					  soruluyor.
+					-->
+					<Border IsVisible="{Binding ShowChecklist}"
+							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}"
+							BorderThickness="1" CornerRadius="12" Padding="24,20">
+						<StackPanel Spacing="14">
+
+							<Grid ColumnDefinitions="*,Auto">
+								<StackPanel Grid.Column="0" Spacing="2">
+									<TextBlock Classes="display" Text="Kontrol Listesi" FontSize="15.5"
+											   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+									<TextBlock Text="Bu sözleşme Son Kontrol'e uğramadan doğrudan yönetim onayına gidecek; girdiğiniz bilgileri burada doğrulayın."
+											   FontSize="11" Foreground="{DynamicResource TextFaintAlt}" TextWrapping="Wrap"/>
+								</StackPanel>
+								<TextBlock Grid.Column="1" Text="{Binding ChecklistProgressText}"
+										   FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AccentBase}"
+										   VerticalAlignment="Center"/>
+							</Grid>
+
+							<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
+
+							<ItemsControl ItemsSource="{Binding Checklist}">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:ChecklistItemViewModel">
+										<CheckBox IsChecked="{Binding IsChecked}" Margin="0,2"
+												  FontSize="12" Foreground="{DynamicResource TextBody}">
+											<TextBlock Text="{Binding Label}" TextWrapping="Wrap" FontSize="12"/>
+										</CheckBox>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+
+							<TextBlock IsVisible="{Binding ShowChecklistWarning}"
+									   Text="Sözleşmeyi kaydetmek için tüm maddeleri işaretleyin."
+									   FontSize="11" Foreground="{DynamicResource WarningBase}" TextWrapping="Wrap"/>
+						</StackPanel>
+					</Border>
+
+					<!--
 					  Talebe daha önce yüklenmiş dosyalar. Kalemlerin aksine bunlar silinmiyor
 					  (fiziksel dosyalar diskte duruyor), yalnızca gösteriliyor — SYB'nin aynı
 					  dosyayı ikinci kez yükleyip sözleşmeye kopya eklememesi için.
@@ -544,7 +591,7 @@
 				</Button>
 
 				<Button Classes="flat" HorizontalAlignment="Stretch" IsVisible="{Binding IsStep3}"
-						Command="{Binding SubmitCommand}" IsEnabled="{Binding !IsSubmitting}">
+						Command="{Binding SubmitCommand}" IsEnabled="{Binding CanSubmit}">
 					<Border Background="{DynamicResource SuccessSolid}" CornerRadius="9" Padding="18,12">
 						<TextBlock Text="Sözleşmeyi Kaydet" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
 								   HorizontalAlignment="Center"/>

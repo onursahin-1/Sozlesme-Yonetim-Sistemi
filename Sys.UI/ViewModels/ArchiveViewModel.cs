@@ -191,7 +191,7 @@ public partial class ArchiveViewModel : ViewModelBase
             if (CurrentPage > TotalPages) CurrentPage = TotalPages;
 
             AvailableContracts = new ObservableCollection<ContractCardViewModel>(
-                contracts.Select(c => new ContractCardViewModel(c, currentUser: _currentUser)));
+                contracts.Select(c => new ContractCardViewModel(c, _currentUser)));
         }
         catch (Exception ex)
         {
@@ -336,7 +336,7 @@ public partial class ArchiveViewModel : ViewModelBase
             }
 
             var tr = CultureInfo.GetCultureInfo("tr-TR");
-            var card = new ContractCardViewModel(full, currentUser: _currentUser);
+            var card = new ContractCardViewModel(full, _currentUser);
 
             Detail = full;
             DetailTitle = full.Title;

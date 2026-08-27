@@ -30,11 +30,18 @@ public class ContractService
 
     // Bildirim oluşturma, hiçbir zaman asıl iş akışını bozmamalı: bildirim yazılamazsa
     // (bağlantı hatası vb.) onay/fesih işlemi başarılı sayılmaya devam eder.
-    private async Task NotifyAsync(IEnumerable<int> userIds, int contractId, NotificationType type, string title, string message)
+    // Kullanıcı kendi yaptığı işlemin bildirimini almaz.
+    //
+    // Bildirimler "senin adına bir şey oldu, haberin olsun" demek için var. İşlemi
+    // yapan kişi zaten haberdar; kendi kararını kendisine "Talebiniz reddedildi"
+    // diye bildirmek rozeti şişirir ve gerçek işleri görünmez kılar. SYB kendi
+    // talebini işlediğinde (talebi de sözleşmeyi de aynı kişi yürütüyor) tam olarak
+    // bu oluyordu.
+    private async Task NotifyAsync(IEnumerable<int> userIds, int contractId, NotificationType type, string title, string message, int? excludeUserId = null)
     {
         if (_notifications is null) return;
 
-        var list = userIds.Distinct().Select(id => new Notification
+        var list = userIds.Distinct().Where(id => id != excludeUserId).Select(id => new Notification
         {
             UserId = id,
             ContractId = contractId,
@@ -434,6 +441,7 @@ public class ContractService
         contract.WasRejected = false;
         contract.LastRejectionNote = null;
         contract.LastRejectedAt = null;
+        contract.LastRejectedStage = null;
         // RenewedFromContractId'ye dokunulmuyor: yenileme bağı çağırandan geliyor ve
         // kaydın parçası olarak yazılıyor.
         await _contracts.AddAsync(contract);
@@ -502,18 +510,27 @@ public class ContractService
         if (string.IsNullOrWhiteSpace(note))
             throw new InvalidOperationException("Reddetme işlemi için bir gerekçe girilmelidir.");
 
+        // Aynı kural, iki farklı insan davranışı: başkasının talebini REDDETMEK bir
+        // karar, kendi talebini GERİ ÇEKMEK bir vazgeçme. Kayıtlarda da ayrılıyor;
+        // aksi halde işlem geçmişinde kişinin kendi talebini "reddettiği" yazıyordu.
+        var isOwnRequest = contract.CreatedByUserId == actingUser.Id;
+
         contract.Stage = 0;
         contract.Status = allowResubmit ? ContractStatus.Talep : ContractStatus.Reddedildi;
         contract.WasRejected = true;
         contract.LastRejectionNote = note;
         contract.LastRejectedAt = DateTime.Now;
+        // 0 = onay zinciri öncesi talep incelemesi.
+        contract.LastRejectedStage = 0;
 
         // Karar, sözleşme detayındaki zaman çizelgesinde de görünsün diye ApprovalLog
         // olarak yazılır. StepNumber 0 = onay zinciri öncesi talep incelemesi.
         var log = new ApprovalLog
         {
             StepNumber = 0,
-            StepName = allowResubmit ? "Talep İncelemesi (İade)" : "Talep İncelemesi (Kapatıldı)",
+            StepName = isOwnRequest
+                ? (allowResubmit ? "Talep Geri Çekildi" : "Talep Geri Çekildi (Kapatıldı)")
+                : (allowResubmit ? "Talep İncelemesi (İade)" : "Talep İncelemesi (Kapatıldı)"),
             ActingUserId = actingUser.Id,
             Decision = ApprovalDecision.Red,
             Note = note,
@@ -524,9 +541,11 @@ public class ContractService
         {
             EntityName = "Contract",
             EntityId = contract.Id,
-            Action = allowResubmit ? "TalepİadeEdildi" : "TalepReddedildi",
+            Action = isOwnRequest ? "TalepGeriÇekildi" : allowResubmit ? "TalepİadeEdildi" : "TalepReddedildi",
             ActingUserId = actingUser.Id,
-            Detail = $"{contract.Title} talebi " + (allowResubmit ? "düzeltilmek üzere iade edildi" : "reddedilip kapatıldı") + $" - Not: {note}",
+            Detail = $"{contract.Title} talebi " + (isOwnRequest
+                ? (allowResubmit ? "sahibi tarafından geri çekildi" : "sahibi tarafından geri çekilip kapatıldı")
+                : (allowResubmit ? "düzeltilmek üzere iade edildi" : "reddedilip kapatıldı")) + $" - Not: {note}",
             ActionDate = DateTime.Now,
         };
 
@@ -539,7 +558,7 @@ public class ContractService
                $"\"{contract.Title}\" talebi reddedildi ve kapatıldı. Gerekçe: {note}");
 
         await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id,
-            NotificationType.TalepSonucu, baslik, mesaj);
+            NotificationType.TalepSonucu, baslik, mesaj, excludeUserId: actingUser.Id);
     }
 
     public async Task AddAttachmentAsync(Attachment attachment, User actingUser)
@@ -636,7 +655,26 @@ public class ContractService
 
         contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
         contract.Status = ContractStatus.OnayBekliyor;
-        contract.Stage = 1;
+
+        // SON KONTROL (Stage 1) YALNIZCA KENDİ TALEBİNDE ATLANIR.
+        //
+        // Talebi açan kişi ile sözleşmeyi oluşturan kişi AYNI SYB ise, Son Kontrol
+        // o kişinin kendi girdiği veriyi kendisinin onaylaması demek olurdu; denetim
+        // değeri üretmeyen bir tekrar. Bu durumda sözleşme doğrudan yönetim onayına
+        // gider.
+        //
+        // Talep Personel'den (ya da başka bir SYB'den) geldiyse akış DEĞİŞMEZ:
+        // sözleşme Son Kontrol'e düşer ve kontrol listesi orada sorulur.
+        //
+        // Stage 1 hiçbir durumda silinmedi; başka üç işi de duruyor:
+        //   - Müdür reddederse sözleşme Stage 1'e düşer, SYB düzeltip yeniden gönderir
+        //   - Düzenleme talebi Stage 1'den başlar
+        //   - Fesih talebi Stage 1'den başlar
+        var skipFinalCheck = contract.CreatedByUserId == actingUser.Id;
+        contract.Stage = skipFinalCheck ? 2 : 1;
+        // Karar sözleşmeye yazılıyor: Müdür reddettiğinde sözleşmenin nereye
+        // döneceği buna bağlı ve o an bu hesap yeniden yapılamıyor.
+        contract.FinalCheckSkipped = skipFinalCheck;
 
         // Talep aşamasındaki red işareti burada temizlenir: talep artık sözleşmeye
         // dönüştü. Aksi halde talep reddinin gerekçesi, Son Kontrol'deki yeni
@@ -645,18 +683,26 @@ public class ContractService
         contract.WasRejected = false;
         contract.LastRejectionNote = null;
         contract.LastRejectedAt = null;
+        contract.LastRejectedStage = null;
         var auditLog = new AuditLog
         {
             EntityName = "Contract",
             EntityId = contract.Id,
             Action = "SözleşmeOluşturuldu",
             ActingUserId = actingUser.Id,
-            Detail = $"{contract.Title} sözleşmesi SYB tarafından oluşturuldu.",
+            // Son Kontrol atlandıysa kayda AÇIKÇA yazılıyor. Aksi halde geçmişe
+            // bakan biri bir adımın sessizce eksik kaldığını sanardı.
+            Detail = skipFinalCheck
+                ? $"{contract.Title} sözleşmesi SYB tarafından oluşturuldu. Talep de aynı " +
+                  "kullanıcıya ait olduğu için Son Kontrol atlandı; kontrol listesi oluşturma " +
+                  "sırasında onaylandı ve sözleşme doğrudan yönetim onayına gönderildi."
+                : $"{contract.Title} sözleşmesi SYB tarafından oluşturuldu ve Son Kontrol'e gönderildi.",
             ActionDate = DateTime.Now,
         };
         await _contracts.FinalizeCreationAsync(contract, items, attachments, auditLog);
 
-        // Onay zincirinin BAŞLANGICI burası: sözleşme Stage 1'e (SYB Son Kontrol) taşındı.
+        // Onay zincirinin BAŞLANGICI burası: sözleşme Stage 1'e (Son Kontrol) ya da
+        // kendi talebiyse doğrudan Stage 2'ye (yönetim onayı) taşındı.
         // Bu bildirim olmadan zincir hiç başlamıyor, sonraki aşamaların bildirimleri de
         // dolayısıyla tetiklenmiyordu.
         await NotifyStageOwnersAsync(contract, "sözleşmesi");
@@ -819,6 +865,7 @@ public class ContractService
                 contract.WasRejected = false;
                 contract.LastRejectionNote = null;
                 contract.LastRejectedAt = null;
+                contract.LastRejectedStage = null;
 
                 if (contract.Stage == 1)
                 {
@@ -840,8 +887,25 @@ public class ContractService
                 contract.WasRejected = true;
                 contract.LastRejectionNote = note;
                 contract.LastRejectedAt = DateTime.Now;
+                // Aşama DEĞİŞMEDEN önce yazılıyor: birkaç satır aşağıda Stage
+                // güncelleniyor ve reddin nereden geldiği bilgisi kayboluyordu.
+                contract.LastRejectedStage = contract.Stage;
 
-                if (contract.Stage == 1)
+                // Reddedilen sözleşme, DÜZELTİLEBİLECEĞİ yere döner.
+                //
+                // Son Kontrol ekranında düzeltme yapılamaz; orada yalnızca onay ve red
+                // vardır. Dolayısıyla Stage 1'e dönmek ancak Son Kontrol'ü BAŞKASI
+                // yapıyorsa anlamlıdır: o kişi Müdür'ün itirazını değerlendirir ve
+                // gerekiyorsa talebi sahibine iade eder.
+                //
+                // Son Kontrol atlanmışsa böyle bir ara mercii yok. Sözleşmeyi kuran
+                // kişiyle onaylayacak kişi aynı olduğu için Stage 1'e dönmek, SYB'yi
+                // kendi sözleşmesini yeniden onaylayan bir ekrana düşürüyordu: tek
+                // anlamlı eylem "Reddet" oluyordu, yani düzeltebilmek için kendi
+                // talebini reddetmek zorunda kalıyordu. Doğrudan Talep durumuna
+                // dönüyor; sözleşme, verileri dolu olarak Sözleşme Yarat ekranında
+                // açılıyor. Sözleşme numarası korunuyor, kalemler değiştiriliyor.
+                if (contract.Stage == 1 || contract.FinalCheckSkipped)
                 {
                     contract.Stage = 0;
                     contract.Status = ContractStatus.Talep;
@@ -879,7 +943,7 @@ public class ContractService
                 : ("Talebiniz reddedildi", $"\"{contract.Title}\" {bildirimKonusu} reddedildi. Gerekçe: {note}");
 
             await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id,
-                NotificationType.TalepSonucu, baslik, mesaj);
+                NotificationType.TalepSonucu, baslik, mesaj, excludeUserId: actingUser.Id);
         }
     }
 

@@ -283,7 +283,7 @@
 												Click="OnRejectRequestClick">
 											<Border Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 													CornerRadius="6" Padding="12,5">
-												<TextBlock Text="Talebi Reddet" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
+												<TextBlock Text="{Binding RejectRequestLabel}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
 											</Border>
 										</Button>
 										<Button Classes="flat" IsVisible="{Binding NeedsContractCreation}"

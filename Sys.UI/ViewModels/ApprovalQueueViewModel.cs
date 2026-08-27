@@ -134,16 +134,12 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         }
 
         // Yeni sözleşme: ilk kez yürürlüğe girecek.
-        // "Fesih/Revizyon bağlamı gözden geçirildi" maddesi kaldırıldı — bu akışta
-        // öyle bir bağlam yok, madde her zaman boşa işaretleniyordu.
-        return new[]
-        {
-            "Kapsam, talebin konusuyla örtüşüyor",
-            "Bedel kalemleri ve toplam tutar doğru",
-            "Firma bilgileri doğru (Vergi No, SAP Cari Kodu)",
-            "Başlangıç/Bitiş tarihleri ve ödeme periyodu doğru",
-            "Sözleşme dosyası yüklendi; ek ve teminat belgeleri tam",
-        };
+        //
+        // Maddeler WizardChecklist'ten geliyor: aynı liste Sözleşme Yarat
+        // sihirbazının son adımında da kullanılıyor (talebi de aynı SYB açtıysa
+        // Son Kontrol atlanıyor ve liste orada soruluyor). İki yerde ayrı
+        // yazılsaydı zamanla ayrışırlardı.
+        return WizardChecklist.Labels;
     }
 
     // Onay/red penceresinin metni de karar neye aitse ona göre yazılır. "Bu sözleşmeyi

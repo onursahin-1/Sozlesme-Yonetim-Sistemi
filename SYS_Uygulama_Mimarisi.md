@@ -1,4 +1,4 @@
-# SYS — Uygulama Mimarisi
+﻿# SYS — Uygulama Mimarisi
 
 ## Katmanlar
 
@@ -55,10 +55,17 @@ kayboluyordu. Çözüm: butonun gövdesi tamamen şeffaf, renk ve yazı **içind
 `Border`/`TextBlock` üzerinde (yerel değer, tema ezemez), geri bildirim `Opacity`
 ile. Tanım `App.axaml` içinde.
 
-**`RequestedThemeVariant="Light"`.** Uygulamanın tüm renkleri açık tema
-varsayımıyla yazıldı. "Default" bırakılınca sistem koyu moddayken tema
-varsayılanı olan açık yazılar beyaz kartların üzerine düşüp okunamaz hale
-geliyordu.
+**Renkler paletten gelir.** Ekranlar renk yazmaz, `Themes/Palette.axaml`
+içindeki ROL adlarına başvurur (`{DynamicResource TextPrimary}`). Sözlük tema
+başına ayrı değer taşır; açık/koyu geçişi tek yerden yönetilir. ViewModel'lerin
+ürettiği renkler de palet anahtarı döndürür ve `ThemeBrushConverter` üzerinden
+çözülür.
+
+> Renkler eskiden 20 dosyada 919 sabit hex olarak duruyordu ve
+> `RequestedThemeVariant` "Light"e sabitlenmişti. Taşıma sırasında aynı hex'in
+> farklı rollerde kullanıldığı beş yer çıktı (üst çubuk zemini metin rengiyle
+> aynı hex'ti, dolu buton zemini yazı rengiyle aynıydı…). Bu yüzden isimler ton
+> değil **rol** anlatır.
 
 **Emoji kullanılmaz.** Emoji her Windows sürümünde farklı çiziliyor, hizası kayıyor
 ve satır yüksekliğini bozuyor. İkonlar `Path` (vektör) veya renkli nokta olarak
@@ -123,6 +130,80 @@ yazıldıklarında kümeler birbirinden sapmıştı.
 `FinalizeContractAsync` yalnızca `Talep` durumundaki kaydı kabul eder — kapatılmış
 bir talep ya da yürürlükteki bir sözleşme yeniden onay zincirinin başına
 gönderilemez.
+
+### Son Kontrol'ün atlanması
+
+Sözleşmeyi her zaman SYB oluşturur. Talebi de **aynı SYB** açtıysa, Son Kontrol
+o kişinin kendi girdiği veriyi kendisinin onaylaması demek olur — denetim değeri
+üretmeyen bir tekrar. Bu durumda sözleşme doğrudan yönetim onayına (Stage 2)
+gider.
+
+| Talebi açan | Sözleşmeyi oluşturan | Zincir |
+|---|---|---|
+| Personel | SYB | Talep → **Son Kontrol** → Yönetim → Yürürlükte |
+| SYB (başkası) | SYB | Talep → **Son Kontrol** → Yönetim → Yürürlükte |
+| SYB (aynı kişi) | Aynı SYB | Talep → Yönetim → Yürürlükte |
+
+Kontrol listesi kaybolmuyor, **yer değiştiriyor**: atlanan durumda maddeler
+Sözleşme Yarat sihirbazının son adımında soruluyor ve hepsi işaretlenmeden
+sözleşme kaydedilemiyor. Maddeler zaten veri girişini doğruluyor (SAP cari kodu,
+bedel kalemleri, tarihler), kararı değil — asıl yerleri veri girişinin sonu.
+İki ekran da `WizardChecklist.Labels`'tan besleniyor ki zamanla ayrışmasınlar.
+
+Atlama denetim kaydına **açıkça** yazılıyor; aksi halde geçmişe bakan biri bir
+adımın sessizce eksik kaldığını sanardı.
+
+Atlama kararı `Contract.FinalCheckSkipped` alanında **saklanıyor**. Karar
+oluşturma anında veriliyor ama sonucu red anında da gerekiyor ve o an işlemi
+yapan kişi Müdür olduğu için yeniden hesaplanamıyor.
+
+**Stage 1 silinmedi.** Yeni sözleşme yolundan çıkarıldı ama iki işi duruyor:
+düzenleme talebinin başlangıcı ve fesih talebinin başlangıcı. Müdür reddinde de
+hâlâ dönüş noktası — ama yalnızca Son Kontrol'ü **başkası** yapacaksa.
+
+### Reddedilen sözleşme nereye döner
+
+Son Kontrol ekranında düzeltme yapılamaz; orada yalnızca onay ve red vardır.
+Bu yüzden Müdür reddinin Stage 1'e dönmesi ancak Son Kontrol'ü **başka biri**
+yapacaksa anlamlı: o kişi Müdür'ün itirazını değerlendirir ve gerekiyorsa
+talebi sahibine iade eder.
+
+Son Kontrol atlanmışsa böyle bir ara mercii yok. Stage 1'e dönmek SYB'yi kendi
+sözleşmesini yeniden onaylayan bir ekrana düşürüyordu; ekranda tek anlamlı
+eylem "Reddet" olduğu için SYB, düzeltebilmek için **kendi talebini reddetmek**
+zorunda kalıyordu. Artık doğrudan `Talep` durumuna dönüyor: sözleşme, verileri
+dolu olarak Sözleşme Yarat ekranında açılıyor. Sözleşme numarası korunuyor,
+kalemler ekleme değil değiştirme ile yazılıyor.
+
+| Son Kontrol | Müdür reddettiğinde |
+|---|---|
+| Yapıldı (Personel/başka SYB talebi) | Stage 1 — Son Kontrol'e döner |
+| Atlandı (kendi talebi) | Stage 0, `Talep` — Sözleşme Yarat'a döner |
+
+### Red izinde "kim geri gönderdi"
+
+`WasRejected` yalnızca "reddedildi mi" der. Ama `Talep` + reddedilmiş görünümü
+**üç** ayrı olaydan doğuyor: SYB'nin talebi sahibine iade etmesi, Müdür'ün
+Son Kontrol'ü atlanmış bir sözleşmeyi geri göndermesi, ve kişinin kendi talebini
+geri çekmesi. Üçünde de kullanıcıya söylenecek cümle farklı.
+
+Bunu `FinalCheckSkipped`'tan çıkarmaya çalışmak yanlıştı: o alan "Son Kontrol
+atlandı mı" sorusuna ait. Kendi talebini geri çeken SYB'ye "Yönetim onayından
+döndü" yazıyordu. Ayrı soru, ayrı alan: `LastRejectedStage` (0 / 1 / 2), red
+yazılırken **aşama değişmeden önce** doldurulur ve zincirde ileri gidildiğinde
+red izinin geri kalanıyla birlikte temizlenir.
+
+### Kendi işleminin bildirimi gönderilmez
+
+`NotifyAsync` alıcı listesinden işlemi yapan kişiyi çıkarır. Bildirimler "senin
+adına bir şey oldu" demek için var; işlemi yapan zaten haberdar. SYB kendi
+talebini işlediğinde sistem kendi kararını kendisine "Talebiniz reddedildi"
+diye bildiriyordu — rozet şişiyor, gerçek işler görünmez oluyordu.
+
+Aynı ayrım arayüzde de var: başkasının talebini **reddetmek** bir karar, kendi
+talebini **geri çekmek** bir vazgeçme. Buton ve diyalog metinleri talebin
+sahibine göre değişiyor (`ContractCardViewModel.IsOwnRequest`); işletilen kural
+aynı.
 
 ### Red izi
 

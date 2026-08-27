@@ -25,7 +25,7 @@ public partial class ContractListView : UserControl
         var owner = TopLevel.GetTopLevel(this) as Window;
         if (owner is null) return;
 
-        var result = await RejectRequestDialog.ShowAsync(owner, card.Title);
+        var result = await RejectRequestDialog.ShowAsync(owner, card.Title, card.IsOwnRequest);
         if (result is null) return; // kullanıcı vazgeçti
 
         await vm.RejectRequestAsync(card, result.Note, result.AllowResubmit);

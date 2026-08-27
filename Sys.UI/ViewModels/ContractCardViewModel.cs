@@ -9,11 +9,26 @@ public class ContractCardViewModel
     private readonly Contract _contract;
     private readonly bool _isSyb;
 
-    public ContractCardViewModel(Contract contract, int currentUserId = 0, bool isSyb = false, User? currentUser = null)
+    // Kart, kullanıcının KENDİSİNİ alır; rol ve kimlik ayrı ayrı geçilmez.
+    //
+    // Eskiden liste ekranı buraya "editableUserId" adında bir sayı geçiyordu ve bu
+    // sayı Personel dışındaki rollerde 0'dı — çünkü tek işi "listeden düzenleyebilir
+    // mi" sorusuydu. Sonradan aynı alana "bu talep bana mı ait" sorusu da bağlanınca
+    // SYB için cevap her zaman "hayır" çıktı: kendi talebi "başkasının talebi" gibi
+    // görünüyordu. Bir tanımlayıcıya ikinci bir rol yüklemenin bilinen sonucu.
+    public ContractCardViewModel(Contract contract, User? currentUser = null)
     {
         _contract = contract;
-        _isSyb = isSyb;
-        IsEditable = currentUserId != 0 && contract.CreatedByUserId == currentUserId && contract.Status == ContractStatus.Talep;
+        _isSyb = currentUser?.Role == UserRole.SYB;
+
+        IsOwnRequest = currentUser is not null && contract.CreatedByUserId == currentUser.Id;
+
+        // Listeden talep düzenleme yalnızca Personel'e açık. SYB'nin kendi talebinde
+        // karşılığı "Sözleşme Yarat" akışı; oradaki sihirbaz zaten tüm alanları alıyor.
+        IsEditable = IsOwnRequest
+            && currentUser!.Role == UserRole.Personel
+            && contract.Status == ContractStatus.Talep;
+
         CanRenew = currentUser is not null && ContractService.CanRenew(contract, currentUser);
     }
 
@@ -38,6 +53,13 @@ public class ContractCardViewModel
     // bu hem gereksiz veri girişi hem de boşa yanan bir sözleşme numarası demekti.
     public bool CanRejectRequest => _isSyb && Status == ContractStatus.Talep;
 
+    // Aynı işlem, talep kime aitse ona göre farklı bir eylemdir: başkasının talebini
+    // reddetmek bir KARAR, kendi talebini geri çekmek bir VAZGEÇME. SYB kendi talebini
+    // de işleyebildiği için ikisi tek butonda toplanıyordu ve ekranda "kendi talebini
+    // reddet" gibi tuhaf bir iş görünüyordu.
+    public bool IsOwnRequest { get; }
+    public string RejectRequestLabel => IsOwnRequest ? "Talebi Geri Çek" : "Talebi Reddet";
+
     // SYB rolündeki kullanıcı için: bu kart "Son Kontrol" (aşama 1 onayı) işlemini mi bekliyor?
     public bool NeedsSybSonKontrol => _isSyb && Status == ContractStatus.OnayBekliyor && Stage == 1;
 
@@ -52,7 +74,7 @@ public class ContractCardViewModel
     public int Stage => _contract.Stage;
 
     public string StatusLabel => IsReturned
-        ? "İade Edildi"
+        ? ReturnBadgeText
         : Status switch
         {
             ContractStatus.Talep => "Talep",
@@ -68,6 +90,25 @@ public class ContractCardViewModel
 
     // İade: talep sahibine geri döndü, düzeltilip yeniden gönderilebilir.
     public bool IsReturned => Status == ContractStatus.Talep && _contract.WasRejected;
+
+    // Aynı görünüm (Talep + reddedilmiş) ÜÇ farklı olaydan doğabiliyor: SYB'nin
+    // talebi sahibine iade etmesi, Son Kontrol'ü atlanmış bir sözleşmeyi Müdür'ün
+    // geri göndermesi, ya da kişinin kendi talebini geri çekmesi. Kullanıcıya
+    // söylenecek cümle üçünde de farklı.
+    //
+    // Ayrımı LastRejectedStage yapıyor. Bunu önce FinalCheckSkipped'tan çıkarmaya
+    // çalışmıştım — yanlıştı: o alan "Son Kontrol atlandı mı" sorusuna ait, "reddi
+    // kim verdi" sorusuna değil. Kendi talebini geri çeken SYB'ye "Yönetim onayından
+    // döndü" yazıyordu.
+    public bool IsReturnedFromManagement => IsReturned && _contract.LastRejectedStage == 2;
+
+    // Kişinin kendi geri çekmesi: red aşama 0'dan geldi ve talep zaten onun.
+    public bool IsSelfWithdrawn => IsReturned && _contract.LastRejectedStage == 0 && IsOwnRequest;
+
+    public string ReturnBadgeText =>
+        IsReturnedFromManagement ? "Yönetimden Döndü"
+        : IsSelfWithdrawn ? "Geri Çekildi"
+        : "İade Edildi";
 
     // Kapatma: talep nihai olarak reddedildi, yeniden gönderilemez.
     public bool IsClosedRejected => Status == ContractStatus.Reddedildi;
@@ -92,8 +133,21 @@ public class ContractCardViewModel
             if (IsClosedRejected)
                 return $"Talep reddedildi ve kapatıldı. Gerekçe: {note}";
 
+            // Aynı olay, bakan kişiye göre farklı bir şey söyler. SYB için bu bir
+            // İŞ ("Son Kontrol tekrar yapılmalı"); talebi açan Personel için bir
+            // HABER — onun yapacağı bir şey yok, sözleşme hâlâ SYB'nin elinde.
+            // Herkese aynı cümleyi göstermek, Personel'e üstlenemeyeceği bir görev
+            // veriyordu.
             if (IsSentBackToSyb)
-                return $"Yönetim onayından döndü — Son Kontrol tekrar yapılmalı. Gerekçe: {note}";
+                return _isSyb
+                    ? $"Yönetim onayından döndü — Son Kontrol tekrar yapılmalı. Gerekçe: {note}"
+                    : $"Yönetim onayından döndü; SYB yeniden inceliyor. Gerekçe: {note}";
+
+            if (IsReturnedFromManagement)
+                return $"Yönetim onayından döndü — düzeltip yeniden gönderin. Gerekçe: {note}";
+
+            if (IsSelfWithdrawn)
+                return $"Talebi geri çektiniz; düzeltip yeniden gönderebilirsiniz. Gerekçe: {note}";
 
             return $"Düzeltilmek üzere iade edildi. Gerekçe: {note}";
         }

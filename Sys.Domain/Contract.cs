@@ -19,8 +19,27 @@ public class Contract
     public bool WasRejected { get; set; }
     public string? LastRejectionNote { get; set; }
     public DateTime? LastRejectedAt { get; set; }
+
+    // Son red HANGİ AŞAMADAN geldi? 0 talep incelemesi (SYB iadesi ya da talep
+    // sahibinin geri çekmesi) · 1 SYB Son Kontrol · 2 Yönetim onayı.
+    //
+    // WasRejected "reddedildi mi" sorusuna cevap verir; bu alan "kim geri
+    // gönderdi" sorusuna. İkisi ayrı sorular ve ekranda ayrı cümleler gerektiriyor:
+    // Müdür'ün geri gönderdiği bir sözleşme ile kullanıcının kendi geri çektiği
+    // talep aynı görünüyor (ikisi de Talep + reddedilmiş), ama kullanıcıya
+    // söylenecek şey aynı değil.
+    public int? LastRejectedStage { get; set; }
     public ContractStatus Status { get; set; }
     public int Stage { get; set; }
+
+    // Bu sözleşme oluşturulurken Son Kontrol (Stage 1) atlandı mı?
+    //
+    // Atlanma kuralı sözleşme YARATILIRKEN işliyor (talebi açan ile sözleşmeyi
+    // oluşturan aynı SYB mi). Ama sonucu daha sonra, Müdür reddettiğinde de
+    // gerekiyor: atlanmış bir sözleşme reddedilince Son Kontrol'e "geri" dönemez —
+    // orada hiç bulunmadı. Karar anında bunu yeniden hesaplamak mümkün değil,
+    // çünkü o an işlemi yapan kişi Müdür. Bu yüzden kararın kendisi saklanıyor.
+    public bool FinalCheckSkipped { get; set; }
     public bool PendingTermination { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }

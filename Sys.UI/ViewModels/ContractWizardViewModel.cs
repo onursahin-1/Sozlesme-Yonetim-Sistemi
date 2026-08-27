@@ -98,6 +98,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     public partial bool IsLoading { get; set; } = true;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSubmit))]
     public partial bool IsSubmitting { get; set; }
 
     [ObservableProperty]
@@ -148,6 +149,64 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
     partial void OnEndDateChanged(DateTimeOffset? value) => EndDateError = string.Empty;
     partial void OnSelectedPaymentPeriodChanged(string value) => PaymentPeriodError = string.Empty;
     partial void OnSapCariKoduChanged(string value) => SapCariKoduError = string.Empty;
+
+    // --- Son adımdaki kontrol listesi ---
+    //
+    // Bu liste YALNIZCA Son Kontrol'ün atlanacağı durumda çıkar: talebi de aynı SYB
+    // açtıysa sözleşme doğrudan yönetim onayına gidiyor ve kontrol listesi başka
+    // hiçbir yerde sorulmuyor. Talep Personel'den geldiyse liste burada gösterilmez;
+    // o akışta Son Kontrol aşaması duruyor ve maddeler orada soruluyor.
+    //
+    // Maddeler ApprovalQueue'daki "yeni sözleşme" listesiyle AYNI: ikisi de veri
+    // girişini doğruluyor. Tek kaynaktan (WizardChecklist) besleniyor ki zamanla
+    // ayrışmasınlar.
+    public ObservableCollection<ChecklistItemViewModel> Checklist { get; } = new();
+
+    // Talebi açan kişi ile sözleşmeyi oluşturan aynı mı? Servisteki kuralın aynısı;
+    // ekranın neyi göstereceğine bu karar veriyor.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowChecklist))]
+    public partial bool SkipsFinalCheck { get; set; }
+
+    public bool ShowChecklist => SkipsFinalCheck;
+
+    private int CheckedCount => Checklist.Count(i => i.IsChecked);
+    public bool AllChecked => !ShowChecklist || Checklist.All(i => i.IsChecked);
+    public string ChecklistProgressText => $"{CheckedCount} / {Checklist.Count} madde";
+    public bool ShowChecklistWarning => ShowChecklist && !AllChecked;
+
+    // Gönder butonu iki sebeple pasif olabilir: liste bitmemiştir ya da gönderim
+    // sürüyordur. İkisi tek özellikte birleşiyor — XAML'de iki bağlamayı "ve" ile
+    // birleştirmenin temiz bir yolu yok ve çift gönderim koruması kaybolmamalı.
+    public bool CanSubmit => AllChecked && !IsSubmitting;
+
+    private void BuildChecklist(Contract? request, User currentUser)
+    {
+        foreach (var item in Checklist) item.PropertyChanged -= OnChecklistItemChanged;
+        Checklist.Clear();
+
+        SkipsFinalCheck = request is not null && request.CreatedByUserId == currentUser.Id;
+        if (!SkipsFinalCheck) { NotifyChecklistChanged(); return; }
+
+        foreach (var label in WizardChecklist.Labels)
+        {
+            var item = new ChecklistItemViewModel(label);
+            item.PropertyChanged += OnChecklistItemChanged;
+            Checklist.Add(item);
+        }
+        NotifyChecklistChanged();
+    }
+
+    private void OnChecklistItemChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => NotifyChecklistChanged();
+
+    private void NotifyChecklistChanged()
+    {
+        OnPropertyChanged(nameof(AllChecked));
+        OnPropertyChanged(nameof(ChecklistProgressText));
+        OnPropertyChanged(nameof(ShowChecklistWarning));
+        OnPropertyChanged(nameof(CanSubmit));
+    }
 
     public ObservableCollection<ContractItemRowViewModel> Items { get; } = new();
     public ObservableCollection<WizardFileItem> SozlesmeFileNames { get; } = new();
@@ -338,6 +397,8 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         RecreateNotice = string.Empty;
         ExistingAttachments = new ObservableCollection<Attachment>();
 
+        BuildChecklist(value, _currentUser);
+
         var token = ++_requestLoadToken;
         _ = LoadExistingContractDataAsync(value, token);
     }
@@ -378,7 +439,19 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 
             ExistingAttachments = new ObservableCollection<Attachment>(full.Attachments);
 
-            IsRecreate = full.Items.Count > 0 || full.Attachments.Count > 0;
+            // "Daha önce sözleşme oluşturulmuş" işareti YALNIZCA kalemlere bakar.
+            // Kalem tek bir yerden yazılıyor: sözleşme oluşturma sihirbazından.
+            // Yani kalem varsa bu talep gerçekten bir kez sözleşmeye dönüşmüş demektir.
+            //
+            // Ek dosyası bu soruya cevap VERMEZ: talebi açan kişi talebin kendi
+            // belgesini (Category = Talep) eklediğinde de ek oluşuyor. Ek sayısına
+            // bakmak iki hataya yol açıyordu — ilk kez işlenen bir talepte "daha önce
+            // oluşturulmuş" uyarısı çıkıyor, dahası YENİLEME talebine dosya eklenmişse
+            // aşağıdaki else-if hiç çalışmadığı için kaynak sözleşmenin kalemleri
+            // forma hiç gelmiyordu.
+            //
+            // Yüklenen ekler zaten HasExistingAttachments ile ayrıca listeleniyor.
+            IsRecreate = full.Items.Count > 0;
             if (IsRecreate)
             {
                 RecreateNotice =
@@ -511,6 +584,14 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         if (SelectedRequest is null)
         {
             ErrorMessage = "Talep seçilmedi.";
+            return;
+        }
+
+        // Son Kontrol atlanacaksa liste burada zorunlu: başka hiçbir yerde
+        // sorulmayacak, kaydettikten sonra sözleşme doğrudan yönetime gidiyor.
+        if (ShowChecklist && !AllChecked)
+        {
+            ErrorMessage = "Göndermeden önce kontrol listesindeki tüm maddeleri işaretleyin.";
             return;
         }
 
