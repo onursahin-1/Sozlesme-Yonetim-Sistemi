@@ -24,6 +24,10 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // Kayıtlı tema tercihi, ilk pencere açılmadan uygulanıyor. Sonraya kalsaydı
+        // uygulama önce açık temayla çizilip hemen ardından koyuya dönerdi.
+        ThemeService.Initialize();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             AppSettings settings;

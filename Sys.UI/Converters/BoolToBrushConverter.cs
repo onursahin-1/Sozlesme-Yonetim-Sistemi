@@ -13,19 +13,20 @@ namespace Sys.UI.Converters;
 // olduğunu değil yalnızca "bir şeyler eksik" olduğunu bilirdi.
 public class BoolToBrushConverter : IValueConverter
 {
-    public static readonly BoolToBrushConverter Rule = new("#1A6B2A", "#B6BDC9");
+    public static readonly BoolToBrushConverter Rule = new("SuccessBase", "TextDisabled");
 
-    private readonly IBrush _true;
-    private readonly IBrush _false;
+    // Palet anahtarları; gerçek fırça her çağrıda o anki temadan çözülüyor.
+    private readonly string _trueKey;
+    private readonly string _falseKey;
 
-    private BoolToBrushConverter(string trueColor, string falseColor)
+    private BoolToBrushConverter(string trueKey, string falseKey)
     {
-        _true = new SolidColorBrush(Color.Parse(trueColor));
-        _false = new SolidColorBrush(Color.Parse(falseColor));
+        _trueKey = trueKey;
+        _falseKey = falseKey;
     }
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is true ? _true : _false;
+        => ThemeBrushConverter.Instance.Convert(value is true ? _trueKey : _falseKey, targetType, null, culture);
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();

@@ -46,10 +46,14 @@ public class WizardStepViewModel
     public bool IsCurrent { get; }
 
     public string NumberText => IsDone ? "✓" : Number.ToString();
-    public string CircleBgHex => IsDone ? "#16A34A" : IsCurrent ? "#2D6EA8" : "#FFFFFF";
-    public string CircleBorderHex => IsDone ? "#16A34A" : IsCurrent ? "#2D6EA8" : "#DFE5EE";
-    public string NumberColorHex => IsDone || IsCurrent ? "#FFFFFF" : "#A3ABB8";
-    public string LabelColorHex => IsCurrent ? "#1A2E4A" : IsDone ? "#4B5563" : "#A3ABB8";
+    // Henüz gelinmemiş adımın dairesi KART YÜZEYİYLE aynı olmalı: yalnızca
+    // çerçevesi görünsün, içi zeminle kaynaşsın. Eskiden burada "beyaz" yazıyordu
+    // ve açık temada kart da beyaz olduğu için doğru görünüyordu; koyu temada
+    // parlayan beyaz daireler çıktı.
+    public string CircleBgHex => IsDone ? "SuccessBrightSolid" : IsCurrent ? "AccentSolid" : "SurfaceCard";
+    public string CircleBorderHex => IsDone ? "SuccessBright" : IsCurrent ? "AccentBase" : "BorderInput";
+    public string NumberColorHex => IsDone || IsCurrent ? "TextOnAccent" : "TextFaintAlt";
+    public string LabelColorHex => IsCurrent ? "TextPrimary" : IsDone ? "TextBodyAlt" : "TextFaintAlt";
     public string LabelWeight => IsCurrent ? "Bold" : "Normal";
 
     // İpucu satırı yalnızca içinde bulunulan adımda gösterilir; diğerleri sade kalsın.

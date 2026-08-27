@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Sys.UI;
@@ -91,27 +91,27 @@ public static class AuditActionCatalog
     // işlemlerde devreye giriyor.
     public static string ColorHexFor(string action) => ToneOf(action) switch
     {
-        Tone.Olumlu => "#1A6B2A",
-        Tone.Uyari => "#B06A00",
-        Tone.Olumsuz => "#A32D2D",
-        _ => "#5B6472"
+        Tone.Olumlu => "SuccessBase",
+        Tone.Uyari => "WarningBase",
+        Tone.Olumsuz => "DangerBase",
+        _ => "TextLabel"
     };
 
     public static string BgHexFor(string action) => ToneOf(action) switch
     {
-        Tone.Olumlu => "#E9F4EB",
-        Tone.Uyari => "#FBF2E3",
-        Tone.Olumsuz => "#FBEBE9",
-        _ => "#F0F3F7"
+        Tone.Olumlu => "SuccessSoftBgAlt",
+        Tone.Uyari => "WarningSoftBgAlt",
+        Tone.Olumsuz => "DangerSoftBgFaint3",
+        _ => "SurfaceSubtle"
     };
 
     // Satırın solundaki ince şerit. Nötr kayıtlarda neredeyse görünmez kalıyor;
     // liste sakin duruyor, dikkat gerektiren satırlar kendiliğinden öne çıkıyor.
     public static string StripHexFor(string action) => ToneOf(action) switch
     {
-        Tone.Olumlu => "#4FA968",
-        Tone.Uyari => "#D9A441",
-        Tone.Olumsuz => "#C25B54",
-        _ => "#E7ECF3"
+        Tone.Olumlu => "SuccessBase",
+        Tone.Uyari => "WarningBright",
+        Tone.Olumsuz => "DangerMuted",
+        _ => "BorderFaint"
     };
 }

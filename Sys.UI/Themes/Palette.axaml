@@ -1,0 +1,390 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<!--
+	  UYGULAMA RENK PALETİ
+
+	  Renkler eskiden her ekranda tek tek yazılıyordu: 20 XAML dosyasında 919 sabit
+	  hex değeri vardı. Bu hem koyu mod eklemeyi imkânsız kılıyordu hem de aynı rolün
+	  (örn. "kart kenarlığı") farklı ekranlarda farklı tonlara kayması kolaydı.
+
+	  Artık her renk bir ROLE karşılık gelen isimle anılıyor ve iki tema sözlüğünde
+	  ayrı değer alıyor. Ekranlar {DynamicResource ...} kullanır; "Dynamic" olması
+	  şart, çünkü tema çalışma anında değişiyor — StaticResource ile değerler ilk
+	  yüklemede sabitlenir ve geçiş yapıldığında güncellenmezdi.
+
+	  AÇIK TEMA DEĞERLERİ, önceki sabit hex değerlerinin BİREBİR AYNISIDIR. Bu
+	  kasıtlı: bu adımda görüntünün hiç değişmemesi gerekiyordu ki koyu mod eklenirken
+	  açık modun bozulup bozulmadığı tartışma konusu olmasın.
+
+	  İsimlendirme: <Rol><Varyant>. Ton adı (Gray400 gibi) kullanılmadı — rengin
+	  ne olduğu değil NEREDE kullanıldığı önemli; koyu temada aynı rol bambaşka bir
+	  ton alabiliyor.
+	-->
+	<ResourceDictionary.ThemeDictionaries>
+
+		<!-- ==================== AÇIK TEMA ==================== -->
+		<ResourceDictionary x:Key="Light">
+
+			<!-- Yazı -->
+			<SolidColorBrush x:Key="TextPrimary" Color="#1A2E4A"/>
+			<SolidColorBrush x:Key="TextBody" Color="#3D4654"/>
+			<SolidColorBrush x:Key="TextBodyAlt" Color="#4B5563"/>
+			<SolidColorBrush x:Key="TextLabel" Color="#5B6472"/>
+			<SolidColorBrush x:Key="TextMuted" Color="#8A94A6"/>
+			<SolidColorBrush x:Key="TextMutedAlt" Color="#93A4BC"/>
+			<SolidColorBrush x:Key="TextFaint" Color="#9CA3AF"/>
+			<SolidColorBrush x:Key="TextFaintAlt" Color="#A3ABB8"/>
+			<SolidColorBrush x:Key="TextDisabled" Color="#B9C1CE"/>
+			<SolidColorBrush x:Key="TextDisabledAlt" Color="#C4CBD6"/>
+			<SolidColorBrush x:Key="TextDisabledSoft" Color="#B8C2D0"/>
+			<!-- Renkli zemin üzerindeki yazı; koyu temada da açık kalır -->
+			<SolidColorBrush x:Key="TextOnAccent" Color="White"/>
+
+			<!-- Yüzeyler -->
+			<SolidColorBrush x:Key="SurfaceCard" Color="White"/>
+			<SolidColorBrush x:Key="SurfaceInput" Color="#FBFCFE"/>
+			<!-- Odaklanmış giriş kutusu: zeminden bir tık AÇIK olmalı ki hangi alanda
+			     yazıldığı belli olsun. Açık temada beyaz, koyu temada bir üst gri. -->
+			<SolidColorBrush x:Key="SurfaceInputFocus" Color="White"/>
+			<SolidColorBrush x:Key="SurfaceInputAlt" Color="#FAFBFD"/>
+			<SolidColorBrush x:Key="SurfaceSubtle" Color="#F7F9FC"/>
+			<SolidColorBrush x:Key="SurfaceSubtleBlue" Color="#F5F9FD"/>
+			<SolidColorBrush x:Key="SurfaceSoft" Color="#F1F4F8"/>
+			<SolidColorBrush x:Key="SurfaceButton" Color="#EEF1F6"/>
+			<SolidColorBrush x:Key="SurfaceDivider" Color="#EDF1F6"/>
+			<SolidColorBrush x:Key="SurfaceNeutral" Color="#F5F5F5"/>
+
+			<!-- Kenarlıklar -->
+			<SolidColorBrush x:Key="BorderCard" Color="#E3E7EE"/>
+			<SolidColorBrush x:Key="BorderInput" Color="#DFE5EE"/>
+			<SolidColorBrush x:Key="BorderButton" Color="#DDE3EC"/>
+			<SolidColorBrush x:Key="BorderStrong" Color="#D0D8E4"/>
+			<SolidColorBrush x:Key="BorderStrongAlt" Color="#C9D3E0"/>
+			<SolidColorBrush x:Key="BorderFaint" Color="#E7ECF3"/>
+			<SolidColorBrush x:Key="BorderFaintBlue" Color="#E7EEF7"/>
+			<SolidColorBrush x:Key="BorderSoftBlue" Color="#E8ECF2"/>
+
+			<!-- Vurgu (mavi) -->
+			<SolidColorBrush x:Key="AccentBase" Color="#2D6EA8"/>
+			<SolidColorBrush x:Key="AccentBaseAlt" Color="#3D6FA8"/>
+			<SolidColorBrush x:Key="AccentSoftBg" Color="#E8EFF9"/>
+			<SolidColorBrush x:Key="AccentSoftBorder" Color="#C4DCF2"/>
+			<SolidColorBrush x:Key="AccentMuted" Color="#9DB6D6"/>
+			<SolidColorBrush x:Key="AccentMutedAlt" Color="#A9C0D9"/>
+			<SolidColorBrush x:Key="AccentMutedStrong" Color="#7FA3C9"/>
+			<SolidColorBrush x:Key="AccentFaint" Color="#B9C6D8"/>
+
+			<!-- Hata / tehlike (kırmızı) -->
+			<SolidColorBrush x:Key="DangerBase" Color="#A32D2D"/>
+			<SolidColorBrush x:Key="DangerText" Color="#D14343"/>
+			<SolidColorBrush x:Key="DangerTextAlt" Color="#9B3B25"/>
+			<SolidColorBrush x:Key="DangerStrong" Color="#DC2626"/>
+			<SolidColorBrush x:Key="DangerBright" Color="#E5484D"/>
+			<SolidColorBrush x:Key="DangerSoftBg" Color="#FDECEA"/>
+			<SolidColorBrush x:Key="DangerSoftBgAlt" Color="#FDF7F6"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint" Color="#FDF6F5"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint2" Color="#FDF2F0"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint3" Color="#FBEBE9"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint4" Color="#FBEDE9"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint5" Color="#FBE4E4"/>
+			<SolidColorBrush x:Key="DangerSoftBorder" Color="#F0C9C1"/>
+			<SolidColorBrush x:Key="DangerSoftBorderAlt" Color="#EFC9C4"/>
+			<SolidColorBrush x:Key="DangerBorderStrong" Color="#E5A8A0"/>
+			<SolidColorBrush x:Key="DangerBorderFaint" Color="#F2DAD5"/>
+			<SolidColorBrush x:Key="DangerBorderWarm" Color="#E8C4B8"/>
+			<SolidColorBrush x:Key="DangerMuted" Color="#B07A70"/>
+			<SolidColorBrush x:Key="DangerDeep" Color="#5B3229"/>
+
+			<!-- Başarı / olumlu (yeşil) -->
+			<SolidColorBrush x:Key="SuccessBase" Color="#1A6B2A"/>
+			<SolidColorBrush x:Key="SuccessBright" Color="#16A34A"/>
+			<SolidColorBrush x:Key="SuccessText" Color="#2E6B3E"/>
+			<SolidColorBrush x:Key="SuccessTextAlt" Color="#3F7A4F"/>
+			<SolidColorBrush x:Key="SuccessDeep" Color="#4A6136"/>
+			<SolidColorBrush x:Key="SuccessSoftBg" Color="#E6F4E7"/>
+			<SolidColorBrush x:Key="SuccessSoftBgAlt" Color="#E9F4EB"/>
+			<SolidColorBrush x:Key="SuccessSoftBgAlt2" Color="#EAF4EC"/>
+			<SolidColorBrush x:Key="SuccessSoftBgFaint" Color="#F6FBF7"/>
+			<SolidColorBrush x:Key="SuccessSoftBgFaint2" Color="#F3F8F4"/>
+			<SolidColorBrush x:Key="SuccessSoftBgWarm" Color="#EEF2E9"/>
+			<SolidColorBrush x:Key="SuccessSoftBorder" Color="#A9D6B0"/>
+			<SolidColorBrush x:Key="SuccessSoftBorderAlt" Color="#C3DFC9"/>
+			<SolidColorBrush x:Key="SuccessBorderFaint" Color="#D9E9DD"/>
+			<SolidColorBrush x:Key="SuccessMuted" Color="#8FB89A"/>
+
+			<!-- Uyarı (kehribar) -->
+			<SolidColorBrush x:Key="WarningBase" Color="#B06A00"/>
+			<SolidColorBrush x:Key="WarningText" Color="#8A5A00"/>
+			<SolidColorBrush x:Key="WarningTextAlt" Color="#7A5C10"/>
+			<SolidColorBrush x:Key="WarningDeep" Color="#5C4409"/>
+			<SolidColorBrush x:Key="WarningDeepAlt" Color="#8A6B1E"/>
+			<SolidColorBrush x:Key="WarningMuted" Color="#B08A3A"/>
+			<SolidColorBrush x:Key="WarningBright" Color="#C8952A"/>
+			<SolidColorBrush x:Key="WarningSoftBg" Color="#FFF7E6"/>
+			<SolidColorBrush x:Key="WarningSoftBgFaint" Color="#FEFAF2"/>
+			<SolidColorBrush x:Key="WarningSoftBgAlt" Color="#FBF2E3"/>
+			<SolidColorBrush x:Key="WarningSoftBorder" Color="#E8C989"/>
+			<SolidColorBrush x:Key="WarningBorderFaint" Color="#EBDCBC"/>
+
+
+			<!--
+			  DOLU ZEMİN tonları. "*Base" renkleri iki ayrı rolde kullanılıyordu:
+			  (a) dolu buton/rozet zemini — üstünde BEYAZ yazı,
+			  (b) soft zemin üstünde YAZI rengi.
+			  Koyu temada (b) için tonlar açıldı, ama bu (a)'yı bozdu: beyaz yazının
+			  kontrastı yeşil butonda 2,2:1'e düştü, yani okunmaz hale geldi.
+			  Roller ayrıldı; "*Solid" yalnızca zemin olarak kullanılır ve koyu temada
+			  beyaz yazıyı taşıyacak kadar koyu kalır.
+			-->
+			<SolidColorBrush x:Key="AccentSolid" Color="#2D6EA8"/>
+			<SolidColorBrush x:Key="DangerSolid" Color="#A32D2D"/>
+			<SolidColorBrush x:Key="SuccessSolid" Color="#1A6B2A"/>
+			<SolidColorBrush x:Key="WarningSolid" Color="#B06A00"/>
+			<SolidColorBrush x:Key="ProcessSolid" Color="#7C3AED"/>
+			<SolidColorBrush x:Key="DangerStrongSolid" Color="#DC2626"/>
+			<SolidColorBrush x:Key="DangerBrightSolid" Color="#E5484D"/>
+			<SolidColorBrush x:Key="SuccessBrightSolid" Color="#16A34A"/>
+
+			<!-- Süreç/aşama vurgusu (mor) -->
+			<SolidColorBrush x:Key="ProcessBase" Color="#7C3AED"/>
+
+			<!--
+			  Kabuk (sol menü ve üst çubuk). Uygulamanın geri kalanından ayrı, sıcak
+			  koyu bir palet kullanıyor; koyu temada bu ayrım korunur ama tonlar
+			  gövdeyle uyumlu hâle gelir.
+			-->
+			<!--
+			  Üst çubuk. Sol menüden ve giriş ekranından AYRI bir anahtar; rengi
+			  (#1A2E4A) açık temada metin rengiyle aynı hex'ti ve renkler kaynaklara
+			  taşınırken yanlışlıkla TextPrimary'ye bağlanmıştı. Koyu temada TextPrimary
+			  açık bir tona döndüğü için çubuk bembeyaz olmuş, beyaz logo ve beyaz yazı
+			  görünmez hale gelmişti. Aynı hex, farklı rol.
+			-->
+			<SolidColorBrush x:Key="ShellTopBarBg" Color="#1A2E4A"/>
+
+			<!--
+			  Üst çubuğun ÜZERİNDEKİ öğeler. Çubuk her iki temada da koyu olduğu için
+			  bu renkler tema değiştiğinde değişmez — ikon ve yazı her zaman açık kalır.
+			  Eskiden ikonlar AccentSoftBg'ye bağlıydı; o anahtar koyu temada koyu
+			  lacivere döndüğü için ikonlar koyu çubuğun üzerinde kayboluyordu.
+			-->
+			<SolidColorBrush x:Key="ShellTopBarIcon" Color="#E8EFF9"/>
+			<SolidColorBrush x:Key="ShellTopBarSubtle" Color="#9DB6D6"/>
+			<SolidColorBrush x:Key="ShellTopBarChip" Color="#1FFFFFFF"/>
+			<SolidColorBrush x:Key="ShellTopBarChipBorder" Color="#38FFFFFF"/>
+			<SolidColorBrush x:Key="ShellTopBarDivider" Color="#33FFFFFF"/>
+
+			<!--
+			  Giriş ekranının sağ (form) paneli. Sol panel koyu, sağ panel açık:
+			  bölünmüş bir giriş ekranı. Bu iki yüzeyin de kendi anahtarı var; renkleri
+			  metin anahtarlarına bağlamak, koyu temada panelin yanlış tarafa dönmesine
+			  yol açıyordu.
+			-->
+			<SolidColorBrush x:Key="LoginFormBg" Color="#FAF8F4"/>
+			<SolidColorBrush x:Key="LoginFormText" Color="#1B1A18"/>
+			<SolidColorBrush x:Key="LoginFormLabel" Color="#3D3A34"/>
+			<SolidColorBrush x:Key="LoginFormMuted" Color="#8A8578"/>
+			<SolidColorBrush x:Key="LoginFormBorder" Color="#DDD8CE"/>
+			<SolidColorBrush x:Key="LoginFormBorderAlt" Color="#E5E0D6"/>
+			<SolidColorBrush x:Key="LoginInputBg" Color="White"/>
+			<!-- Marka panelinin alt yazısı; koyu zeminde okunur kalmalı. -->
+			<SolidColorBrush x:Key="LoginBrandFooter" Color="#7A756A"/>
+
+			<SolidColorBrush x:Key="ShellBg" Color="#1B1A18"/>
+			<SolidColorBrush x:Key="ShellBgAlt" Color="#3D3A34"/>
+			<SolidColorBrush x:Key="ShellMuted" Color="#5C574E"/>
+			<SolidColorBrush x:Key="ShellTextMuted" Color="#8A8578"/>
+			<SolidColorBrush x:Key="ShellText" Color="#DDD8CE"/>
+			<SolidColorBrush x:Key="ShellTextAlt" Color="#E5E0D6"/>
+			<SolidColorBrush x:Key="ShellTextBright" Color="#F5F2EC"/>
+			<SolidColorBrush x:Key="ShellTextBrightest" Color="#FAF8F4"/>
+
+			<!-- Gölge ve yarı saydam katmanlar (alfa kanallı) -->
+			<SolidColorBrush x:Key="ShadowFaint" Color="#01000000"/>
+			<SolidColorBrush x:Key="OverlayLight1" Color="#1FFFFFFF"/>
+			<SolidColorBrush x:Key="OverlayLight2" Color="#38FFFFFF"/>
+			<SolidColorBrush x:Key="OverlayLight3" Color="#33FFFFFF"/>
+			<SolidColorBrush x:Key="OverlayDark1" Color="#33000000"/>
+			<SolidColorBrush x:Key="OverlayDark2" Color="#26000000"/>
+		</ResourceDictionary>
+
+		<!-- ==================== KOYU TEMA ==================== -->
+		<!--
+		  Koyu temanın kuralları:
+
+		  - Saf siyah zemin YOK. #000 üzerinde metin fazla keskin görünür ve gözü
+		    yorar; zeminler #13-#2C aralığında kademeli griler.
+		  - Saf beyaz metin YOK. Parlak beyaz koyu zeminde "titriyor" gibi görünür;
+		    en açık metin #E8ECF3.
+		  - Kenarlıklar zeminden AÇIK. Açık temada kenarlık zeminden koyudur; koyu
+		    temada bu ters döner, aynı değerler bırakılsaydı kenarlıklar kaybolurdu.
+		  - "Soft" zeminler (DangerSoftBg gibi) açık pastel değil, ilgili rengin
+		    KOYU karşılığı. Açık pastel bırakılsaydı koyu ekranda parlayan lekeler
+		    olurdu.
+		  - Vurgu ve durum renkleri bir tık AÇILDI: #2D6EA8 gibi orta tonlar koyu
+		    zeminde sönük kalıyor ve kontrast düşüyor.
+		-->
+		<ResourceDictionary x:Key="Dark">
+
+			<!-- Yazı -->
+			<SolidColorBrush x:Key="TextPrimary" Color="#E8ECF3"/>
+			<SolidColorBrush x:Key="TextBody" Color="#C9D1DD"/>
+			<SolidColorBrush x:Key="TextBodyAlt" Color="#BAC3D1"/>
+			<SolidColorBrush x:Key="TextLabel" Color="#A6B0BF"/>
+			<SolidColorBrush x:Key="TextMuted" Color="#8B95A5"/>
+			<SolidColorBrush x:Key="TextMutedAlt" Color="#828EA1"/>
+			<SolidColorBrush x:Key="TextFaint" Color="#79828F"/>
+			<SolidColorBrush x:Key="TextFaintAlt" Color="#6F7987"/>
+			<SolidColorBrush x:Key="TextDisabled" Color="#5C6573"/>
+			<SolidColorBrush x:Key="TextDisabledAlt" Color="#525B68"/>
+			<SolidColorBrush x:Key="TextDisabledSoft" Color="#57606D"/>
+			<SolidColorBrush x:Key="TextOnAccent" Color="White"/>
+
+			<!-- Yüzeyler -->
+			<SolidColorBrush x:Key="SurfaceCard" Color="#1E2229"/>
+			<SolidColorBrush x:Key="SurfaceInput" Color="#191D23"/>
+			<SolidColorBrush x:Key="SurfaceInputFocus" Color="#252A33"/>
+			<SolidColorBrush x:Key="SurfaceInputAlt" Color="#1B1F26"/>
+			<SolidColorBrush x:Key="SurfaceSubtle" Color="#171A20"/>
+			<SolidColorBrush x:Key="SurfaceSubtleBlue" Color="#181C24"/>
+			<SolidColorBrush x:Key="SurfaceSoft" Color="#232830"/>
+			<SolidColorBrush x:Key="SurfaceButton" Color="#272D36"/>
+			<SolidColorBrush x:Key="SurfaceDivider" Color="#2C323B"/>
+			<SolidColorBrush x:Key="SurfaceNeutral" Color="#20242B"/>
+
+			<!-- Kenarlıklar -->
+			<SolidColorBrush x:Key="BorderCard" Color="#333A45"/>
+			<SolidColorBrush x:Key="BorderInput" Color="#3A424E"/>
+			<SolidColorBrush x:Key="BorderButton" Color="#39414C"/>
+			<SolidColorBrush x:Key="BorderStrong" Color="#454E5B"/>
+			<SolidColorBrush x:Key="BorderStrongAlt" Color="#4B5563"/>
+			<SolidColorBrush x:Key="BorderFaint" Color="#2E343E"/>
+			<SolidColorBrush x:Key="BorderFaintBlue" Color="#303845"/>
+			<SolidColorBrush x:Key="BorderSoftBlue" Color="#333B47"/>
+
+			<!-- Vurgu (mavi) -->
+			<SolidColorBrush x:Key="AccentBase" Color="#4A90D9"/>
+			<SolidColorBrush x:Key="AccentBaseAlt" Color="#5698DD"/>
+			<SolidColorBrush x:Key="AccentSoftBg" Color="#1B2A3D"/>
+			<SolidColorBrush x:Key="AccentSoftBorder" Color="#2F4B6C"/>
+			<SolidColorBrush x:Key="AccentMuted" Color="#6E93BE"/>
+			<SolidColorBrush x:Key="AccentMutedAlt" Color="#7A9CC4"/>
+			<SolidColorBrush x:Key="AccentMutedStrong" Color="#8FADD1"/>
+			<SolidColorBrush x:Key="AccentFaint" Color="#5C7B94"/>
+
+			<!-- Hata / tehlike (kırmızı) -->
+			<SolidColorBrush x:Key="DangerBase" Color="#E06C6C"/>
+			<SolidColorBrush x:Key="DangerText" Color="#F08585"/>
+			<SolidColorBrush x:Key="DangerTextAlt" Color="#E89178"/>
+			<SolidColorBrush x:Key="DangerStrong" Color="#F26060"/>
+			<SolidColorBrush x:Key="DangerBright" Color="#FF6B70"/>
+			<SolidColorBrush x:Key="DangerSoftBg" Color="#3A2221"/>
+			<SolidColorBrush x:Key="DangerSoftBgAlt" Color="#332120"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint" Color="#312020"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint2" Color="#301F1E"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint3" Color="#2E1E1D"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint4" Color="#2F1F1D"/>
+			<SolidColorBrush x:Key="DangerSoftBgFaint5" Color="#341F1F"/>
+			<SolidColorBrush x:Key="DangerSoftBorder" Color="#5E3A36"/>
+			<SolidColorBrush x:Key="DangerSoftBorderAlt" Color="#5C3934"/>
+			<SolidColorBrush x:Key="DangerBorderStrong" Color="#6E413B"/>
+			<SolidColorBrush x:Key="DangerBorderFaint" Color="#4E312D"/>
+			<SolidColorBrush x:Key="DangerBorderWarm" Color="#5A3B33"/>
+			<SolidColorBrush x:Key="DangerMuted" Color="#B08078"/>
+			<SolidColorBrush x:Key="DangerDeep" Color="#C4998F"/>
+
+			<!-- Başarı / olumlu (yeşil) -->
+			<SolidColorBrush x:Key="SuccessBase" Color="#5DC177"/>
+			<SolidColorBrush x:Key="SuccessBright" Color="#4ECB74"/>
+			<SolidColorBrush x:Key="SuccessText" Color="#6FCB86"/>
+			<SolidColorBrush x:Key="SuccessTextAlt" Color="#7FD093"/>
+			<SolidColorBrush x:Key="SuccessDeep" Color="#8FB877"/>
+			<SolidColorBrush x:Key="SuccessSoftBg" Color="#1C2E22"/>
+			<SolidColorBrush x:Key="SuccessSoftBgAlt" Color="#1D3024"/>
+			<SolidColorBrush x:Key="SuccessSoftBgAlt2" Color="#1E3125"/>
+			<SolidColorBrush x:Key="SuccessSoftBgFaint" Color="#1A2A1F"/>
+			<SolidColorBrush x:Key="SuccessSoftBgFaint2" Color="#1B2C20"/>
+			<SolidColorBrush x:Key="SuccessSoftBgWarm" Color="#232B1E"/>
+			<SolidColorBrush x:Key="SuccessSoftBorder" Color="#37543F"/>
+			<SolidColorBrush x:Key="SuccessSoftBorderAlt" Color="#3A5943"/>
+			<SolidColorBrush x:Key="SuccessBorderFaint" Color="#324A3A"/>
+			<SolidColorBrush x:Key="SuccessMuted" Color="#6E9179"/>
+
+			<!-- Uyarı (kehribar) -->
+			<SolidColorBrush x:Key="WarningBase" Color="#E0A044"/>
+			<SolidColorBrush x:Key="WarningText" Color="#E8B05A"/>
+			<SolidColorBrush x:Key="WarningTextAlt" Color="#D8B268"/>
+			<SolidColorBrush x:Key="WarningDeep" Color="#C9A55E"/>
+			<SolidColorBrush x:Key="WarningDeepAlt" Color="#D4B072"/>
+			<SolidColorBrush x:Key="WarningMuted" Color="#C9A863"/>
+			<SolidColorBrush x:Key="WarningBright" Color="#E5B44A"/>
+			<SolidColorBrush x:Key="WarningSoftBg" Color="#332818"/>
+			<SolidColorBrush x:Key="WarningSoftBgFaint" Color="#2E2517"/>
+			<SolidColorBrush x:Key="WarningSoftBgAlt" Color="#352A19"/>
+			<SolidColorBrush x:Key="WarningSoftBorder" Color="#5E4A28"/>
+			<SolidColorBrush x:Key="WarningBorderFaint" Color="#4E3F26"/>
+
+
+			<!--
+			  DOLU ZEMİN tonları. "*Base" renkleri iki ayrı rolde kullanılıyordu:
+			  (a) dolu buton/rozet zemini — üstünde BEYAZ yazı,
+			  (b) soft zemin üstünde YAZI rengi.
+			  Koyu temada (b) için tonlar açıldı, ama bu (a)'yı bozdu: beyaz yazının
+			  kontrastı yeşil butonda 2,2:1'e düştü, yani okunmaz hale geldi.
+			  Roller ayrıldı; "*Solid" yalnızca zemin olarak kullanılır ve koyu temada
+			  beyaz yazıyı taşıyacak kadar koyu kalır.
+			-->
+			<SolidColorBrush x:Key="AccentSolid" Color="#2F76B5"/>
+			<SolidColorBrush x:Key="DangerSolid" Color="#B23A3A"/>
+			<SolidColorBrush x:Key="SuccessSolid" Color="#217A33"/>
+			<SolidColorBrush x:Key="WarningSolid" Color="#9C5D00"/>
+			<SolidColorBrush x:Key="ProcessSolid" Color="#6D34D6"/>
+			<SolidColorBrush x:Key="DangerStrongSolid" Color="#C42121"/>
+			<SolidColorBrush x:Key="DangerBrightSolid" Color="#CE3B41"/>
+			<SolidColorBrush x:Key="SuccessBrightSolid" Color="#178A40"/>
+
+			<!-- Süreç/aşama vurgusu (mor) -->
+			<SolidColorBrush x:Key="ProcessBase" Color="#9B6BF2"/>
+
+			<!-- Kabuk -->
+			<!-- Koyu temada çubuk kartlardan da koyu: katman hiyerarşisi korunuyor. -->
+			<SolidColorBrush x:Key="ShellTopBarBg" Color="#12161C"/>
+
+			<!-- Çubuk koyu temada da koyu; üzerindeki renkler açık tema ile AYNI. -->
+			<SolidColorBrush x:Key="ShellTopBarIcon" Color="#E8EFF9"/>
+			<SolidColorBrush x:Key="ShellTopBarSubtle" Color="#9DB6D6"/>
+			<SolidColorBrush x:Key="ShellTopBarChip" Color="#1FFFFFFF"/>
+			<SolidColorBrush x:Key="ShellTopBarChipBorder" Color="#38FFFFFF"/>
+			<SolidColorBrush x:Key="ShellTopBarDivider" Color="#33FFFFFF"/>
+
+			<!-- Koyu temada sağ panel de koyulaşır; sol panelden bir tık açık kalarak
+			     bölünmüş yapı korunur. -->
+			<SolidColorBrush x:Key="LoginFormBg" Color="#1E2229"/>
+			<SolidColorBrush x:Key="LoginFormText" Color="#E8ECF3"/>
+			<SolidColorBrush x:Key="LoginFormLabel" Color="#BAC3D1"/>
+			<SolidColorBrush x:Key="LoginFormMuted" Color="#8B95A5"/>
+			<SolidColorBrush x:Key="LoginFormBorder" Color="#3A424E"/>
+			<SolidColorBrush x:Key="LoginFormBorderAlt" Color="#333A45"/>
+			<SolidColorBrush x:Key="LoginInputBg" Color="#191D23"/>
+			<SolidColorBrush x:Key="LoginBrandFooter" Color="#79828F"/>
+
+			<SolidColorBrush x:Key="ShellBg" Color="#131519"/>
+			<SolidColorBrush x:Key="ShellBgAlt" Color="#2A2E36"/>
+			<SolidColorBrush x:Key="ShellMuted" Color="#3E444E"/>
+			<SolidColorBrush x:Key="ShellTextMuted" Color="#7C8593"/>
+			<SolidColorBrush x:Key="ShellText" Color="#C6CDD9"/>
+			<SolidColorBrush x:Key="ShellTextAlt" Color="#D2D8E2"/>
+			<SolidColorBrush x:Key="ShellTextBright" Color="#E4E9F0"/>
+			<SolidColorBrush x:Key="ShellTextBrightest" Color="#F0F3F8"/>
+
+			<!-- Gölge ve yarı saydam katmanlar -->
+			<SolidColorBrush x:Key="ShadowFaint" Color="#01000000"/>
+			<SolidColorBrush x:Key="OverlayLight1" Color="#1FFFFFFF"/>
+			<SolidColorBrush x:Key="OverlayLight2" Color="#38FFFFFF"/>
+			<SolidColorBrush x:Key="OverlayLight3" Color="#33FFFFFF"/>
+			<SolidColorBrush x:Key="OverlayDark1" Color="#33000000"/>
+			<SolidColorBrush x:Key="OverlayDark2" Color="#26000000"/>
+		</ResourceDictionary>
+
+	</ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -19,8 +20,8 @@
 	<UserControl.Styles>
 		<!-- Kart: beyaz zemin, ince çerçeve, yumuşak köşe — uygulama genelindeki dil -->
 		<Style Selector="Border.card">
-			<Setter Property="Background" Value="White"/>
-			<Setter Property="BorderBrush" Value="#E3E7EE"/>
+			<Setter Property="Background" Value="{DynamicResource SurfaceCard}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderCard}"/>
 			<Setter Property="BorderThickness" Value="1"/>
 			<Setter Property="CornerRadius" Value="10"/>
 			<Setter Property="Padding" Value="18"/>
@@ -28,7 +29,7 @@
 		<Style Selector="TextBlock.cardTitle">
 			<Setter Property="FontSize" Value="10.5"/>
 			<Setter Property="FontWeight" Value="SemiBold"/>
-			<Setter Property="Foreground" Value="#8A94A6"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
 			<Setter Property="LetterSpacing" Value="0.8"/>
 		</Style>
 	</UserControl.Styles>
@@ -46,8 +47,8 @@
 				<!-- Karşılama -->
 				<StackPanel Spacing="2">
 					<TextBlock Classes="display" Text="{Binding GreetingText}" FontSize="22"
-							   FontWeight="SemiBold" Foreground="#1A2E4A"/>
-					<TextBlock Text="{Binding TodayText}" FontSize="12.5" Foreground="#8A94A6"/>
+							   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+					<TextBlock Text="{Binding TodayText}" FontSize="12.5" Foreground="{DynamicResource TextMuted}"/>
 				</StackPanel>
 
 				<!--
@@ -60,19 +61,19 @@
 					<Button Classes="statCard" Margin="0,0,12,0"
 							Command="{Binding FilterCardCommand}" CommandParameter="aktif"
 							IsEnabled="{Binding AktifCardClickable}">
-						<Border Background="#F6FBF7" BorderBrush="#E8ECF2" BorderThickness="1"
+						<Border Background="{DynamicResource SuccessSoftBgFaint}" BorderBrush="{DynamicResource BorderSoftBlue}" BorderThickness="1"
 								CornerRadius="10" Padding="16,15">
 							<Grid ColumnDefinitions="Auto,*">
 								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
 								<Border Grid.Column="0" Width="3" CornerRadius="2"
-										Background="#1A6B2A" Margin="0,2,14,2"/>
+										Background="{DynamicResource SuccessSolid}" Margin="0,2,14,2"/>
 								<StackPanel Grid.Column="1" Spacing="3">
 									<TextBlock Classes="display" Text="{Binding Aktif}"
-											   FontSize="34" FontWeight="SemiBold" Foreground="#1A6B2A"
+											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBase}"
 											   LetterSpacing="-0.5"/>
 									<TextBlock Text="Aktif" FontSize="12.5" FontWeight="SemiBold"
-											   Foreground="#3D4654"/>
-									<TextBlock Text="yürürlükteki sözleşme" FontSize="10.5" Foreground="#9CA3AF"/>
+											   Foreground="{DynamicResource TextBody}"/>
+									<TextBlock Text="yürürlükteki sözleşme" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -81,19 +82,19 @@
 					<Button Classes="statCard" Margin="0,0,12,0"
 							Command="{Binding FilterCardCommand}" CommandParameter="onay_bekliyor"
 							IsEnabled="{Binding OnayBekliyorCardClickable}">
-						<Border Background="#F5F9FD" BorderBrush="#E8ECF2" BorderThickness="1"
+						<Border Background="{DynamicResource SurfaceSubtleBlue}" BorderBrush="{DynamicResource BorderSoftBlue}" BorderThickness="1"
 								CornerRadius="10" Padding="16,15">
 							<Grid ColumnDefinitions="Auto,*">
 								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
 								<Border Grid.Column="0" Width="3" CornerRadius="2"
-										Background="#2D6EA8" Margin="0,2,14,2"/>
+										Background="{DynamicResource AccentSolid}" Margin="0,2,14,2"/>
 								<StackPanel Grid.Column="1" Spacing="3">
 									<TextBlock Classes="display" Text="{Binding OnayBekliyor}"
-											   FontSize="34" FontWeight="SemiBold" Foreground="#2D6EA8"
+											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource AccentBase}"
 											   LetterSpacing="-0.5"/>
 									<TextBlock Text="Onay Bekliyor" FontSize="12.5" FontWeight="SemiBold"
-											   Foreground="#3D4654"/>
-									<TextBlock Text="süreçte bekleyen" FontSize="10.5" Foreground="#9CA3AF"/>
+											   Foreground="{DynamicResource TextBody}"/>
+									<TextBlock Text="süreçte bekleyen" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -102,19 +103,19 @@
 					<Button Classes="statCard" Margin="0,0,12,0"
 							Command="{Binding FilterCardCommand}" CommandParameter="uyari"
 							IsEnabled="{Binding UyariCardClickable}">
-						<Border Background="#FEFAF2" BorderBrush="#E8ECF2" BorderThickness="1"
+						<Border Background="{DynamicResource WarningSoftBgFaint}" BorderBrush="{DynamicResource BorderSoftBlue}" BorderThickness="1"
 								CornerRadius="10" Padding="16,15">
 							<Grid ColumnDefinitions="Auto,*">
 								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
 								<Border Grid.Column="0" Width="3" CornerRadius="2"
-										Background="#B06A00" Margin="0,2,14,2"/>
+										Background="{DynamicResource WarningSolid}" Margin="0,2,14,2"/>
 								<StackPanel Grid.Column="1" Spacing="3">
 									<TextBlock Classes="display" Text="{Binding Uyari}"
-											   FontSize="34" FontWeight="SemiBold" Foreground="#B06A00"
+											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource WarningBase}"
 											   LetterSpacing="-0.5"/>
 									<TextBlock Text="Bitiş Uyarısı" FontSize="12.5" FontWeight="SemiBold"
-											   Foreground="#3D4654"/>
-									<TextBlock Text="30 günden az kaldı" FontSize="10.5" Foreground="#9CA3AF"/>
+											   Foreground="{DynamicResource TextBody}"/>
+									<TextBlock Text="30 günden az kaldı" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -123,12 +124,12 @@
 					<Button Classes="statCard"
 							Command="{Binding FilterCardCommand}" CommandParameter="ihlal"
 							IsEnabled="{Binding IhlalCardClickable}">
-						<Border Background="#FDF7F6" BorderBrush="#E8ECF2" BorderThickness="1"
+						<Border Background="{DynamicResource DangerSoftBgAlt}" BorderBrush="{DynamicResource BorderSoftBlue}" BorderThickness="1"
 								CornerRadius="10" Padding="16,15">
 							<Grid ColumnDefinitions="Auto,*">
 								<!-- İkon yerine ince renkli şerit: rengi taşır, gürültü yapmaz -->
 								<Border Grid.Column="0" Width="3" CornerRadius="2"
-										Background="#A32D2D" Margin="0,2,14,2"/>
+										Background="{DynamicResource DangerSolid}" Margin="0,2,14,2"/>
 								<StackPanel Grid.Column="1" Spacing="3">
 									<!--
 									  Kart artık SÖZLEŞME değil AÇIK İHLAL sayısını gösteriyor:
@@ -137,12 +138,12 @@
 									  sözleşmeye yayıldığını söylüyor.
 									-->
 									<TextBlock Classes="display" Text="{Binding OpenViolations}"
-											   FontSize="34" FontWeight="SemiBold" Foreground="#A32D2D"
+											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource DangerBase}"
 											   LetterSpacing="-0.5"/>
 									<TextBlock Text="Açık İhlal" FontSize="12.5" FontWeight="SemiBold"
-											   Foreground="#3D4654"/>
+											   Foreground="{DynamicResource TextBody}"/>
 									<TextBlock Text="{Binding IhlalSubtitle}" FontSize="10.5"
-											   Foreground="#9CA3AF" TextWrapping="Wrap"/>
+											   Foreground="{DynamicResource TextFaint}" TextWrapping="Wrap"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -163,15 +164,15 @@
 											HorizontalContentAlignment="Stretch" Margin="0,0,0,8"
 											Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenPendingWorkCommand}"
 											CommandParameter="{Binding}">
-										<Border Background="#F7F9FC" BorderBrush="#E8ECF2" BorderThickness="1"
+										<Border Background="{DynamicResource SurfaceSubtle}" BorderBrush="{DynamicResource BorderSoftBlue}" BorderThickness="1"
 												CornerRadius="8" Padding="14,12">
 											<Grid ColumnDefinitions="Auto,*,Auto">
-												<Border Grid.Column="0" Background="{Binding ColorHex}"
+												<Border Grid.Column="0" Background="{Binding ColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 														Width="4" CornerRadius="2" Margin="0,0,14,0"/>
 												<StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
 													<TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
-															   Foreground="#1A2E4A"/>
-													<TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#8A94A6"
+															   Foreground="{DynamicResource TextPrimary}"/>
+													<TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource TextMuted}"
 															   TextWrapping="Wrap"/>
 													<!--
 													  Bekleme süresi: "12 iş bekliyor" ile "12 iş
@@ -181,19 +182,19 @@
 													-->
 													<TextBlock Text="{Binding WaitingText}" FontSize="10.5"
 															   FontWeight="SemiBold"
-															   Foreground="{Binding WaitingColorHex}"
+															   Foreground="{Binding WaitingColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 															   IsVisible="{Binding HasWaitingInfo}"
 															   Margin="0,2,0,0"/>
 												</StackPanel>
 												<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
 															VerticalAlignment="Center">
-													<Border Background="{Binding ColorHex}" CornerRadius="11"
+													<Border Background="{Binding ColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}" CornerRadius="11"
 															MinWidth="26" Height="22" Padding="8,0">
-														<TextBlock Text="{Binding CountText}" Foreground="White"
+														<TextBlock Text="{Binding CountText}" Foreground="{DynamicResource TextOnAccent}"
 																   FontSize="12" FontWeight="Bold"
 																   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 													</Border>
-													<TextBlock Text="›" FontSize="17" Foreground="#B9C1CE"
+													<TextBlock Text="›" FontSize="17" Foreground="{DynamicResource TextDisabled}"
 															   VerticalAlignment="Center"/>
 												</StackPanel>
 											</Grid>
@@ -211,21 +212,21 @@
 					<Border Grid.Column="0" Classes="card">
 						<StackPanel Spacing="12">
 							<TextBlock Classes="cardTitle" Text="TOPLAM SÖZLEŞME DEĞERİ"/>
-							<TextBlock Text="Yürürlükteki sözleşme yok." FontSize="12" Foreground="#9CA3AF"
+							<TextBlock Text="Yürürlükteki sözleşme yok." FontSize="12" Foreground="{DynamicResource TextFaint}"
 									   IsVisible="{Binding !HasActiveValue}"/>
 							<ItemsControl ItemsSource="{Binding ActiveValue}">
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="vm:CurrencyTotalRowViewModel">
 										<StackPanel Spacing="1" Margin="0,0,0,10">
 											<TextBlock Text="{Binding AmountText}" FontSize="19" FontWeight="Bold"
-													   Foreground="#1A2E4A"/>
-											<TextBlock Text="{Binding CountText}" FontSize="11" Foreground="#8A94A6"/>
+													   Foreground="{DynamicResource TextPrimary}"/>
+											<TextBlock Text="{Binding CountText}" FontSize="11" Foreground="{DynamicResource TextMuted}"/>
 										</StackPanel>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
 							</ItemsControl>
 							<TextBlock Text="Kur dönüşümü yapılmaz; her para birimi ayrı gösterilir."
-									   FontSize="10.5" Foreground="#B9C1CE" TextWrapping="Wrap"/>
+									   FontSize="10.5" Foreground="{DynamicResource TextDisabled}" TextWrapping="Wrap"/>
 						</StackPanel>
 					</Border>
 
@@ -233,21 +234,21 @@
 						<StackPanel Spacing="12">
 							<StackPanel Spacing="2">
 								<TextBlock Classes="cardTitle" Text="BU AY"/>
-								<TextBlock Text="{Binding MonthLabel}" FontSize="11" Foreground="#B9C1CE"/>
+								<TextBlock Text="{Binding MonthLabel}" FontSize="11" Foreground="{DynamicResource TextDisabled}"/>
 							</StackPanel>
 
 							<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-								<TextBlock Grid.Row="0" Grid.Column="0" Text="Yeni talep" FontSize="12.5" Foreground="#4B5563"/>
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="Yeni talep" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
 								<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MonthNewRequests}"
-										   FontSize="15" FontWeight="Bold" Foreground="#1A2E4A"/>
+										   FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
 
-								<TextBlock Grid.Row="1" Grid.Column="0" Text="Yürürlüğe giren" FontSize="12.5" Foreground="#4B5563"/>
+								<TextBlock Grid.Row="1" Grid.Column="0" Text="Yürürlüğe giren" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
 								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MonthActivated}"
-										   FontSize="15" FontWeight="Bold" Foreground="#1A6B2A"/>
+										   FontSize="15" FontWeight="Bold" Foreground="{DynamicResource SuccessBase}"/>
 
-								<TextBlock Grid.Row="2" Grid.Column="0" Text="Feshedilen" FontSize="12.5" Foreground="#4B5563"/>
+								<TextBlock Grid.Row="2" Grid.Column="0" Text="Feshedilen" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
 								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MonthTerminated}"
-										   FontSize="15" FontWeight="Bold" Foreground="#A32D2D"/>
+										   FontSize="15" FontWeight="Bold" Foreground="{DynamicResource DangerBase}"/>
 							</Grid>
 						</StackPanel>
 					</Border>
@@ -275,20 +276,20 @@
 									<DataTemplate x:DataType="vm:TypeBreakdownRowViewModel">
 										<Button Classes="flat" HorizontalAlignment="Stretch"
 												HorizontalContentAlignment="Stretch" Margin="0,0,0,8"
-												ToolTip.Tip="Bu türdeki sözleşmeleri listele"
-												IsEnabled="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).TypeRowsClickable}"
+												ToolTip.Tip="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).TypeRowTooltip}"
+												IsHitTestVisible="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).TypeRowsClickable}"
 												Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenTypeCommand}"
 												CommandParameter="{Binding}">
 											<StackPanel Spacing="4">
 												<Grid ColumnDefinitions="*,Auto">
 													<TextBlock Grid.Column="0" Text="{Binding Type}" FontSize="12"
-															   Foreground="#4B5563"/>
+															   Foreground="{DynamicResource TextBodyAlt}"/>
 													<TextBlock Grid.Column="1" Text="{Binding CountText}" FontSize="12"
-															   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+															   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 												</Grid>
 												<!-- Çubuk, en yüksek değere oranlanır (0..1) -->
-												<Border Background="#EDF1F6" Height="6" CornerRadius="3">
-													<Border Background="#2D6EA8" Height="6" CornerRadius="3"
+												<Border Background="{DynamicResource SurfaceDivider}" Height="6" CornerRadius="3">
+													<Border Background="{DynamicResource AccentSolid}" Height="6" CornerRadius="3"
 															HorizontalAlignment="Left"
 															Width="{Binding BarRatio, Converter={x:Static vm:RatioToWidthConverter.Instance}, ConverterParameter=280}"/>
 												</Border>
@@ -306,7 +307,7 @@
 							<StackPanel Spacing="12">
 								<TextBlock Classes="cardTitle" Text="YAKLAŞAN BİTİŞLER (30 GÜN İÇİNDE)"/>
 								<TextBlock Text="Önümüzdeki 30 gün içinde sona erecek sözleşme yok."
-										   FontSize="12" Foreground="#9CA3AF"
+										   FontSize="12" Foreground="{DynamicResource TextFaint}"
 										   IsVisible="{Binding !UpcomingEndings.Count}"/>
 								<ItemsControl ItemsSource="{Binding UpcomingEndings}">
 									<ItemsControl.ItemTemplate>
@@ -315,13 +316,13 @@
 													HorizontalContentAlignment="Stretch" Margin="0,0,0,6"
 													Command="{Binding $parent[UserControl].((vm:DashboardViewModel)DataContext).OpenUpcomingCommand}"
 													CommandParameter="{Binding}">
-												<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+												<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 														CornerRadius="8" Padding="12,10">
 													<Grid ColumnDefinitions="*,Auto">
 														<StackPanel Grid.Column="0" Spacing="2">
 															<TextBlock Text="{Binding Title}" FontSize="12.5"
-																	   FontWeight="SemiBold" Foreground="#1A2E4A"/>
-															<TextBlock FontSize="11" Foreground="#8A94A6">
+																	   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+															<TextBlock FontSize="11" Foreground="{DynamicResource TextMuted}">
 																<Run Text="{Binding RefNoText}"/>
 																<Run Text=" · "/>
 																<Run Text="{Binding CompanyName}"/>
@@ -331,7 +332,7 @@
 																	HorizontalAlignment="Right">
 															<TextBlock Text="{Binding GunKalanText}"
 																	   FontSize="11.5" FontWeight="SemiBold"
-																	   Foreground="#B06A00"
+																	   Foreground="{DynamicResource WarningBase}"
 																	   HorizontalAlignment="Right"/>
 
 															<!--
@@ -341,12 +342,12 @@
 															  yapıyordu; rozetin yokluğu zaten "yenilenmedi"
 															  anlamına geliyor.
 															-->
-															<Border Background="#EAF4EC" BorderBrush="#C3DFC9"
+															<Border Background="{DynamicResource SuccessSoftBgAlt2}" BorderBrush="{DynamicResource SuccessSoftBorderAlt}"
 																	BorderThickness="1" CornerRadius="9"
 																	Padding="8,2" HorizontalAlignment="Right"
 																	IsVisible="{Binding IsRenewed}">
 																<TextBlock Text="Yenilendi" FontSize="10"
-																		   FontWeight="SemiBold" Foreground="#2E6B3E"/>
+																		   FontWeight="SemiBold" Foreground="{DynamicResource SuccessText}"/>
 															</Border>
 														</StackPanel>
 													</Grid>
@@ -368,19 +369,19 @@
 								<ItemsControl ItemsSource="{Binding RecentActivity}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate x:DataType="vm:AuditLogRowViewModel">
-											<Border BorderBrush="#EDF1F6" BorderThickness="0,0,0,1" Padding="0,8">
+											<Border BorderBrush="{DynamicResource SurfaceDivider}" BorderThickness="0,0,0,1" Padding="0,8">
 												<Grid ColumnDefinitions="*,Auto">
 													<StackPanel Grid.Column="0" Spacing="2">
 														<TextBlock Text="{Binding ActionText}" FontSize="12.5"
-																   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+																   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 														<TextBlock Text="{Binding DetailText}" FontSize="11"
-																   Foreground="#8A94A6" TextWrapping="Wrap"/>
+																   Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
 													</StackPanel>
 													<StackPanel Grid.Column="1" Spacing="2" Margin="12,0,0,0">
 														<TextBlock Text="{Binding UserText}" FontSize="11"
-																   Foreground="#4B5563" HorizontalAlignment="Right"/>
+																   Foreground="{DynamicResource TextBodyAlt}" HorizontalAlignment="Right"/>
 														<TextBlock Text="{Binding ActionDate, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}"
-																   FontSize="10.5" Foreground="#B9C1CE"
+																   FontSize="10.5" Foreground="{DynamicResource TextDisabled}"
 																   HorizontalAlignment="Right"/>
 													</StackPanel>
 												</Grid>

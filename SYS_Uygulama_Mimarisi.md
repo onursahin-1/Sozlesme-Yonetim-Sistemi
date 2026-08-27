@@ -301,7 +301,13 @@ Panelin ölçüsü **aksiyona dönüp dönmediği**. Bu ölçüyle iki kutu değ
   hiçbir yere gitmiyordu. Artık bir türe basınca sözleşme listesi o türe
   filtrelenmiş açılır. Bunun için tür filtresi uçtan uca eklendi (sorgu, servis,
   liste ekranındaki açılır seçici). Müdür'de genel sözleşme listesi ekranı
-  olmadığı için satırlar orada tıklanamaz kalır.
+  olmadığı için satırlar orada tıklanamaz kalır — ama kutu gösterilmeye devam
+  eder: portföyün türe göre dağılımı bir yönetici için başlı başına anlamlı.
+
+  Tıklama `IsEnabled` ile değil **`IsHitTestVisible`** ile kapatılır. `IsEnabled`
+  satırın tamamını soluklaştırıp bozuk gösteriyordu; oysa burada devre dışı bir
+  denetim yok, yalnızca gidilecek bir yer yok. Aynı sebeple "tıklayın" diyen
+  ipucu da o rolde gizlenir.
 
 Üç gösterge, "neyi saydığı" düzeltilerek eklendi:
 

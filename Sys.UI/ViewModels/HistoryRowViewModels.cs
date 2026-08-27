@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Sys.Domain;
 
 namespace Sys.UI.ViewModels;
@@ -25,30 +25,30 @@ internal static class OutcomeStyle
 
     public static string ColorHex(bool? isApproved) => isApproved switch
     {
-        true => "#1A6B2A",
-        false => "#A32D2D",
-        _ => "#B06A00"
+        true => "SuccessBase",
+        false => "DangerBase",
+        _ => "WarningBase"
     };
 
     public static string BgHex(bool? isApproved) => isApproved switch
     {
-        true => "#E6F4E7",
-        false => "#FDECEA",
-        _ => "#FFF3CD"
+        true => "SuccessSoftBg",
+        false => "DangerSoftBg",
+        _ => "WarningSoftBg"
     };
 
     // Kayıt kartının zemini: reddedilenler soluk kırmızı, onaylananlar nötr.
     // Amaç, listeyi tararken gerçekleşmemiş kayıtların hemen ayırt edilmesi.
     public static string CardBgHex(bool? isApproved) => isApproved switch
     {
-        false => "#FDF6F5",
-        _ => "#FBFCFE"
+        false => "DangerSoftBgFaint",
+        _ => "SurfaceInput"
     };
 
     public static string CardBorderHex(bool? isApproved) => isApproved switch
     {
-        false => "#F2DAD5",
-        _ => "#E9EEF5"
+        false => "DangerBorderFaint",
+        _ => "SurfaceSoft"
     };
 }
 
@@ -123,13 +123,13 @@ public class ViolationRowViewModel
     public bool CanResolve { get; }
 
     public string StatusLabel => IsResolved ? "Giderildi" : "Açık";
-    public string StatusColorHex => IsResolved ? "#1A6B2A" : "#A32D2D";
-    public string StatusBgHex => IsResolved ? "#E6F4E7" : "#FDECEA";
+    public string StatusColorHex => IsResolved ? "SuccessBase" : "DangerBase";
+    public string StatusBgHex => IsResolved ? "SuccessSoftBg" : "DangerSoftBg";
 
     // Giderilmiş ihlaller nötr zeminde; açık olanlar kırmızımsı kalıp dikkat çeker.
-    public string CardBgHex => IsResolved ? "#FBFCFE" : "#FDF6F5";
-    public string CardBorderHex => IsResolved ? "#E9EEF5" : "#F2DAD5";
-    public string TitleColorHex => IsResolved ? "#1A2E4A" : "#8C3220";
+    public string CardBgHex => IsResolved ? "SurfaceInput" : "DangerSoftBgFaint";
+    public string CardBorderHex => IsResolved ? "SurfaceSoft" : "DangerBorderFaint";
+    public string TitleColorHex => IsResolved ? "TextPrimary" : "DangerTextAlt";
 
     public bool HasResolution => IsResolved && !string.IsNullOrWhiteSpace(_violation.ResolutionNote);
 

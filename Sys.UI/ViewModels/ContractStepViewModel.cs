@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Sys.Domain;
@@ -48,31 +48,32 @@ public class ContractStepViewModel
         _ => "○"
     };
 
-    public string IconColorHex => State == ContractStepState.Pending ? "#C4CBD6" : "#FFFFFF";
+    public string IconColorHex => State == ContractStepState.Pending ? "TextDisabledAlt" : "TextOnAccent";
 
     public string IconBgHex => State switch
     {
-        ContractStepState.Completed => "#16A34A",
-        ContractStepState.Current => "#2D6EA8",
-        ContractStepState.Rejected => "#A32D2D",
-        _ => "#FFFFFF"
+        ContractStepState.Completed => "SuccessBrightSolid",
+        ContractStepState.Current => "AccentSolid",
+        ContractStepState.Rejected => "DangerSolid",
+        // Bekleyen adım: daire zeminle kaynaşsın, yalnızca çerçevesi görünsün.
+        _ => "SurfaceCard"
     };
 
     public string IconBorderHex => State switch
     {
-        ContractStepState.Completed => "#16A34A",
-        ContractStepState.Current => "#2D6EA8",
-        ContractStepState.Rejected => "#A32D2D",
-        _ => "#C4CBD6"
+        ContractStepState.Completed => "SuccessBrightSolid",
+        ContractStepState.Current => "AccentSolid",
+        ContractStepState.Rejected => "DangerSolid",
+        _ => "TextDisabledAlt"
     };
 
     // Geçmiş adımlar soluk, içinde bulunulan adım koyu ve kalın, sıradakiler gri.
     public string LabelColorHex => State switch
     {
-        ContractStepState.Completed => "#4B5563",
-        ContractStepState.Current => "#1A2E4A",
-        ContractStepState.Rejected => "#A32D2D",
-        _ => "#9CA3AF"
+        ContractStepState.Completed => "TextBodyAlt",
+        ContractStepState.Current => "TextPrimary",
+        ContractStepState.Rejected => "DangerBase",
+        _ => "TextFaint"
     };
 
     public string LabelWeight => State == ContractStepState.Current ? "Bold" : "Normal";
@@ -80,9 +81,9 @@ public class ContractStepViewModel
     // Adımlar arası dikey bağlayıcı; gerçekleşmiş adımlarda renkli kalır.
     public string ConnectorColorHex => State switch
     {
-        ContractStepState.Completed => "#16A34A",
-        ContractStepState.Rejected => "#A32D2D",
-        _ => "#DDE3EC"
+        ContractStepState.Completed => "SuccessBright",
+        ContractStepState.Rejected => "DangerBase",
+        _ => "BorderButton"
     };
 
     // --- Zaman çizelgesinin kurulması ---

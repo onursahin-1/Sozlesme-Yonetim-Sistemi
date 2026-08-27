@@ -10,20 +10,25 @@ namespace Sys.UI.Converters;
 // filtre butonlarında hangi filtrenin seçili olduğunu görsel olarak belirtmek için kullanılır.
 public class FilterStateBrushConverter : IValueConverter
 {
-    public static readonly FilterStateBrushConverter Background = new("#2D6EA8", "#E5E7EB");
-    public static readonly FilterStateBrushConverter Foreground = new("White", "#374151");
+    public static readonly FilterStateBrushConverter Background = new("AccentBase", "SurfaceDivider");
+    public static readonly FilterStateBrushConverter Foreground = new("TextOnAccent", "TextBody");
 
-    private readonly IBrush _active;
-    private readonly IBrush _inactive;
+    // Renkler artık hazır fırça değil PALET ANAHTARI. Eskiden kurucuda bir kez
+    // SolidColorBrush üretiliyordu; o fırça tema değişse de aynı kalırdı.
+    private readonly string _activeKey;
+    private readonly string _inactiveKey;
 
-    private FilterStateBrushConverter(string activeColor, string inactiveColor)
+    private FilterStateBrushConverter(string activeKey, string inactiveKey)
     {
-        _active = new SolidColorBrush(Color.Parse(activeColor));
-        _inactive = new SolidColorBrush(Color.Parse(inactiveColor));
+        _activeKey = activeKey;
+        _inactiveKey = inactiveKey;
     }
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is string s && parameter is string p && s == p ? _active : _inactive;
+    {
+        var key = value is string s && parameter is string p && s == p ? _activeKey : _inactiveKey;
+        return ThemeBrushConverter.Instance.Convert(key, targetType, null, culture);
+    }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();

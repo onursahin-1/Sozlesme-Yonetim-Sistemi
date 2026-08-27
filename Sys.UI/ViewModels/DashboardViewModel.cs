@@ -70,7 +70,7 @@ public class PendingWorkRowViewModel
     };
 
     // Bir haftayı aşan bekleme dikkat çekmeli; altındakiler nötr kalır.
-    public string WaitingColorHex => _item.OldestWaitingDays >= 7 ? "#A32D2D" : "#8A94A6";
+    public string WaitingColorHex => _item.OldestWaitingDays >= 7 ? "DangerBase" : "TextMuted";
 }
 
 // Para birimi başına toplam değer satırı.
@@ -181,9 +181,16 @@ public partial class DashboardViewModel : ViewModelBase
     public bool HasTypeBreakdown => TypeBreakdown.Count > 0;
 
     // Müdür'de genel bir sözleşme listesi ekranı yok, dolayısıyla tıklamanın
-    // gideceği bir yer de yok. Durum kartlarındaki desenin aynısı: kutu görünür
-    // kalır ama tıklanamaz — tıklanıp hiçbir şey olmaması daha kötü olurdu.
+    // gideceği bir yer de yok. Kutu yine de gösteriliyor: portföyün türe göre
+    // dağılımı bir yönetici için başlı başına anlamlı bir bilgi.
+    //
+    // Tıklama IsEnabled ile değil IsHitTestVisible ile kapatılıyor. IsEnabled,
+    // satırın tamamını soluklaştırıp bozuk gösteriyordu; oysa burada devre dışı
+    // bir denetim yok, yalnızca gidilecek bir yer yok.
     public bool TypeRowsClickable => _currentUser.Role is UserRole.Personel or UserRole.SYB;
+
+    // Gidilecek bir yer yokken "tıklayın" diyen bir ipucu göstermemek için.
+    public string? TypeRowTooltip => TypeRowsClickable ? "Bu türdeki sözleşmeleri listele" : null;
 
     // --- Karşılama başlığı ---
     // Günün saatine göre selam; küçük bir dokunuş ama panelin "kişisel" hissini veriyor.

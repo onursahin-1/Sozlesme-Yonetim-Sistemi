@@ -1,4 +1,4 @@
-using Sys.Domain;
+﻿using Sys.Domain;
 
 namespace Sys.UI.ViewModels;
 
@@ -33,19 +33,19 @@ public class AttachmentRowViewModel
     // taşıdığından ayrı renkte; diğerleri nötr.
     public string CategoryColorHex => _attachment.Category switch
     {
-        AttachmentCategory.Sozlesme => "#2D6EA8",
-        AttachmentCategory.Teminat => "#B06A00",
-        AttachmentCategory.Ihlal => "#A32D2D",
-        AttachmentCategory.Fesih => "#A32D2D",
-        _ => "#5B6472"
+        AttachmentCategory.Sozlesme => "AccentBase",
+        AttachmentCategory.Teminat => "WarningBase",
+        AttachmentCategory.Ihlal => "DangerBase",
+        AttachmentCategory.Fesih => "DangerBase",
+        _ => "TextLabel"
     };
 
     public string CategoryBgHex => _attachment.Category switch
     {
-        AttachmentCategory.Sozlesme => "#E7EEF7",
-        AttachmentCategory.Teminat => "#FFF3E0",
-        AttachmentCategory.Ihlal => "#FDECEA",
-        AttachmentCategory.Fesih => "#FDECEA",
-        _ => "#EEF1F6"
+        AttachmentCategory.Sozlesme => "BorderFaintBlue",
+        AttachmentCategory.Teminat => "WarningSoftBgAlt",
+        AttachmentCategory.Ihlal => "DangerSoftBg",
+        AttachmentCategory.Fesih => "DangerSoftBg",
+        _ => "SurfaceButton"
     };
 }

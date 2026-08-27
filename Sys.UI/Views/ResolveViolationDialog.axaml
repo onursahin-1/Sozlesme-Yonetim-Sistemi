@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Sys.UI.Views.ResolveViolationDialog"
         Title="İhlali Gider"
@@ -9,24 +9,24 @@
 
 		<StackPanel Spacing="3">
 			<TextBlock x:Name="HeaderText" FontSize="15" FontWeight="SemiBold"
-					   Foreground="#1A2E4A" TextWrapping="Wrap"/>
-			<TextBlock x:Name="HintText" FontSize="11.5" Foreground="#8A94A6" TextWrapping="Wrap"/>
+					   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+			<TextBlock x:Name="HintText" FontSize="11.5" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"/>
 		</StackPanel>
 
 		<StackPanel Spacing="6">
-			<TextBlock Text="İhlal nasıl giderildi?" FontSize="12" FontWeight="SemiBold" Foreground="#4B5563"/>
+			<TextBlock Text="İhlal nasıl giderildi?" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyAlt}"/>
 			<TextBox x:Name="NoteBox" AcceptsReturn="True" TextWrapping="Wrap"
 					 Height="110" MaxLength="500"
 					 PlaceholderText="Eksik iş tamamlandı, gecikme telafi edildi, tutanak imzalandı..."/>
-			<TextBlock x:Name="ErrorText" FontSize="11.5" Foreground="#A32D2D"
+			<TextBlock x:Name="ErrorText" FontSize="11.5" Foreground="{DynamicResource DangerBase}"
 					   IsVisible="False" TextWrapping="Wrap"/>
 		</StackPanel>
 
 		<StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
 			<Button x:Name="CancelButton" Content="Vazgeç" Click="OnCancelClick"/>
 			<Button Classes="flat" Click="OnConfirmClick">
-				<Border Background="#1A6B2A" CornerRadius="4" Padding="14,6">
-					<TextBlock Text="Giderildi Olarak İşaretle" Foreground="White"/>
+				<Border Background="{DynamicResource SuccessSolid}" CornerRadius="4" Padding="14,6">
+					<TextBlock Text="Giderildi Olarak İşaretle" Foreground="{DynamicResource TextOnAccent}"/>
 				</Border>
 			</Button>
 		</StackPanel>

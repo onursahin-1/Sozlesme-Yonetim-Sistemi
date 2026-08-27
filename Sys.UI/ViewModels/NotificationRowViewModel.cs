@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Sys.Domain;
 
@@ -32,9 +32,11 @@ public partial class NotificationRowViewModel : ObservableObject
     // Okunmamış bildirimler hafif mavi zeminle, kalın başlıkla ve sol kenardaki
     // mavi şeritle öne çıkar. Okunmuşlarda şerit şeffaf kalıp yer kaplamaya devam
     // eder; böylece satırlar birbirine göre kaymaz.
-    public string RowBackgroundHex => IsRead ? "#FFFFFF" : "#F2F7FC";
+    // Okunmuş bildirim panelin kendi yüzeyinde durur; okunmamış olan hafif
+    // vurgulu bir zemin alır.
+    public string RowBackgroundHex => IsRead ? "SurfaceCard" : "AccentSoftBg";
     public string TitleWeight => IsRead ? "Normal" : "Bold";
-    public string UnreadStripHex => IsRead ? "#00FFFFFF" : "#2D6EA8";
+    public string UnreadStripHex => IsRead ? "#00FFFFFF" : "AccentBase";
 
     public string TimeText
     {
@@ -57,11 +59,11 @@ public partial class NotificationRowViewModel : ObservableObject
     // yeşil bir nokta reddedilen talepte yanıltıcı olurdu. Sonucu başlık söylüyor.
     public string TypeColorHex => _notification.Type switch
     {
-        NotificationType.YaklasanBitis => "#B06A00",
-        NotificationType.OnayBekliyor => "#2D6EA8",
-        NotificationType.TalepSonucu => "#5B6472",
-        NotificationType.SozlesmeOlayi => "#93A4BC",
-        NotificationType.SifreSifirlamaTalebi => "#A32D2D",
-        _ => "#93A4BC"
+        NotificationType.YaklasanBitis => "WarningBase",
+        NotificationType.OnayBekliyor => "AccentBase",
+        NotificationType.TalepSonucu => "TextLabel",
+        NotificationType.SozlesmeOlayi => "TextMutedAlt",
+        NotificationType.SifreSifirlamaTalebi => "DangerBase",
+        _ => "TextMutedAlt"
     };
 }

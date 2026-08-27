@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Sys.UI.Views.RejectRequestDialog"
         Title="Talebi Reddet"
@@ -8,14 +8,14 @@
 	<StackPanel Margin="24" Spacing="14">
 
 		<TextBlock x:Name="HeaderText" FontSize="15" FontWeight="SemiBold"
-				   Foreground="#1A2E4A" TextWrapping="Wrap"/>
+				   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
 
 		<StackPanel Spacing="6">
-			<TextBlock Text="Red gerekçesi" FontSize="12" FontWeight="SemiBold" Foreground="#4B5563"/>
+			<TextBlock Text="Red gerekçesi" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBodyAlt}"/>
 			<TextBox x:Name="NoteBox" AcceptsReturn="True" TextWrapping="Wrap"
 					 Height="110" MaxLength="500"
 					 PlaceholderText="Talebin neden reddedildiğini yazın. Bu metin talep sahibine bildirim olarak iletilir."/>
-			<TextBlock x:Name="ErrorText" FontSize="11.5" Foreground="#A32D2D"
+			<TextBlock x:Name="ErrorText" FontSize="11.5" Foreground="{DynamicResource DangerBase}"
 					   IsVisible="False" TextWrapping="Wrap"/>
 		</StackPanel>
 
@@ -23,12 +23,12 @@
 		  Redde iki anlam yüklenebiliyor: iade (düzeltilip tekrar gönderilebilir) ve
 		  kapatma (nihai). Varsayılan iade — geri alınabilir olan seçenek daha güvenli.
 		-->
-		<Border Background="#F7F9FC" BorderBrush="#DDE3EC" BorderThickness="1"
+		<Border Background="{DynamicResource SurfaceSubtle}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 				CornerRadius="8" Padding="12,10">
 			<StackPanel Spacing="4">
 				<CheckBox x:Name="AllowResubmitCheck" IsChecked="True"
 						  Content="Düzeltilip yeniden gönderilebilir"/>
-				<TextBlock x:Name="HintText" FontSize="11.5" Foreground="#8A94A6"
+				<TextBlock x:Name="HintText" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
 						   TextWrapping="Wrap" Margin="0,0,0,0"/>
 			</StackPanel>
 		</Border>
@@ -36,8 +36,8 @@
 		<StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
 			<Button x:Name="CancelButton" Content="Vazgeç" Click="OnCancelClick"/>
 			<Button Classes="flat" Click="OnConfirmClick">
-				<Border Background="#A32D2D" CornerRadius="4" Padding="14,6">
-					<TextBlock x:Name="ConfirmText" Text="Talebi Reddet" Foreground="White"/>
+				<Border Background="{DynamicResource DangerSolid}" CornerRadius="4" Padding="14,6">
+					<TextBlock x:Name="ConfirmText" Text="Talebi Reddet" Foreground="{DynamicResource TextOnAccent}"/>
 				</Border>
 			</Button>
 		</StackPanel>

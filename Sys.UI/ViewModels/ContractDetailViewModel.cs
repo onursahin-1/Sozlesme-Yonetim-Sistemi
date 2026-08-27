@@ -75,10 +75,10 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
     public partial string DetailStatus { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string DetailStatusColorHex { get; set; } = "#555555";
+    public partial string DetailStatusColorHex { get; set; } = "TextLabel";
 
     [ObservableProperty]
-    public partial string DetailStatusBgHex { get; set; } = "#EAECF0";
+    public partial string DetailStatusBgHex { get; set; } = "SurfaceDivider";
 
     // Revizyon geçmişindeki tutarlar ContractRevision üzerinden geliyor; o kayıtta
     // para birimi yok, sözleşmeninki geçerli. Ekranda ek olarak yazılabilsin diye.

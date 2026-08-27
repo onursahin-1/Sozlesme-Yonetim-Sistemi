@@ -116,28 +116,28 @@ public class ContractCardViewModel
         }
     }
 
-    public string StatusColorHex => IsRejected ? "#A32D2D" : Status switch
+    public string StatusColorHex => IsRejected ? "DangerBase" : Status switch
     {
-        ContractStatus.Aktif => "#1A6B2A",
-        ContractStatus.OnayBekliyor => "#2D6EA8",
-        ContractStatus.Uyari => "#B06A00",
-        ContractStatus.Ihlal => "#A32D2D",
-        ContractStatus.Tamamlandi => "#888888",
-        ContractStatus.Feshedildi => "#A32D2D",
-        ContractStatus.Reddedildi => "#A32D2D",
-        _ => "#555555"
+        ContractStatus.Aktif => "SuccessBase",
+        ContractStatus.OnayBekliyor => "AccentBase",
+        ContractStatus.Uyari => "WarningBase",
+        ContractStatus.Ihlal => "DangerBase",
+        ContractStatus.Tamamlandi => "TextFaint",
+        ContractStatus.Feshedildi => "DangerBase",
+        ContractStatus.Reddedildi => "DangerBase",
+        _ => "TextLabel"
     };
 
-    public string StatusBgHex => IsRejected ? "#FDECEA" : Status switch
+    public string StatusBgHex => IsRejected ? "DangerSoftBg" : Status switch
     {
-        ContractStatus.Aktif => "#E6F4E7",
-        ContractStatus.OnayBekliyor => "#D6E9F8",
-        ContractStatus.Uyari => "#FFF3CD",
-        ContractStatus.Ihlal => "#FDECEA",
-        ContractStatus.Tamamlandi => "#EAECF0",
-        ContractStatus.Feshedildi => "#FDECEA",
-        ContractStatus.Reddedildi => "#FDECEA",
-        _ => "#EAECF0"
+        ContractStatus.Aktif => "SuccessSoftBg",
+        ContractStatus.OnayBekliyor => "AccentSoftBorder",
+        ContractStatus.Uyari => "WarningSoftBg",
+        ContractStatus.Ihlal => "DangerSoftBg",
+        ContractStatus.Tamamlandi => "SurfaceDivider",
+        ContractStatus.Feshedildi => "DangerSoftBg",
+        ContractStatus.Reddedildi => "DangerSoftBg",
+        _ => "SurfaceDivider"
     };
 
     public string BedelText => CurrencyHelper.Format(_contract.TotalAmount, _contract.Currency);

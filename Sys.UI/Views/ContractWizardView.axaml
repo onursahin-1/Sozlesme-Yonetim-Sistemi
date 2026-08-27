@@ -1,5 +1,6 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -17,12 +18,12 @@
 		<Style Selector="TextBlock.formLabel">
 			<Setter Property="FontSize" Value="11.5"/>
 			<Setter Property="FontWeight" Value="SemiBold"/>
-			<Setter Property="Foreground" Value="#5B6472"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextLabel}"/>
 			<Setter Property="Margin" Value="0,0,0,5"/>
 		</Style>
 		<Style Selector="TextBlock.formHint">
 			<Setter Property="FontSize" Value="11"/>
-			<Setter Property="Foreground" Value="#A3ABB8"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextFaintAlt}"/>
 			<Setter Property="Margin" Value="2,5,0,0"/>
 			<Setter Property="TextWrapping" Value="Wrap"/>
 		</Style>
@@ -30,45 +31,45 @@
 			<Setter Property="Padding" Value="11,9"/>
 			<Setter Property="FontSize" Value="13"/>
 			<Setter Property="CornerRadius" Value="8"/>
-			<Setter Property="BorderBrush" Value="#DFE5EE"/>
-			<Setter Property="Background" Value="#FBFCFE"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderInput}"/>
+			<Setter Property="Background" Value="{DynamicResource SurfaceInput}"/>
 		</Style>
 		<Style Selector="TextBox:focus">
-			<Setter Property="Background" Value="White"/>
+			<Setter Property="Background" Value="{DynamicResource SurfaceInputFocus}"/>
 		</Style>
 		<Style Selector="ComboBox">
 			<Setter Property="Padding" Value="11,8"/>
 			<Setter Property="FontSize" Value="13"/>
 			<Setter Property="CornerRadius" Value="8"/>
-			<Setter Property="BorderBrush" Value="#DFE5EE"/>
-			<Setter Property="Background" Value="#FBFCFE"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderInput}"/>
+			<Setter Property="Background" Value="{DynamicResource SurfaceInput}"/>
 		</Style>
 		<Style Selector="DatePicker">
 			<Setter Property="CornerRadius" Value="8"/>
-			<Setter Property="BorderBrush" Value="#DFE5EE"/>
-			<Setter Property="Background" Value="#FBFCFE"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderInput}"/>
+			<Setter Property="Background" Value="{DynamicResource SurfaceInput}"/>
 			<Setter Property="HorizontalAlignment" Value="Stretch"/>
 		</Style>
 
 		<Style Selector="TextBlock.summaryLabel">
 			<Setter Property="FontSize" Value="9.5"/>
 			<Setter Property="FontWeight" Value="Bold"/>
-			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextMutedAlt}"/>
 			<Setter Property="LetterSpacing" Value="0.6"/>
 		</Style>
 		<Style Selector="TextBlock.summaryValue">
 			<Setter Property="FontSize" Value="13"/>
-			<Setter Property="Foreground" Value="#1A2E4A"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
 			<Setter Property="TextWrapping" Value="Wrap"/>
 		</Style>
 		<Style Selector="TextBlock.summaryEmpty">
 			<Setter Property="FontSize" Value="13"/>
-			<Setter Property="Foreground" Value="#C4CBD6"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextDisabledAlt}"/>
 		</Style>
 		<Style Selector="TextBlock.tableHead">
 			<Setter Property="FontSize" Value="10"/>
 			<Setter Property="FontWeight" Value="Bold"/>
-			<Setter Property="Foreground" Value="#93A4BC"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextMutedAlt}"/>
 			<Setter Property="LetterSpacing" Value="0.5"/>
 		</Style>
 	</UserControl.Styles>
@@ -89,29 +90,29 @@
 
 				<!-- Kısa özet; ayrıntılı mesaj ilgili alanın altında gösteriliyor -->
 				<Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-						Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+						Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 						CornerRadius="10" Padding="14,11">
-					<TextBlock Text="{Binding ErrorMessage}" Foreground="#9B3B25"
+					<TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerTextAlt}"
 							   FontSize="12.5" TextWrapping="Wrap"/>
 				</Border>
 
 				<!-- ==================== ADIM 1 ==================== -->
 				<Border IsVisible="{Binding IsStep1}"
-						Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="24,20">
 					<StackPanel Spacing="18">
 
 						<StackPanel Spacing="1">
 							<TextBlock Classes="display" Text="Temel Bilgiler" FontSize="15.5"
-									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
-							<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="#A3ABB8"/>
+									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
+							<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
-						<Border Background="#EDF1F6" Height="1"/>
+						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
 								<Run Text="SÖZLEŞMESİ OLUŞTURULACAK TALEP"/>
-								<Run Text=" *" Foreground="#D14343"/>
+								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<ComboBox ItemsSource="{Binding PendingRequests}" SelectedItem="{Binding SelectedRequest}"
 									  HorizontalAlignment="Stretch">
@@ -135,7 +136,7 @@
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
 									<Run Text="BAŞLANGIÇ TARİHİ"/>
-									<Run Text=" *" Foreground="#D14343"/>
+									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<DatePicker SelectedDate="{Binding StartDate}"/>
 								<TextBlock Classes="fieldError" Text="{Binding StartDateError}"
@@ -144,7 +145,7 @@
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
 									<Run Text="BİTİŞ TARİHİ"/>
-									<Run Text=" *" Foreground="#D14343"/>
+									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<DatePicker SelectedDate="{Binding EndDate}"/>
 								<TextBlock Classes="fieldError" Text="{Binding EndDateError}"
@@ -156,7 +157,7 @@
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
 									<Run Text="ÖDEME PERİYODU"/>
-									<Run Text=" *" Foreground="#D14343"/>
+									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<ComboBox ItemsSource="{Binding PaymentPeriodOptions}"
 										  SelectedItem="{Binding SelectedPaymentPeriod}" HorizontalAlignment="Stretch"/>
@@ -173,7 +174,7 @@
 						<StackPanel>
 							<TextBlock Classes="formLabel">
 								<Run Text="SAP CARİ KODU"/>
-								<Run Text=" *" Foreground="#D14343"/>
+								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX"/>
 							<TextBlock Classes="fieldError" Text="{Binding SapCariKoduError}"
@@ -184,17 +185,17 @@
 
 				<!-- ==================== ADIM 2 ==================== -->
 				<Border IsVisible="{Binding IsStep2}"
-						Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="24,20">
 					<StackPanel Spacing="16">
 
 						<StackPanel Spacing="1">
 							<TextBlock Classes="display" Text="Bedel Kalemleri" FontSize="15.5"
-									   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 							<TextBlock Text="Sözleşmenin toplam bedeli bu kalemlerden hesaplanır."
-									   FontSize="11" Foreground="#A3ABB8"/>
+									   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
-						<Border Background="#EDF1F6" Height="1"/>
+						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<!--
 						  Reddedilip geri dönmüş bir talep ikinci kez sözleşmeye dönüştürülürken
@@ -202,10 +203,10 @@
 						  ekleniyor ve bu ekranda hiç görünmüyordu.
 						-->
 						<Border IsVisible="{Binding IsRecreate}"
-								Background="#FFF7E6" BorderBrush="#E8C989" BorderThickness="1"
+								Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 								CornerRadius="10" Padding="14,11">
 							<TextBlock Text="{Binding RecreateNotice}" FontSize="12"
-									   Foreground="#7A5C10" TextWrapping="Wrap"/>
+									   Foreground="{DynamicResource WarningTextAlt}" TextWrapping="Wrap"/>
 						</Border>
 
 						<!-- Sütun başlıkları: hangi kutunun ne olduğu yazmıyordu -->
@@ -230,9 +231,9 @@
 												 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 										<Button Grid.Column="4" Classes="flat" Command="{Binding RemoveCommand}"
 												ToolTip.Tip="Kalemi sil" VerticalAlignment="Center">
-											<Border Background="#FDECEA" BorderBrush="#F0C9C1" BorderThickness="1"
+											<Border Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 													CornerRadius="7" Width="34" Height="34">
-												<Path Stroke="#A32D2D" StrokeThickness="1.8" StrokeLineCap="Round"
+												<Path Stroke="{DynamicResource DangerBase}" StrokeThickness="1.8" StrokeLineCap="Round"
 													  Fill="Transparent" Width="12" Height="12" Stretch="Uniform"
 													  HorizontalAlignment="Center" VerticalAlignment="Center"
 													  Data="M6 6L18 18M18 6L6 18"/>
@@ -244,30 +245,30 @@
 						</ItemsControl>
 
 						<Button Classes="flat" HorizontalAlignment="Left" Command="{Binding AddItemCommand}">
-							<Border Background="#EEF1F6" BorderBrush="#C9D3E0" BorderThickness="1"
+							<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 									CornerRadius="8" Padding="14,8">
 								<StackPanel Orientation="Horizontal" Spacing="8">
-									<Path Stroke="#3D4654" StrokeThickness="2" StrokeLineCap="Round"
+									<Path Stroke="{DynamicResource TextBody}" StrokeThickness="2" StrokeLineCap="Round"
 										  Fill="Transparent" Width="12" Height="12" Stretch="Uniform"
 										  VerticalAlignment="Center" Data="M12 5v14M5 12h14"/>
-									<TextBlock Text="Kalem Ekle" Foreground="#3D4654" FontSize="12.5"
+									<TextBlock Text="Kalem Ekle" Foreground="{DynamicResource TextBody}" FontSize="12.5"
 											   VerticalAlignment="Center"/>
 								</StackPanel>
 							</Border>
 						</Button>
 
-						<Border Background="#EDF1F6" Height="1"/>
+						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<!-- Para birimi kalem bazında değil sözleşme bazında seçilir; kur dönüşümü yapılmaz. -->
 						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="Para Birimi" FontSize="12" Foreground="#5B6472"
+							<TextBlock Grid.Column="0" Text="Para Birimi" FontSize="12" Foreground="{DynamicResource TextLabel}"
 									   FontWeight="SemiBold" VerticalAlignment="Center"/>
 							<ComboBox Grid.Column="1" Width="140" HorizontalAlignment="Left"
 									  ItemsSource="{Binding CurrencyOptions}" SelectedItem="{Binding SelectedCurrency}"/>
 							<StackPanel Grid.Column="2" Spacing="1" HorizontalAlignment="Right">
 								<TextBlock Classes="summaryLabel" Text="TOPLAM" TextAlignment="Right"/>
 								<TextBlock Classes="display" Text="{Binding ToplamText}" FontSize="21"
-										   FontWeight="Bold" Foreground="#1A2E4A" TextAlignment="Right"/>
+										   FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" TextAlignment="Right"/>
 							</StackPanel>
 						</Grid>
 					</StackPanel>
@@ -282,43 +283,43 @@
 					  dosyayı ikinci kez yükleyip sözleşmeye kopya eklememesi için.
 					-->
 					<Border IsVisible="{Binding HasExistingAttachments}"
-							Background="#FFF7E6" BorderBrush="#E8C989" BorderThickness="1"
+							Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 							CornerRadius="10" Padding="14,12">
 						<StackPanel Spacing="7">
-							<TextBlock Text="ZATEN EKLİ DOSYALAR" FontSize="10" FontWeight="Bold" Foreground="#7A5C10"/>
+							<TextBlock Text="ZATEN EKLİ DOSYALAR" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource WarningTextAlt}"/>
 							<TextBlock Text="Bu dosyalar önceki denemede yüklendi ve sözleşmede kalmaya devam edecek. Aynı dosyayı tekrar eklemeyin."
-									   FontSize="11" Foreground="#7A5C10" TextWrapping="Wrap"/>
+									   FontSize="11" Foreground="{DynamicResource WarningTextAlt}" TextWrapping="Wrap"/>
 							<ItemsControl ItemsSource="{Binding ExistingAttachments}">
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="domain:Attachment">
 										<TextBlock Text="{Binding FileName}" FontSize="12"
-												   Foreground="#5C4409" Margin="0,2"/>
+												   Foreground="{DynamicResource WarningDeep}" Margin="0,2"/>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
 							</ItemsControl>
 						</StackPanel>
 					</Border>
 
-					<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+					<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="24,20">
 						<StackPanel Spacing="18">
 
 							<StackPanel Spacing="1">
 								<TextBlock Classes="display" Text="Belgeler" FontSize="15.5"
-										   FontWeight="SemiBold" Foreground="#1A2E4A"/>
+										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 								<TextBlock Text="Sözleşme metni, ekleri ve teminat belgeleri."
-										   FontSize="11" Foreground="#A3ABB8"/>
+										   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
-							<Border Background="#EDF1F6" Height="1"/>
+							<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 							<!-- Sözleşme dosyası -->
 							<StackPanel Spacing="8">
 								<Grid ColumnDefinitions="*,Auto">
 									<TextBlock Grid.Column="0" Classes="formLabel" Text="SÖZLEŞME DOSYASI" Margin="0"/>
 									<Button Grid.Column="1" Classes="flat" Click="OnPickSozlesmeFileClick">
-										<Border Background="#EEF1F6" BorderBrush="#C9D3E0" BorderThickness="1"
+										<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 												CornerRadius="7" Padding="12,6">
-											<TextBlock Text="+ Dosya Ekle" Foreground="#3D4654" FontSize="11.5"/>
+											<TextBlock Text="+ Dosya Ekle" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 										</Border>
 									</Button>
 								</Grid>
@@ -327,20 +328,20 @@
 								<ItemsControl ItemsSource="{Binding SozlesmeFileNames}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
-											<Border Background="#F5F9FD" BorderBrush="#C4DCF2" BorderThickness="1"
+											<Border Background="{DynamicResource SurfaceSubtleBlue}" BorderBrush="{DynamicResource AccentSoftBorder}" BorderThickness="1"
 													CornerRadius="8" Padding="12,9" Margin="0,0,0,6">
 												<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-													<Path Grid.Column="0" Stroke="#2D6EA8" StrokeThickness="1.8"
+													<Path Grid.Column="0" Stroke="{DynamicResource AccentBase}" StrokeThickness="1.8"
 														  Fill="Transparent" Width="15" Height="15" Stretch="Uniform"
 														  VerticalAlignment="Center"
 														  Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>
 													<TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12"
-															   Foreground="#1A2E4A" VerticalAlignment="Center"
+															   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 															   TextTrimming="CharacterEllipsis"/>
 													<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
 															Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveSozlesmeFileCommand}"
 															CommandParameter="{Binding}">
-														<TextBlock Text="Kaldır" Foreground="#A32D2D" FontSize="11"/>
+														<TextBlock Text="Kaldır" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
 													</Button>
 												</Grid>
 											</Border>
@@ -354,9 +355,9 @@
 								<Grid ColumnDefinitions="*,Auto">
 									<TextBlock Grid.Column="0" Classes="formLabel" Text="EKLER" Margin="0"/>
 									<Button Grid.Column="1" Classes="flat" Click="OnPickEkFileClick">
-										<Border Background="#EEF1F6" BorderBrush="#C9D3E0" BorderThickness="1"
+										<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 												CornerRadius="7" Padding="12,6">
-											<TextBlock Text="+ Dosya Ekle" Foreground="#3D4654" FontSize="11.5"/>
+											<TextBlock Text="+ Dosya Ekle" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 										</Border>
 									</Button>
 								</Grid>
@@ -365,20 +366,20 @@
 								<ItemsControl ItemsSource="{Binding EkFileNames}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
-											<Border Background="#F5F9FD" BorderBrush="#C4DCF2" BorderThickness="1"
+											<Border Background="{DynamicResource SurfaceSubtleBlue}" BorderBrush="{DynamicResource AccentSoftBorder}" BorderThickness="1"
 													CornerRadius="8" Padding="12,9" Margin="0,0,0,6">
 												<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-													<Path Grid.Column="0" Stroke="#2D6EA8" StrokeThickness="1.8"
+													<Path Grid.Column="0" Stroke="{DynamicResource AccentBase}" StrokeThickness="1.8"
 														  Fill="Transparent" Width="15" Height="15" Stretch="Uniform"
 														  VerticalAlignment="Center"
 														  Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>
 													<TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12"
-															   Foreground="#1A2E4A" VerticalAlignment="Center"
+															   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 															   TextTrimming="CharacterEllipsis"/>
 													<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
 															Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveEkFileCommand}"
 															CommandParameter="{Binding}">
-														<TextBlock Text="Kaldır" Foreground="#A32D2D" FontSize="11"/>
+														<TextBlock Text="Kaldır" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
 													</Button>
 												</Grid>
 											</Border>
@@ -392,9 +393,9 @@
 								<Grid ColumnDefinitions="*,Auto">
 									<TextBlock Grid.Column="0" Classes="formLabel" Text="TEMİNAT" Margin="0"/>
 									<Button Grid.Column="1" Classes="flat" Click="OnPickTeminatFileClick">
-										<Border Background="#EEF1F6" BorderBrush="#C9D3E0" BorderThickness="1"
+										<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 												CornerRadius="7" Padding="12,6">
-											<TextBlock Text="+ Dosya Ekle" Foreground="#3D4654" FontSize="11.5"/>
+											<TextBlock Text="+ Dosya Ekle" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 										</Border>
 									</Button>
 								</Grid>
@@ -403,20 +404,20 @@
 								<ItemsControl ItemsSource="{Binding TeminatFileNames}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
-											<Border Background="#F5F9FD" BorderBrush="#C4DCF2" BorderThickness="1"
+											<Border Background="{DynamicResource SurfaceSubtleBlue}" BorderBrush="{DynamicResource AccentSoftBorder}" BorderThickness="1"
 													CornerRadius="8" Padding="12,9" Margin="0,0,0,6">
 												<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-													<Path Grid.Column="0" Stroke="#2D6EA8" StrokeThickness="1.8"
+													<Path Grid.Column="0" Stroke="{DynamicResource AccentBase}" StrokeThickness="1.8"
 														  Fill="Transparent" Width="15" Height="15" Stretch="Uniform"
 														  VerticalAlignment="Center"
 														  Data="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"/>
 													<TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12"
-															   Foreground="#1A2E4A" VerticalAlignment="Center"
+															   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 															   TextTrimming="CharacterEllipsis"/>
 													<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
 															Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveTeminatFileCommand}"
 															CommandParameter="{Binding}">
-														<TextBlock Text="Kaldır" Foreground="#A32D2D" FontSize="11"/>
+														<TextBlock Text="Kaldır" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
 													</Button>
 												</Grid>
 											</Border>
@@ -428,9 +429,9 @@
 					</Border>
 
 					<Border IsVisible="{Binding SuccessMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-							Background="#E6F4E7" BorderBrush="#A9D6B0" BorderThickness="1"
+							Background="{DynamicResource SuccessSoftBg}" BorderBrush="{DynamicResource SuccessSoftBorder}" BorderThickness="1"
 							CornerRadius="10" Padding="14,11">
-						<TextBlock Text="{Binding SuccessMessage}" Foreground="#1A6B2A"
+						<TextBlock Text="{Binding SuccessMessage}" Foreground="{DynamicResource SuccessBase}"
 								   FontSize="12.5" TextWrapping="Wrap"/>
 					</Border>
 				</StackPanel>
@@ -443,14 +444,14 @@
 
 			<Button Classes="flat" HorizontalAlignment="Left" IsVisible="{Binding ShowBackButton}"
 					Command="{Binding BackCommand}">
-				<Border Background="#EEF1F6" BorderBrush="#DFE5EE" BorderThickness="1"
+				<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 						CornerRadius="7" Padding="12,6">
-					<TextBlock Text="← Sözleşmeler" Foreground="#5B6472" FontSize="11.5"/>
+					<TextBlock Text="← Sözleşmeler" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
 				</Border>
 			</Button>
 
 			<!-- Dikey adım göstergesi: tamamlananlar yeşil onay, bulunulan adım mavi -->
-			<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+			<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 					CornerRadius="12" Padding="18,16">
 				<StackPanel Spacing="14">
 					<TextBlock Classes="sectionLabel" Text="ADIMLAR"/>
@@ -459,18 +460,18 @@
 							<DataTemplate x:DataType="vm:WizardStepViewModel">
 								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="11" Margin="0,0,0,12">
 									<Border Grid.Column="0" Width="24" Height="24" CornerRadius="12"
-											Background="{Binding CircleBgHex}"
-											BorderBrush="{Binding CircleBorderHex}" BorderThickness="1.5"
+											Background="{Binding CircleBgHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
+											BorderBrush="{Binding CircleBorderHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}" BorderThickness="1.5"
 											VerticalAlignment="Top">
-										<TextBlock Text="{Binding NumberText}" Foreground="{Binding NumberColorHex}"
+										<TextBlock Text="{Binding NumberText}" Foreground="{Binding NumberColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 												   FontSize="11" FontWeight="Bold"
 												   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 									</Border>
 									<StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
 										<TextBlock Text="{Binding Label}" FontSize="12.5"
-												   Foreground="{Binding LabelColorHex}"
+												   Foreground="{Binding LabelColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 												   FontWeight="{Binding LabelWeight}" TextWrapping="Wrap"/>
-										<TextBlock Text="{Binding Hint}" FontSize="10.5" Foreground="#A3ABB8"
+										<TextBlock Text="{Binding Hint}" FontSize="10.5" Foreground="{DynamicResource TextFaintAlt}"
 												   TextWrapping="Wrap" IsVisible="{Binding ShowHint}"/>
 									</StackPanel>
 								</Grid>
@@ -481,7 +482,7 @@
 			</Border>
 
 			<!-- Canlı özet: seçilen talep, süre ve oluşan bedel her adımda görünür kalır -->
-			<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+			<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 					CornerRadius="12" Padding="18,16">
 				<StackPanel Spacing="14">
 					<TextBlock Classes="sectionLabel" Text="ÖZET"/>
@@ -491,7 +492,7 @@
 						<StackPanel IsVisible="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNotNull}}"
 									Spacing="1">
 							<TextBlock Classes="summaryValue" Text="{Binding SelectedRequest.Title}"/>
-							<TextBlock Text="{Binding SelectedRequest.CompanyName}" FontSize="11.5" Foreground="#8A94A6"
+							<TextBlock Text="{Binding SelectedRequest.CompanyName}" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
 									   TextWrapping="Wrap"/>
 						</StackPanel>
 						<TextBlock Classes="summaryEmpty" Text="Henüz seçilmedi"
@@ -517,16 +518,16 @@
 						</StackPanel>
 					</Grid>
 
-					<Border Background="#EDF1F6" Height="1"/>
+					<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 					<Grid ColumnDefinitions="*,Auto">
 						<StackPanel Grid.Column="0" Spacing="3">
 							<TextBlock Classes="summaryLabel" Text="TOPLAM BEDEL"/>
 							<TextBlock Text="{Binding Items.Count, StringFormat='{}{0} kalem'}"
-									   FontSize="11" Foreground="#A3ABB8"/>
+									   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
 						<TextBlock Grid.Column="1" Classes="display" Text="{Binding ToplamText}"
-								   FontSize="17" FontWeight="Bold" Foreground="#1A2E4A"
+								   FontSize="17" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"
 								   VerticalAlignment="Center"/>
 					</Grid>
 				</StackPanel>
@@ -536,25 +537,25 @@
 			<StackPanel Spacing="8">
 				<Button Classes="flat" HorizontalAlignment="Stretch" IsVisible="{Binding !IsStep3}"
 						Command="{Binding NextStepCommand}">
-					<Border Background="#2D6EA8" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="İleri →" Foreground="White" FontSize="13" FontWeight="SemiBold"
+					<Border Background="{DynamicResource AccentSolid}" CornerRadius="9" Padding="18,12">
+						<TextBlock Text="İleri →" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>
 
 				<Button Classes="flat" HorizontalAlignment="Stretch" IsVisible="{Binding IsStep3}"
 						Command="{Binding SubmitCommand}" IsEnabled="{Binding !IsSubmitting}">
-					<Border Background="#1A6B2A" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="Sözleşmeyi Kaydet" Foreground="White" FontSize="13" FontWeight="SemiBold"
+					<Border Background="{DynamicResource SuccessSolid}" CornerRadius="9" Padding="18,12">
+						<TextBlock Text="Sözleşmeyi Kaydet" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>
 
 				<Button Classes="flat" HorizontalAlignment="Stretch" IsEnabled="{Binding !IsStep1}"
 						Command="{Binding PreviousStepCommand}">
-					<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+					<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 							CornerRadius="9" Padding="18,11">
-						<TextBlock Text="← Geri" Foreground="#5B6472" FontSize="12.5"
+						<TextBlock Text="← Geri" Foreground="{DynamicResource TextLabel}" FontSize="12.5"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:conv="using:Sys.UI.Converters"
@@ -36,7 +36,7 @@
 			<!-- Başlık burada tekrar yazılmıyor; kabuk (ShellView) zaten üstte gösteriyor. -->
 			<TextBlock DockPanel.Dock="Top"
 					   Text="Süresi dolan, feshedilen ve reddedilen kayıtlar — salt okunur"
-					   FontSize="12" Foreground="#8A94A6" Margin="0,0,0,10" TextWrapping="Wrap"/>
+					   FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
 			<!--
 			  Arama kutusunun yanındaki Excel butonu LİSTEYE ait (aşağıdaki Yazdır /
@@ -44,10 +44,10 @@
 			  uygulanır, görünen sayfa değil eşleşen tüm kayıtlar aktarılır.
 			-->
 			<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,10">
-				<Border Grid.Column="0" Background="White" BorderBrush="#DDE3EC" BorderThickness="1"
+				<Border Grid.Column="0" Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 						CornerRadius="8">
 					<Grid ColumnDefinitions="Auto,*">
-						<Path Grid.Column="0" Stroke="#A3ABB8" StrokeThickness="2" Fill="Transparent"
+						<Path Grid.Column="0" Stroke="{DynamicResource TextFaintAlt}" StrokeThickness="2" Fill="Transparent"
 							  Width="13" Height="13" Stretch="Uniform" Margin="11,0,0,0"
 							  VerticalAlignment="Center"
 							  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
@@ -60,9 +60,9 @@
 
 				<Button Grid.Column="1" Classes="flat" Click="OnExportExcelClick"
 						ToolTip.Tip="Filtrelenmiş arşiv listesini Excel dosyası olarak kaydeder">
-					<Border Background="#E9F4EB" BorderBrush="#A9D6B0" BorderThickness="1"
+					<Border Background="{DynamicResource SuccessSoftBgAlt}" BorderBrush="{DynamicResource SuccessSoftBorder}" BorderThickness="1"
 							CornerRadius="8" Padding="11,9">
-						<Path Stroke="#1A6B2A" StrokeThickness="1.8" Fill="Transparent"
+						<Path Stroke="{DynamicResource SuccessBase}" StrokeThickness="1.8" Fill="Transparent"
 							  Width="14" Height="14" Stretch="Uniform"
 							  Data="M12 3v12M12 15l-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
 					</Border>
@@ -109,30 +109,30 @@
 			<Border DockPanel.Dock="Bottom" IsVisible="{Binding ShowPager}" Margin="0,10,0,0">
 				<StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
 					<Button Classes="flat" IsEnabled="{Binding CanGoPrevious}" Command="{Binding PreviousPageCommand}">
-						<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+						<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 								CornerRadius="6" Padding="10,5">
-							<TextBlock Text="‹" Foreground="#3D4654" FontSize="12"/>
+							<TextBlock Text="‹" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 						</Border>
 					</Button>
 					<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center"
-							   FontSize="11.5" Foreground="#8A94A6"/>
+							   FontSize="11.5" Foreground="{DynamicResource TextMuted}"/>
 					<Button Classes="flat" IsEnabled="{Binding CanGoNext}" Command="{Binding NextPageCommand}">
-						<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+						<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 								CornerRadius="6" Padding="10,5">
-							<TextBlock Text="›" Foreground="#3D4654" FontSize="12"/>
+							<TextBlock Text="›" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 						</Border>
 					</Button>
 				</StackPanel>
 			</Border>
 
 			<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,20,0,0" IsVisible="{Binding IsEmpty}">
-				<TextBlock Text="Bu filtrelerle eşleşen arşiv kaydı yok." Foreground="#8A94A6"
+				<TextBlock Text="Bu filtrelerle eşleşen arşiv kaydı yok." Foreground="{DynamicResource TextMuted}"
 						   FontSize="12" TextWrapping="Wrap" HorizontalAlignment="Center"/>
 				<Button Classes="flat" HorizontalAlignment="Center" Command="{Binding ClearFiltersCommand}"
 						IsVisible="{Binding HasActiveFilters}">
-					<Border Background="#EEF1F6" BorderBrush="#DDE3EC" BorderThickness="1"
+					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 							CornerRadius="6" Padding="12,6">
-						<TextBlock Text="Filtreleri temizle" Foreground="#3D4654" FontSize="11.5"/>
+						<TextBlock Text="Filtreleri temizle" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 					</Border>
 				</Button>
 			</StackPanel>
@@ -141,22 +141,22 @@
                      SelectedItem="{Binding SelectedContract}">
 				<ListBox.ItemTemplate>
 					<DataTemplate x:DataType="vm:ContractCardViewModel">
-						<Border Background="White" BorderBrush="#E3E7EE" BorderThickness="1"
+						<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 								CornerRadius="8" Padding="12,10" Margin="0,0,0,6">
 							<StackPanel Spacing="6">
 								<TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12.5"
-										   Foreground="#1A2E4A" TextWrapping="Wrap"/>
-								<TextBlock Text="{Binding CompanyName}" FontSize="11" Foreground="#8A94A6"
+										   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+								<TextBlock Text="{Binding CompanyName}" FontSize="11" Foreground="{DynamicResource TextMuted}"
 										   TextWrapping="Wrap"/>
 								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
 									<!-- Rozet: kaydın arşive neden düştüğünü tek bakışta gösterir -->
-									<Border Grid.Column="0" Background="{Binding StatusBgHex}"
+									<Border Grid.Column="0" Background="{Binding StatusBgHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 											CornerRadius="9" Padding="8,2" VerticalAlignment="Center">
-										<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex}"
+										<TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 												   FontSize="10" FontWeight="Bold"/>
 									</Border>
 									<TextBlock Grid.Column="1" Text="{Binding ArchiveDateText}" FontSize="10.5"
-											   Foreground="#A3ABB8" VerticalAlignment="Center"
+											   Foreground="{DynamicResource TextFaintAlt}" VerticalAlignment="Center"
 											   HorizontalAlignment="Right"/>
 								</Grid>
 							</StackPanel>
@@ -190,58 +190,58 @@
 					-->
 					<Button Classes="flat" IsVisible="{Binding CanRenew}" Command="{Binding RenewCommand}"
 							ToolTip.Tip="Bu sözleşmenin bilgileriyle yeni dönem talebi oluşturur">
-						<Border Background="#EAF4EC" BorderBrush="#C3DFC9" BorderThickness="1"
+						<Border Background="{DynamicResource SuccessSoftBgAlt2}" BorderBrush="{DynamicResource SuccessSoftBorderAlt}" BorderThickness="1"
 								CornerRadius="8" Padding="14,8">
 							<StackPanel Orientation="Horizontal" Spacing="8">
-								<Path Stroke="#2E6B3E" StrokeThickness="1.7" Fill="Transparent"
+								<Path Stroke="{DynamicResource SuccessText}" StrokeThickness="1.7" Fill="Transparent"
 									  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
 									  Data="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M12 12v5 M9.5 14.5h5"/>
-								<TextBlock Text="Sözleşmeyi Yenile" Foreground="#2E6B3E" FontSize="12.5"
+								<TextBlock Text="Sözleşmeyi Yenile" Foreground="{DynamicResource SuccessText}" FontSize="12.5"
 										   FontWeight="SemiBold" VerticalAlignment="Center"/>
 							</StackPanel>
 						</Border>
 					</Button>
 					<Button Classes="flat" Command="{Binding PrintCommand}"
 							ToolTip.Tip="Sözleşme künyesini varsayılan yazıcıya gönderir">
-						<Border Background="#2D6EA8" CornerRadius="8" Padding="14,9">
+						<Border Background="{DynamicResource AccentSolid}" CornerRadius="8" Padding="14,9">
 							<StackPanel Orientation="Horizontal" Spacing="8">
-								<Path Stroke="White" StrokeThickness="1.7" Fill="Transparent"
+								<Path Stroke="{DynamicResource TextOnAccent}" StrokeThickness="1.7" Fill="Transparent"
 									  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
 									  Data="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>
-								<TextBlock Text="Yazdır" Foreground="White" FontSize="12.5"
+								<TextBlock Text="Yazdır" Foreground="{DynamicResource TextOnAccent}" FontSize="12.5"
 										   FontWeight="SemiBold" VerticalAlignment="Center"/>
 							</StackPanel>
 						</Border>
 					</Button>
 					<Button Classes="flat" Click="OnExportPdfClick"
 							ToolTip.Tip="Sözleşme künyesini PDF dosyası olarak kaydeder">
-						<Border Background="White" BorderBrush="#C9D3E0" BorderThickness="1"
+						<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 								CornerRadius="8" Padding="14,8">
-							<TextBlock Text="PDF Kaydet" Foreground="#3D4654" FontSize="12.5"/>
+							<TextBlock Text="PDF Kaydet" Foreground="{DynamicResource TextBody}" FontSize="12.5"/>
 						</Border>
 					</Button>
 				</StackPanel>
 
 				<!-- Künye kartı: sözleşme detay ekranıyla aynı düzen ve stiller -->
 				<Border IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"
-						Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
+						Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1"
 						CornerRadius="10" Padding="20">
 					<StackPanel Spacing="14">
 
 						<Grid ColumnDefinitions="*,Auto">
 							<StackPanel Grid.Column="0" Spacing="3">
 								<TextBlock Text="{Binding DetailTitle}" FontSize="19" FontWeight="Bold"
-										   Foreground="#1A2E4A" TextWrapping="Wrap"/>
-								<TextBlock Text="{Binding DetailNo}" FontSize="12" Foreground="#8A94A6"/>
+										   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+								<TextBlock Text="{Binding DetailNo}" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
 							</StackPanel>
 							<Border Grid.Column="1" VerticalAlignment="Top" Margin="12,2,0,0"
-									Background="{Binding DetailStatusBgHex}" CornerRadius="10" Padding="10,4">
-								<TextBlock Text="{Binding DetailStatus}" Foreground="{Binding DetailStatusColorHex}"
+									Background="{Binding DetailStatusBgHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}" CornerRadius="10" Padding="10,4">
+								<TextBlock Text="{Binding DetailStatus}" Foreground="{Binding DetailStatusColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 										   FontSize="11" FontWeight="Bold"/>
 							</Border>
 						</Grid>
 
-						<Border Background="#EDF1F6" Height="1"/>
+						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
 							  ColumnSpacing="24" RowSpacing="14">
@@ -296,21 +296,21 @@
 				</Border>
 
 				<Border IsVisible="{Binding HasTerminationInfo}"
-                        Background="#FBE4E4" BorderBrush="#A32D2D" BorderThickness="1"
+                        Background="{DynamicResource DangerSoftBgFaint5}" BorderBrush="{DynamicResource DangerBase}" BorderThickness="1"
 						CornerRadius="10" Padding="20">
 					<StackPanel Spacing="6">
-						<TextBlock Text="FESİH BİLGİSİ" FontSize="10" FontWeight="Bold" Foreground="#A32D2D"/>
-						<TextBlock Text="{Binding TerminationInfo}" Foreground="#1A2E4A" FontSize="12.5" TextWrapping="Wrap"/>
+						<TextBlock Text="FESİH BİLGİSİ" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource DangerBase}"/>
+						<TextBlock Text="{Binding TerminationInfo}" Foreground="{DynamicResource TextPrimary}" FontSize="12.5" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
 
 				<!-- Fesih bilgisi kutusunun karşılığı: reddedilerek kapatılan talepler için -->
 				<Border IsVisible="{Binding HasRejectionInfo}"
-						Background="#FBE4E4" BorderBrush="#A32D2D" BorderThickness="1"
+						Background="{DynamicResource DangerSoftBgFaint5}" BorderBrush="{DynamicResource DangerBase}" BorderThickness="1"
 						CornerRadius="10" Padding="20">
 					<StackPanel Spacing="6">
-						<TextBlock Text="RED BİLGİSİ" FontSize="10" FontWeight="Bold" Foreground="#A32D2D"/>
-						<TextBlock Text="{Binding RejectionInfo}" Foreground="#1A2E4A" FontSize="12.5" TextWrapping="Wrap"/>
+						<TextBlock Text="RED BİLGİSİ" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource DangerBase}"/>
+						<TextBlock Text="{Binding RejectionInfo}" Foreground="{DynamicResource TextPrimary}" FontSize="12.5" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
 
@@ -319,10 +319,10 @@
 
 					<StackPanel Grid.Column="0" VerticalAlignment="Top">
 						<Border IsVisible="{Binding Steps.Count}"
-								Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
+								Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1"
 								CornerRadius="10" Padding="20">
 							<StackPanel Spacing="12">
-								<TextBlock Text="SÜREÇ ADIMLARI" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
+								<TextBlock Text="SÜREÇ ADIMLARI" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
 
 								<ItemsControl ItemsSource="{Binding Steps}">
 									<ItemsControl.ItemTemplate>
@@ -331,26 +331,26 @@
 
 												<Grid Grid.Column="0" RowDefinitions="Auto,*" Width="22">
 													<Border Grid.Row="0" Width="18" Height="18" CornerRadius="9"
-															Background="{Binding IconBgHex}"
-															BorderBrush="{Binding IconBorderHex}" BorderThickness="1.5"
+															Background="{Binding IconBgHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
+															BorderBrush="{Binding IconBorderHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}" BorderThickness="1.5"
 															HorizontalAlignment="Center">
 														<TextBlock Text="{Binding Icon}" FontSize="10" FontWeight="Bold"
-																   Foreground="{Binding IconColorHex}"
+																   Foreground="{Binding IconColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 																   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 													</Border>
 													<Border Grid.Row="1" Width="2" MinHeight="14"
-															Background="{Binding ConnectorColorHex}"
+															Background="{Binding ConnectorColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 															HorizontalAlignment="Center"/>
 												</Grid>
 
 												<StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2">
 													<TextBlock Text="{Binding Label}" FontSize="12.5"
-															   Foreground="{Binding LabelColorHex}"
+															   Foreground="{Binding LabelColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 															   FontWeight="{Binding LabelWeight}"
 															   TextWrapping="Wrap"/>
-													<TextBlock Text="{Binding DateText}" FontSize="10.5" Foreground="#9CA3AF"
+													<TextBlock Text="{Binding DateText}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"
 															   IsVisible="{Binding HasDate}"/>
-													<TextBlock Text="{Binding Note}" FontSize="11" Foreground="#7A5C10"
+													<TextBlock Text="{Binding Note}" FontSize="11" Foreground="{DynamicResource WarningTextAlt}"
 															   FontStyle="Italic" TextWrapping="Wrap"
 															   IsVisible="{Binding HasNote}"/>
 												</StackPanel>
@@ -365,36 +365,36 @@
 					<StackPanel Grid.Column="1" Spacing="16">
 
 						<Border IsVisible="{Binding Items.Count}"
-								Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
+								Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1"
 								CornerRadius="10" Padding="20">
 							<StackPanel Spacing="10">
-								<TextBlock Text="KALEMLER" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
+								<TextBlock Text="KALEMLER" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
 
 								<Grid ColumnDefinitions="2*,Auto,*,*" ColumnSpacing="12">
-									<TextBlock Grid.Column="0" Text="Açıklama" FontSize="11" FontWeight="Bold" Foreground="#8A94A6"/>
-									<TextBlock Grid.Column="1" Text="Miktar" FontSize="11" FontWeight="Bold" Foreground="#8A94A6" Width="70" TextAlignment="Right"/>
-									<TextBlock Grid.Column="2" Text="Birim Fiyat" FontSize="11" FontWeight="Bold" Foreground="#8A94A6" TextAlignment="Right"/>
-									<TextBlock Grid.Column="3" Text="Tutar" FontSize="11" FontWeight="Bold" Foreground="#8A94A6" TextAlignment="Right"/>
+									<TextBlock Grid.Column="0" Text="Açıklama" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
+									<TextBlock Grid.Column="1" Text="Miktar" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" Width="70" TextAlignment="Right"/>
+									<TextBlock Grid.Column="2" Text="Birim Fiyat" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" TextAlignment="Right"/>
+									<TextBlock Grid.Column="3" Text="Tutar" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" TextAlignment="Right"/>
 								</Grid>
-								<Border Background="#EDF1F6" Height="1"/>
+								<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 								<ItemsControl ItemsSource="{Binding Items}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
-											<Border BorderBrush="#EDF1F6" BorderThickness="0,0,0,1" Padding="0,7">
+											<Border BorderBrush="{DynamicResource SurfaceDivider}" BorderThickness="0,0,0,1" Padding="0,7">
 												<Grid ColumnDefinitions="2*,Auto,*,*" ColumnSpacing="12">
 													<TextBlock Grid.Column="0" Text="{Binding Description}" FontSize="12.5"
-															   Foreground="#1A2E4A" TextWrapping="Wrap"/>
-													<TextBlock Grid.Column="1" FontSize="12.5" Foreground="#4B5563"
+															   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+													<TextBlock Grid.Column="1" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"
 															   Width="70" TextAlignment="Right">
 														<Run Text="{Binding Quantity}"/>
 														<Run Text=" "/>
 														<Run Text="{Binding Unit}"/>
 													</TextBlock>
 													<TextBlock Grid.Column="2" Text="{Binding UnitPrice, StringFormat={}{0:N2}}"
-															   FontSize="12.5" Foreground="#4B5563" TextAlignment="Right"/>
+															   FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}" TextAlignment="Right"/>
 													<TextBlock Grid.Column="3" Text="{Binding LineTotal, StringFormat={}{0:N2}}"
-															   FontSize="12.5" Foreground="#1A2E4A" FontWeight="Bold" TextAlignment="Right"/>
+															   FontSize="12.5" Foreground="{DynamicResource TextPrimary}" FontWeight="Bold" TextAlignment="Right"/>
 												</Grid>
 											</Border>
 										</DataTemplate>
@@ -404,17 +404,17 @@
 						</Border>
 
 						<Border IsVisible="{Binding Attachments.Count}"
-								Background="White" BorderBrush="#D0D8E4" BorderThickness="1"
+								Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderStrong}" BorderThickness="1"
 								CornerRadius="10" Padding="20">
 							<StackPanel Spacing="10">
-								<TextBlock Text="DOSYALAR" FontSize="10" FontWeight="Bold" Foreground="#8A94A6"/>
+								<TextBlock Text="DOSYALAR" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMuted}"/>
 								<ItemsControl ItemsSource="{Binding Attachments}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
-											<Border BorderBrush="#EDF1F6" BorderThickness="0,0,0,1" Padding="0,7">
+											<Border BorderBrush="{DynamicResource SurfaceDivider}" BorderThickness="0,0,0,1" Padding="0,7">
 												<Grid ColumnDefinitions="*,Auto">
 													<TextBlock Grid.Column="0" Text="{Binding FileName}" FontSize="12.5"
-															   Foreground="#1A2E4A" VerticalAlignment="Center"/>
+															   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
 													<Button Grid.Column="1" Content="Aç"
 															Command="{Binding $parent[UserControl].((vm:ArchiveViewModel)DataContext).OpenAttachmentCommand}"
 															CommandParameter="{Binding}"/>

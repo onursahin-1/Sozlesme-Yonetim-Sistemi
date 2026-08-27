@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -19,7 +20,7 @@
 	<!-- Panel: bildirim listesi ana içeriğin ÜSTÜNDE açılabilsin diye katmanlı yerleşim -->
 	<Panel>
 	<DockPanel>
-		<Border DockPanel.Dock="Top" Background="#1A2E4A" Padding="24,12">
+		<Border DockPanel.Dock="Top" Background="{DynamicResource ShellTopBarBg}" Padding="24,12">
 			<Grid ColumnDefinitions="*,Auto">
 				<!--
 				  Kurum logosu. Beyaz ve şeffaf arka planlı sürüm kullanılıyor, koyu
@@ -32,6 +33,33 @@
 				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
 
 					<!--
+					  Tema geçişi. Tek bir düğme; iki seçenekli bir liste yerine anahtar
+					  kullanıldı çünkü seçenek sayısı iki ve mevcut durum ikonun kendisinden
+					  okunuyor: güneş görünüyorsa "açığa geç", ay görünüyorsa "koyuya geç".
+					-->
+					<Button Classes="flat" VerticalAlignment="Center"
+							Command="{Binding ToggleThemeCommand}"
+							ToolTip.Tip="{Binding ThemeToggleTooltip}">
+						<Panel Width="38" Height="38" Background="Transparent">
+							<Border Background="{DynamicResource ShellTopBarChip}" CornerRadius="8" Width="34" Height="34"/>
+
+							<!-- Ay: koyu moda geçmeyi önerir (şu an açık tema) -->
+							<Path IsVisible="{Binding !IsDarkTheme}"
+								  Fill="{DynamicResource ShellTopBarIcon}" Width="16" Height="16" Stretch="Uniform"
+								  HorizontalAlignment="Center" VerticalAlignment="Center"
+								  Data="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+
+							<!-- Güneş: açık moda geçmeyi önerir (şu an koyu tema) -->
+							<Path IsVisible="{Binding IsDarkTheme}"
+								  Stroke="{DynamicResource ShellTopBarIcon}" StrokeThickness="2"
+								  StrokeLineCap="Round" Fill="Transparent"
+								  Width="17" Height="17" Stretch="Uniform"
+								  HorizontalAlignment="Center" VerticalAlignment="Center"
+								  Data="M12 4V2M12 22v-2M4 12H2M22 12h-2M6.3 6.3L4.9 4.9M19.1 19.1l-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"/>
+						</Panel>
+					</Button>
+
+					<!--
 					  Bildirim zili. Emoji yerine vektör çizim kullanılıyor: emoji gösterimi
 					  sisteme göre değişiyor ve çubuğun geri kalanıyla uyumsuz duruyordu.
 					  Path her ortamda aynı çiziliyor ve rengi kontrol edilebiliyor.
@@ -42,21 +70,21 @@
                             ToolTip.Tip="Bildirimler">
 						<!-- Background="Transparent": tüm kutu hit-test edilebilir olsun diye -->
 						<Panel Width="38" Height="38" Background="Transparent">
-							<Border Background="#1FFFFFFF" CornerRadius="8" Width="34" Height="34"/>
-							<Path Fill="#E8EFF9" Width="17" Height="17" Stretch="Uniform"
+							<Border Background="{DynamicResource ShellTopBarChip}" CornerRadius="8" Width="34" Height="34"/>
+							<Path Fill="{DynamicResource ShellTopBarIcon}" Width="17" Height="17" Stretch="Uniform"
 								  HorizontalAlignment="Center" VerticalAlignment="Center"
 								  Data="M12 2a6 6 0 0 0-6 6v3.6L4.2 14.4A1 1 0 0 0 5 16h14a1 1 0 0 0 .8-1.6L18 11.6V8a6 6 0 0 0-6-6zm0 19a2.6 2.6 0 0 0 2.5-2h-5a2.6 2.6 0 0 0 2.5 2z"/>
-							<Border Background="#E5484D" CornerRadius="8" MinWidth="16" Height="16" Padding="4,0"
+							<Border Background="{DynamicResource DangerBrightSolid}" CornerRadius="8" MinWidth="16" Height="16" Padding="4,0"
                                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0"
                                     IsVisible="{Binding HasUnreadNotifications}">
-								<TextBlock Text="{Binding UnreadCountText}" Foreground="White" FontSize="9.5" FontWeight="Bold"
+								<TextBlock Text="{Binding UnreadCountText}" Foreground="{DynamicResource TextOnAccent}" FontSize="9.5" FontWeight="Bold"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 						</Panel>
 					</Button>
 
 					<!-- İnce ayırıcı: zil ile kullanıcı bloğunu görsel olarak ayırır -->
-					<Border Width="1" Height="22" Background="#33FFFFFF" Margin="4,0,8,0"
+					<Border Width="1" Height="22" Background="{DynamicResource ShellTopBarDivider}" Margin="4,0,8,0"
 							VerticalAlignment="Center"/>
 
 					<!--
@@ -66,20 +94,20 @@
 					-->
 					<Button Classes="flat" VerticalAlignment="Center"
 							Command="{Binding ToggleUserMenuCommand}">
-						<Border Background="#1FFFFFFF" BorderBrush="#38FFFFFF" BorderThickness="1"
+						<Border Background="{DynamicResource ShellTopBarChip}" BorderBrush="{DynamicResource ShellTopBarChipBorder}" BorderThickness="1"
 								CornerRadius="8" Padding="7,5,12,5">
 							<StackPanel Orientation="Horizontal" Spacing="10">
-								<Border Width="30" Height="30" CornerRadius="15" Background="#3D6FA8">
-									<TextBlock Text="{Binding UserInitials}" Foreground="White"
+								<Border Width="30" Height="30" CornerRadius="15" Background="{DynamicResource AccentBaseAlt}">
+									<TextBlock Text="{Binding UserInitials}" Foreground="{DynamicResource TextOnAccent}"
 											   FontSize="11.5" FontWeight="Bold" LetterSpacing="0.3"
 											   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 								</Border>
 								<StackPanel VerticalAlignment="Center" Spacing="1">
-									<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="White"
+									<TextBlock Text="{Binding CurrentUser.FullName}" Foreground="{DynamicResource TextOnAccent}"
 											   FontSize="12.5" FontWeight="SemiBold"/>
-									<TextBlock Text="{Binding RoleLabel}" Foreground="#9DB6D6" FontSize="10.5"/>
+									<TextBlock Text="{Binding RoleLabel}" Foreground="{DynamicResource ShellTopBarSubtle}" FontSize="10.5"/>
 								</StackPanel>
-								<Path Stroke="#9DB6D6" StrokeThickness="2"
+								<Path Stroke="{DynamicResource ShellTopBarSubtle}" StrokeThickness="2"
 									  StrokeLineCap="Round" StrokeJoin="Round"
 									  Width="10" Height="6" Stretch="Uniform"
 									  VerticalAlignment="Center" Margin="2,2,0,0"
@@ -98,9 +126,9 @@
 				<DataTemplate x:DataType="vm:NavItem">
 					<Grid ColumnDefinitions="*,Auto" Margin="8,4">
 						<TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center"/>
-						<Border Grid.Column="1" Background="#DC2626" CornerRadius="10" Padding="7,2" MinWidth="20"
+						<Border Grid.Column="1" Background="{DynamicResource DangerStrongSolid}" CornerRadius="10" Padding="7,2" MinWidth="20"
                                 IsVisible="{Binding ShowBadge}" HorizontalAlignment="Right">
-							<TextBlock Text="{Binding Count}" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
+							<TextBlock Text="{Binding Count}" Foreground="{DynamicResource TextOnAccent}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"/>
 						</Border>
 					</Grid>
 				</DataTemplate>
@@ -127,13 +155,13 @@
             BorderThickness="0" CornerRadius="0" Cursor="Arrow">
 		<Button.Styles>
 			<Style Selector="Button /template/ ContentPresenter">
-				<Setter Property="Background" Value="#01000000"/>
+				<Setter Property="Background" Value="{DynamicResource ShadowFaint}"/>
 			</Style>
 			<Style Selector="Button:pointerover /template/ ContentPresenter">
-				<Setter Property="Background" Value="#01000000"/>
+				<Setter Property="Background" Value="{DynamicResource ShadowFaint}"/>
 			</Style>
 			<Style Selector="Button:pressed /template/ ContentPresenter">
-				<Setter Property="Background" Value="#01000000"/>
+				<Setter Property="Background" Value="{DynamicResource ShadowFaint}"/>
 			</Style>
 		</Button.Styles>
 	</Button>
@@ -145,13 +173,13 @@
             BorderThickness="0" CornerRadius="0" Cursor="Arrow">
 		<Button.Styles>
 			<Style Selector="Button /template/ ContentPresenter">
-				<Setter Property="Background" Value="#01000000"/>
+				<Setter Property="Background" Value="{DynamicResource ShadowFaint}"/>
 			</Style>
 			<Style Selector="Button:pointerover /template/ ContentPresenter">
-				<Setter Property="Background" Value="#01000000"/>
+				<Setter Property="Background" Value="{DynamicResource ShadowFaint}"/>
 			</Style>
 			<Style Selector="Button:pressed /template/ ContentPresenter">
-				<Setter Property="Background" Value="#01000000"/>
+				<Setter Property="Background" Value="{DynamicResource ShadowFaint}"/>
 			</Style>
 		</Button.Styles>
 	</Button>
@@ -160,7 +188,7 @@
 	<Border IsVisible="{Binding IsUserMenuOpen}"
 			HorizontalAlignment="Right" VerticalAlignment="Top"
 			Margin="0,68,24,0" MinWidth="210"
-			Background="White" BorderBrush="#B9C6D8" BorderThickness="1" CornerRadius="8"
+			Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource AccentFaint}" BorderThickness="1" CornerRadius="8"
 			BoxShadow="0 6 20 0 #33000000">
 		<StackPanel Margin="6">
 
@@ -169,19 +197,19 @@
 				<Border Background="Transparent" CornerRadius="5" Padding="12,9">
 					<StackPanel Orientation="Horizontal" Spacing="10">
 						<TextBlock Text="🔑" FontSize="12" VerticalAlignment="Center"/>
-						<TextBlock Text="Şifre Değiştir" Foreground="#1A2E4A" FontSize="12.5" VerticalAlignment="Center"/>
+						<TextBlock Text="Şifre Değiştir" Foreground="{DynamicResource TextPrimary}" FontSize="12.5" VerticalAlignment="Center"/>
 					</StackPanel>
 				</Border>
 			</Button>
 
-			<Border Background="#EDF1F6" Height="1" Margin="8,4"/>
+			<Border Background="{DynamicResource SurfaceDivider}" Height="1" Margin="8,4"/>
 
 			<Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
 					Command="{Binding LogoutCommand}">
 				<Border Background="Transparent" CornerRadius="5" Padding="12,9">
 					<StackPanel Orientation="Horizontal" Spacing="10">
-						<TextBlock Text="⏻" FontSize="12" Foreground="#A32D2D" VerticalAlignment="Center"/>
-						<TextBlock Text="Çıkış Yap" Foreground="#A32D2D" FontSize="12.5" VerticalAlignment="Center"/>
+						<TextBlock Text="⏻" FontSize="12" Foreground="{DynamicResource DangerBase}" VerticalAlignment="Center"/>
+						<TextBlock Text="Çıkış Yap" Foreground="{DynamicResource DangerBase}" FontSize="12.5" VerticalAlignment="Center"/>
 					</StackPanel>
 				</Border>
 			</Button>
@@ -193,31 +221,31 @@
 	<Border IsVisible="{Binding IsNotificationPanelOpen}"
             HorizontalAlignment="Right" VerticalAlignment="Top"
             Margin="0,68,24,0" Width="400" MaxHeight="480"
-            Background="White" BorderBrush="#DFE5EE" BorderThickness="1" CornerRadius="12"
+            Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1" CornerRadius="12"
             BoxShadow="0 10 30 0 #26000000" ClipToBounds="True">
 		<DockPanel>
-			<Border DockPanel.Dock="Top" Background="#F7F9FC" Padding="18,13"
-                    BorderBrush="#E7ECF3" BorderThickness="0,0,0,1">
+			<Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceSubtle}" Padding="18,13"
+                    BorderBrush="{DynamicResource BorderFaint}" BorderThickness="0,0,0,1">
 				<StackPanel Spacing="9">
 					<TextBlock Text="{Binding NotificationPanelTitle}" FontSize="13.5" FontWeight="SemiBold"
-							   Foreground="#1A2E4A"/>
+							   Foreground="{DynamicResource TextPrimary}"/>
 
 					<!-- Toplu eylemler başlığın altında: üstte yan yana sıkışıyorlardı -->
 					<StackPanel Orientation="Horizontal" Spacing="8"
 								IsVisible="{Binding !HasNoNotifications}">
 						<Button Classes="flat" IsVisible="{Binding HasUnreadNotifications}"
 								Command="{Binding MarkAllNotificationsReadCommand}">
-							<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 									CornerRadius="7" Padding="10,5">
-								<TextBlock Text="Tümünü okundu işaretle" FontSize="11" Foreground="#2D6EA8"/>
+								<TextBlock Text="Tümünü okundu işaretle" FontSize="11" Foreground="{DynamicResource AccentBase}"/>
 							</Border>
 						</Button>
 						<Button Classes="flat" IsVisible="{Binding HasReadNotifications}"
 								Command="{Binding DeleteReadNotificationsCommand}"
 								ToolTip.Tip="Okunmuş bildirimlerin hepsini siler">
-							<Border Background="White" BorderBrush="#DFE5EE" BorderThickness="1"
+							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 									CornerRadius="7" Padding="10,5">
-								<TextBlock Text="Okunanları sil" FontSize="11" Foreground="#A32D2D"/>
+								<TextBlock Text="Okunanları sil" FontSize="11" Foreground="{DynamicResource DangerBase}"/>
 							</Border>
 						</Button>
 					</StackPanel>
@@ -226,10 +254,10 @@
 
 			<StackPanel DockPanel.Dock="Top" Spacing="6" Margin="18,28"
 						IsVisible="{Binding HasNoNotifications}">
-				<TextBlock Text="Henüz bildiriminiz yok." Foreground="#8A94A6" FontSize="12.5"
+				<TextBlock Text="Henüz bildiriminiz yok." Foreground="{DynamicResource TextMuted}" FontSize="12.5"
 						   HorizontalAlignment="Center"/>
 				<TextBlock Text="Onay, red ve yaklaşan bitiş uyarıları burada görünür."
-						   Foreground="#A3ABB8" FontSize="11" HorizontalAlignment="Center"
+						   Foreground="{DynamicResource TextFaintAlt}" FontSize="11" HorizontalAlignment="Center"
 						   TextAlignment="Center" TextWrapping="Wrap"/>
 			</StackPanel>
 
@@ -240,8 +268,8 @@
 							<Button Classes="flat" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                                     Command="{Binding $parent[UserControl].((vm:ShellViewModel)DataContext).OpenNotificationCommand}"
                                     CommandParameter="{Binding}">
-								<Border Background="{Binding RowBackgroundHex}" Padding="0,11"
-                                        BorderBrush="#F1F4F8" BorderThickness="0,0,0,1">
+								<Border Background="{Binding RowBackgroundHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}" Padding="0,11"
+                                        BorderBrush="{DynamicResource SurfaceSoft}" BorderThickness="0,0,0,1">
 									<Grid ColumnDefinitions="3,Auto,*,Auto" ColumnSpacing="10" Margin="0,0,14,0">
 
 										<!-- Okunmamışı belli eden sol şerit; okunmuşta şeffaf ama yer kaplıyor -->
@@ -253,15 +281,15 @@
 										  farklı çiziliyor ve satır yüksekliğini bozuyordu.
 										-->
 										<Border Grid.Column="1" Width="8" Height="8" CornerRadius="4"
-												Background="{Binding TypeColorHex}"
+												Background="{Binding TypeColorHex, Converter={x:Static conv:ThemeBrushConverter.Instance}}"
 												VerticalAlignment="Top" Margin="8,6,0,0"/>
 
 										<StackPanel Grid.Column="2" Spacing="3">
-											<TextBlock Text="{Binding Title}" Foreground="#1A2E4A" FontSize="12.5"
+											<TextBlock Text="{Binding Title}" Foreground="{DynamicResource TextPrimary}" FontSize="12.5"
                                                        FontWeight="{Binding TitleWeight}" TextWrapping="Wrap"/>
-											<TextBlock Text="{Binding Message}" Foreground="#5B6472" FontSize="11.5"
+											<TextBlock Text="{Binding Message}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"
 													   TextWrapping="Wrap"/>
-											<TextBlock Text="{Binding TimeText}" Foreground="#A3ABB8" FontSize="10.5"/>
+											<TextBlock Text="{Binding TimeText}" Foreground="{DynamicResource TextFaintAlt}" FontSize="10.5"/>
 										</StackPanel>
 
 										<!-- Silme yalnızca okunmuş bildirimlerde görünür.
@@ -272,7 +300,7 @@
                                                 CommandParameter="{Binding}"
                                                 ToolTip.Tip="Bu bildirimi sil">
 											<Border Background="Transparent" Width="22" Height="22" CornerRadius="11">
-												<Path Stroke="#A3ABB8" StrokeThickness="1.6" StrokeLineCap="Round"
+												<Path Stroke="{DynamicResource TextFaintAlt}" StrokeThickness="1.6" StrokeLineCap="Round"
 													  Fill="Transparent" Width="9" Height="9" Stretch="Uniform"
 													  HorizontalAlignment="Center" VerticalAlignment="Center"
 													  Data="M6 6L18 18M18 6L6 18"/>

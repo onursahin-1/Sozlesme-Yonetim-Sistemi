@@ -50,16 +50,16 @@ public partial class UserRowViewModel : ObservableObject
 
     public bool IsDisabled => _user.IsDisabled;
     public string StatusLabel => IsDisabled ? "Devre Dışı" : "Aktif";
-    public string StatusColorHex => IsDisabled ? "#A32D2D" : "#1A6B2A";
-    public string StatusBgHex => IsDisabled ? "#FDECEA" : "#E6F4E7";
+    public string StatusColorHex => IsDisabled ? "DangerBase" : "SuccessBase";
+    public string StatusBgHex => IsDisabled ? "DangerSoftBg" : "SuccessSoftBg";
     public string ToggleButtonLabel => IsDisabled ? "Etkinleştir" : "Devre Dışı Bırak";
 
     // Dolu renkli buton yerine çerçeveli/soluk zemin: bu iki eylem listede her satırda
     // tekrar ettiği için dolu kırmızı/yeşil butonlar ekranı gereksiz yere gürültülü
     // yapıyordu. Renk yine anlamı taşıyor ama arka planda kalıyor.
-    public string ToggleButtonBgHex => IsDisabled ? "#E9F4EB" : "#FBEBE9";
-    public string ToggleButtonBorderHex => IsDisabled ? "#A9D6B0" : "#EFC9C4";
-    public string ToggleButtonFgHex => IsDisabled ? "#1A6B2A" : "#A32D2D";
+    public string ToggleButtonBgHex => IsDisabled ? "SuccessSoftBgAlt" : "DangerSoftBgFaint3";
+    public string ToggleButtonBorderHex => IsDisabled ? "SuccessSoftBorder" : "DangerSoftBorderAlt";
+    public string ToggleButtonFgHex => IsDisabled ? "SuccessBase" : "DangerBase";
 
     [ObservableProperty]
     public partial bool IsResettingPassword { get; set; }

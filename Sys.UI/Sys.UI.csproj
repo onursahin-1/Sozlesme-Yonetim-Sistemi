@@ -9,6 +9,14 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
+
+    <!--
+      Renk paleti. Views altındaki .axaml dosyalarının aksine bu dosyanın
+      code-behind'ı yok; App.axaml içinden avares:// adresiyle yükleniyor.
+      Bu satır olmadan kaynak pakete girmez ve uygulama açılışta paleti
+      bulamayıp hata verir.
+    -->
+    <AvaloniaResource Include="Themes\**" />
   </ItemGroup>
 
   <ItemGroup>

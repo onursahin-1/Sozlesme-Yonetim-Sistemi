@@ -118,10 +118,10 @@ public partial class ArchiveViewModel : ViewModelBase
     public partial string DetailStatus { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string DetailStatusColorHex { get; set; } = "#555555";
+    public partial string DetailStatusColorHex { get; set; } = "TextLabel";
 
     [ObservableProperty]
-    public partial string DetailStatusBgHex { get; set; } = "#EAECF0";
+    public partial string DetailStatusBgHex { get; set; } = "SurfaceDivider";
 
     // Süresi dolmuş sözleşmeler arşivde durur ve yenilemenin asıl kaynağı burasıdır:
     // kullanıcı "geçen yılki sözleşme neydi" diye buraya bakar. Yenileme butonunu

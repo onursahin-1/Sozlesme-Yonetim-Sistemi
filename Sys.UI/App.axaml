@@ -1,21 +1,37 @@
-<Application xmlns="https://github.com/avaloniaui"
+﻿<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Sys.UI.App"
              xmlns:local="using:Sys.UI"
              RequestedThemeVariant="Light">
              <!--
-               RequestedThemeVariant="Light" (eskiden "Default" idi):
-               Uygulamanın tüm özel renkleri (beyaz kartlar, #F5F5F5 paneller, siyah
-               yazılar, renkli durum rozetleri) açık tema varsayımıyla yazıldı. "Default"
-               sistem temasını takip ettiği için, kullanıcının işletim sistemi koyu moddaysa
-               tema varsayılanı olan açık renkli yazılar bizim beyaz kartlarımızın üzerine
-               düşüyor ve okunamaz hale geliyordu. Temayı sabitlemek bu sorun sınıfını
-               kökten çözer.
+               Başlangıç değeri "Light"; gerçek tercih ThemeService tarafından
+               uygulama açılırken (ilk pencere çizilmeden) uygulanıyor.
+
+               Eskiden bu değer SABİTTİ ve tek başına bir çözümdü: uygulamanın tüm
+               renkleri açık tema varsayımıyla, doğrudan XAML'e yazılmıştı. "Default"
+               bırakılınca sistem koyu moddayken tema varsayılanı olan açık yazılar
+               beyaz kartların üzerine düşüp okunamaz hale geliyordu.
+
+               Artık renkler Themes/Palette.axaml içinde tema başına tanımlı olduğu
+               için tema serbestçe değiştirilebiliyor.
              -->
 
     <Application.DataTemplates>
         <local:ViewLocator />
     </Application.DataTemplates>
+
+    <!--
+      Renk paleti. Ekranlar renkleri artık doğrudan yazmıyor, buradaki rol
+      adlarına ({DynamicResource TextPrimary} gibi) başvuruyor. Sözlük tema
+      başına ayrı değer taşıdığı için açık/koyu geçişi tek yerden yönetiliyor.
+    -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Sys.UI/Themes/Palette.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
@@ -43,7 +59,7 @@
         <Style Selector="TextBlock.sectionLabel">
             <Setter Property="FontSize" Value="10.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#8A8578"/>
+            <Setter Property="Foreground" Value="{DynamicResource ShellTextMuted}"/>
             <Setter Property="LetterSpacing" Value="0.8"/>
         </Style>
 
@@ -62,8 +78,8 @@
 
           Kullanımı:
               <Button Classes="flat" Command="...">
-                  <Border Background="#2D6EA8" CornerRadius="4" Padding="12,6">
-                      <TextBlock Text="Kaydet" Foreground="White"/>
+                  <Border Background="{DynamicResource AccentSolid}" CornerRadius="4" Padding="12,6">
+                      <TextBlock Text="Kaydet" Foreground="{DynamicResource TextOnAccent}"/>
                   </Border>
               </Button>
 
@@ -107,11 +123,11 @@
         <Style Selector="TextBlock.fieldLabel">
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#8A94A6"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}"/>
         </Style>
         <Style Selector="TextBlock.fieldValue">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#1A2E4A"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
@@ -153,7 +169,7 @@
 
         <!-- Alan bazlı form doğrulama mesajlarının ortak görünümü -->
         <Style Selector="TextBlock.fieldError">
-            <Setter Property="Foreground" Value="#D14343"/>
+            <Setter Property="Foreground" Value="{DynamicResource DangerText}"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="2,-4,0,0"/>

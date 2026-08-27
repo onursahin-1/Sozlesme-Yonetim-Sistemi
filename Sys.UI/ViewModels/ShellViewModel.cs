@@ -172,6 +172,36 @@ public partial class ShellViewModel : ViewModelBase
         UpdateCurrentPage(SelectedNavItem);
         _ = RefreshUnreadNotificationCountAsync();
         StartNotificationPolling();
+
+        ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    // --- Tema ---
+
+    public bool IsDarkTheme => ThemeService.IsDark;
+
+    public string ThemeToggleTooltip => IsDarkTheme ? "Açık moda geç" : "Koyu moda geç";
+
+    [RelayCommand]
+    private void ToggleTheme() => ThemeService.Toggle();
+
+    // Tema değişince açık olan ekran yeniden oluşturuluyor.
+    //
+    // Sebep: XAML'deki renkler {DynamicResource} olduğu için kendiliğinden
+    // güncelleniyor, ama ViewModel'lerin ürettiği renkler (durum rozetleri, aşama
+    // çizelgesi) bir dönüştürücüden geçiyor ve dönüştürücüler tema değişiminde
+    // yeniden çalışmıyor. Sayfayı yeniden kurmak bunları da tazeliyor.
+    //
+    // Bedeli: o ekrandaki filtre/arama/sayfa durumu sıfırlanıyor. Tema nadiren
+    // değiştirilen bir ayar olduğu için bu, her renk özelliğine tema aboneliği
+    // eklemekten daha makul bir denge.
+    private void OnThemeChanged()
+    {
+        OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(ThemeToggleTooltip));
+
+        _pageCache.Clear();
+        UpdateCurrentPage(SelectedNavItem);
     }
 
     // Kullanıcı aynı ekranda dursa bile başka birinin ürettiği bildirimin rozete
