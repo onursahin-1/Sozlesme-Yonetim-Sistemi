@@ -137,17 +137,19 @@ public class AuthService
 
             if (adminIds.Count == 0) return;
 
-            var message = matchedUser is null
-                ? $"\"{username}\" kullanıcı adıyla şifre sıfırlama talebi geldi, ancak bu kullanıcı adı sistemde bulunamadı."
-                : $"{matchedUser.FullName} ({username}) şifre sıfırlama talebinde bulundu.";
+            var messageKey = matchedUser is null ? "Ntf.PasswordResetUnknown" : "Ntf.PasswordReset";
+            var args = matchedUser is null
+                ? NotificationArgs.Serialize([username])
+                : NotificationArgs.Serialize([matchedUser.FullName, username]);
 
             var notifications = adminIds.Select(id => new Notification
             {
                 UserId = id,
                 ContractId = null,
                 Type = NotificationType.SifreSifirlamaTalebi,
-                Title = "Şifre sıfırlama talebi",
-                Message = message,
+                TitleKey = "Ntf.PasswordResetTitle",
+                MessageKey = messageKey,
+                MessageArgs = args,
                 CreatedAt = DateTime.Now,
             }).ToList();
 

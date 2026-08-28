@@ -234,10 +234,17 @@ Denetim kaydı. İşlem adları `AuditActionCatalog` içinde etiketlenir.
 | `UserId` | int, FK → Users | Alıcı |
 | `ContractId` | int, null | Tıklandığında açılacak sözleşme |
 | `Type` | int | `NotificationType` |
-| `Title`, `Message` | nvarchar | |
+| `Title`, `Message` | nvarchar | **Eski kayıtlar.** Bildirimler çeviri anahtarına geçmeden önce üretilenlerde dolu; yeni kayıtlarda boş |
+| `TitleKey`, `MessageKey` | nvarchar, null | **Yeni kayıtlar.** Çeviri anahtarı; metin gösterim anında, okuyanın dilinde kurulur |
+| `MessageArgs` | nvarchar, null | Mesajdaki `{0}`, `{1}`… değerleri — JSON dizi. Sözleşme başlığı, gerekçe, gün sayısı gibi ÇEVRİLMEYEN veriler |
 | `IsRead` | bit | |
 | `CreatedAt` | datetime2 | |
 | `DedupeKey` | nvarchar, null | Tekrarlayan taramaların aynı olay için mükerrer bildirim üretmesini engeller. Olay anında üretilen bildirimlerde null |
+
+> **Neden bildirim çevriliyor da denetim kaydı çevrilmiyor?** Bildirim geçici bir
+> mesajdır — kimse üç ay sonra bir bildirimin metnine dayanarak karar vermez.
+> Denetim kaydı ise kurumsal kayıttır; olay anında ne yazıldıysa o kalmalıdır.
+> İki kayıt türü farklı işler gördüğü için farklı kurala tabi.
 
 `(UserId, DedupeKey)` üzerinde **filtreli benzersiz index** (`DedupeKey IS NOT NULL`) —
 birden fazla null serbest.

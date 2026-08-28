@@ -13,13 +13,13 @@ namespace Sys.Services;
 // kullanıcının kendi aksiyonunu bekleyen işleri tek yerde göstermek.
 public class PendingWorkItem
 {
-    public PendingWorkItem(string title, string subtitle, int count, string navKey, string colorHex)
+    public PendingWorkItem(string title, string subtitle, int count, string navKey, string colorKey)
     {
         Title = title;
         Subtitle = subtitle;
         Count = count;
         NavKey = navKey;
-        ColorHex = colorHex;
+        ColorKey = colorKey;
     }
 
     public string Title { get; }
@@ -33,7 +33,12 @@ public class PendingWorkItem
 
     // Tıklanınca gidilecek sol menü öğesi.
     public string NavKey { get; }
-    public string ColorHex { get; }
+
+    // Renk de METİN gibi: servis ham hex değil PALET ANAHTARI döndürüyor.
+    // Burada "#7C3AED" yazıyordu — tema turunda 919 sabit hex'i palete taşımıştık
+    // ama servisteki bu dört satır gözden kaçmıştı ve koyu temada tema-bağımsız
+    // kalıyorlardı. Servis katmanı hangi temada çalışıldığını da bilmemeli.
+    public string ColorKey { get; }
 }
 
 // Para birimi başına toplam. Kur dönüşümü yapılmadığı için tutarlar

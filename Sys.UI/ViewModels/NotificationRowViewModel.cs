@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Sys.Domain;
+using Sys.Services;
 using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
@@ -20,8 +22,34 @@ public partial class NotificationRowViewModel : ObservableObject
     public int Id => _notification.Id;
     public int? ContractId => _notification.ContractId;
     public NotificationType Type => _notification.Type;
-    public string Title => _notification.Title;
-    public string Message => _notification.Message;
+    // Metin, bildirimin ÜRETİLDİĞİ anda değil GÖSTERİLDİĞİ anda kuruluyor: aynı
+    // bildirim, dil değiştirildiğinde yeni dilde okunuyor.
+    //
+    // Anahtar yoksa saklanmış hazır metne düşülüyor — bunlar bildirimler anahtara
+    // geçmeden önce üretilmiş eski kayıtlar. Geçmişi toplu güncellemek yerine iki
+    // biçimin bir arada yaşamasına izin verildi; eski bildirimler zaten kısa
+    // ömürlü.
+    public string Title => _notification.TitleKey is { } key
+        ? Strings.T(key)
+        : _notification.Title;
+
+    public string Message
+    {
+        get
+        {
+            if (_notification.MessageKey is not { } key) return _notification.Message;
+
+            // Parametrelerin bazıları kendisi de anahtar olabiliyor (konu adı,
+            // durum adı). Sözlükte varsa çevrilir, yoksa olduğu gibi kullanılır —
+            // sözleşme başlığı ve kullanıcı gerekçesi böyle geçiyor.
+            var args = NotificationArgs.Deserialize(_notification.MessageArgs)
+                .Select(a => Strings.Has(a) ? Strings.T(a) : a)
+                .Cast<object?>()
+                .ToArray();
+
+            return args.Length == 0 ? Strings.T(key) : Strings.T(key, args);
+        }
+    }
     public DateTime CreatedAt => _notification.CreatedAt;
 
     [ObservableProperty]
@@ -45,9 +73,9 @@ public partial class NotificationRowViewModel : ObservableObject
         {
             var fark = DateTime.Now - CreatedAt;
             if (fark.TotalMinutes < 1) return Strings.T("Notif.JustNow");
-            if (fark.TotalMinutes < 60) return $"{(int)fark.TotalMinutes} dk önce";
-            if (fark.TotalHours < 24) return $"{(int)fark.TotalHours} saat önce";
-            if (fark.TotalDays < 7) return $"{(int)fark.TotalDays} gün önce";
+            if (fark.TotalMinutes < 60) return Strings.T("Notif.MinutesAgo", (int)fark.TotalMinutes);
+            if (fark.TotalHours < 24) return Strings.T("Notif.HoursAgo", (int)fark.TotalHours);
+            if (fark.TotalDays < 7) return Strings.T("Notif.DaysAgo", (int)fark.TotalDays);
             return CreatedAt.ToString("dd.MM.yyyy HH:mm");
         }
     }

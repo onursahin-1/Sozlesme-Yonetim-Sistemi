@@ -1,4 +1,4 @@
-using Sys.Domain;
+﻿using Sys.Domain;
 
 namespace Sys.Services;
 
@@ -71,9 +71,13 @@ public class NotificationService
             var threshold = EndingThresholds.Where(t => daysLeft <= t).DefaultIfEmpty(0).Min();
             if (threshold == 0) continue;
 
-            var message = daysLeft == 0
-                ? $"\"{contract.Title}\" sözleşmesinin süresi bugün doluyor."
-                : $"\"{contract.Title}\" sözleşmesinin bitişine {daysLeft} gün kaldı.";
+            // Metin değil ANAHTAR saklanıyor: bildirimin dili, üretildiği an değil
+            // okunduğu an belirleniyor. Bu iş arka planda, kullanıcıdan bağımsız
+            // çalışıyor — üretildiği anda "hangi dil" sorusunun cevabı zaten yok.
+            var messageKey = daysLeft == 0 ? "Ntf.EndsToday" : "Ntf.EndsInDays";
+            var args = daysLeft == 0
+                ? NotificationArgs.Serialize([contract.Title])
+                : NotificationArgs.Serialize([contract.Title, daysLeft]);
 
             var targetUserIds = new HashSet<int>(sybUserIds) { contract.CreatedByUserId };
 
@@ -84,8 +88,9 @@ public class NotificationService
                     UserId = userId,
                     ContractId = contract.Id,
                     Type = NotificationType.YaklasanBitis,
-                    Title = "Yaklaşan bitiş tarihi",
-                    Message = message,
+                    TitleKey = "Ntf.UpcomingEndTitle",
+                    MessageKey = messageKey,
+                    MessageArgs = args,
                     CreatedAt = DateTime.Now,
                     DedupeKey = $"bitis:{contract.Id}:{threshold}"
                 });

@@ -59,7 +59,7 @@ public class PendingWorkRowViewModel
     public string Subtitle => Strings.T(_item.Subtitle);
     public string CountText => _item.Count.ToString();
     public string NavKey => _item.NavKey;
-    public string ColorHex => _item.ColorHex;
+    public string ColorHex => _item.ColorKey;
 
     // "En eski 21 gündür bekliyor". Bilgi yoksa hiç gösterilmez — uydurulmuş bir
     // "0 gün" yazmaktansa satırı boş bırakmak doğru.

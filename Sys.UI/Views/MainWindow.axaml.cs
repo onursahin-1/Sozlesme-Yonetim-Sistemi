@@ -1,6 +1,7 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 namespace Sys.UI.Views;
@@ -11,6 +12,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // Pencere başlığı XAML'de sabitti; İngilizce modda görev çubuğunda ve
+        // pencere çerçevesinde Türkçe kalıyordu. Dil değişiminde de güncellensin
+        // diye olaya abone olunuyor — pencere kabuğun dışında, sayfa yeniden
+        // kurma mekanizması buraya ulaşmıyor.
+        ApplyTitle();
+        LanguageService.LanguageChanged += ApplyTitle;
+
         // Esc kısayolu pencere seviyesinde yakalanıyor. UserControl üzerinde
         // dinlemek yeterli değildi: olayın oraya ulaşması için içindeki bir öğenin
         // odakta olması gerekir, kullanıcı hiçbir yere tıklamadan Esc'e bastığında
@@ -18,6 +26,8 @@ public partial class MainWindow : Window
         // olayı yutmadan önce bize gelsin.
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
     }
+
+    private void ApplyTitle() => Title = Strings.T("Shell.AppTitle");
 
     private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {

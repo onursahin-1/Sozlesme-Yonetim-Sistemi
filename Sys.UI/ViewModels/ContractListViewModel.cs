@@ -49,31 +49,26 @@ public partial class ContractListViewModel : ViewModelBase
     // Seçenekler sabit bir listeden değil VERİDEN geliyor: sözleşme türü serbest
     // metin olarak da girilebiliyor ve sabit listede olmayan bir tür filtreyle hiç
     // bulunamaz hâle gelirdi.
-    // "Tüm türler" hem AÇILIR LİSTEDE GÖRÜNEN METİN hem de "filtre yok" anlamına
-    // gelen İŞARET değeri. İkisi aynı dizge olduğu için metin çevrilince işaret de
-    // değişiyor — bu, bu projede defalarca canımızı yakan desenin ta kendisi.
-    //
-    // Burada kabul edilebilir olmasının tek sebebi: dil değiştiğinde kabuk açık
-    // sayfayı baştan kuruyor, yani liste ve seçili değer aynı anda yeni dilde
-    // doğuyor. Eski dildeki bir işaretle yeni dildeki bir işaret hiçbir zaman
-    // karşılaştırılmıyor. Sayfa yeniden kurulmasaydı filtre sessizce bozulurdu.
-    public static string AllTypes => Strings.T("List.AllTypes");
-
+    // Filtre seçenekleri FilterOption taşıyor: gösterilen etiket ile "daraltma yok"
+    // işareti ayrı. Eskiden ikisi de aynı dizgeydi ("Tüm türler") ve bu, yalnızca
+    // dil değişiminde sayfanın baştan kurulması sayesinde çalışıyordu.
     [ObservableProperty]
-    public partial ObservableCollection<string> TypeOptions { get; set; } = new() { Strings.T("List.AllTypes") };
+    public partial ObservableCollection<FilterOption> TypeOptions { get; set; } = new() { AllTypesOption() };
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedType { get; set; } = Strings.T("List.AllTypes");
+    public partial FilterOption SelectedType { get; set; } = AllTypesOption();
 
-    partial void OnSelectedTypeChanged(string value)
+    private static FilterOption AllTypesOption() => new(null, Strings.T("List.AllTypes"));
+
+    partial void OnSelectedTypeChanged(FilterOption value)
     {
         CurrentPage = 1;
         _ = LoadAsync();
     }
 
     // Servise gönderilen değer: "Tüm türler" seçiliyken filtre uygulanmamalı.
-    private string? TypeFilter => SelectedType == AllTypes ? null : SelectedType;
+    private string? TypeFilter => SelectedType?.Value;
 
     // Arama metni değiştiğinde sayfa 1'e döner — aksi halde kullanıcı 3. sayfadayken
     // arama yaptığında sonuç 3 sayfadan azsa boş bir ekranla karşılaşırdı.
@@ -151,8 +146,10 @@ public partial class ContractListViewModel : ViewModelBase
 
         // Tür ataması seçenekler geldikten SONRA yapılıyor; aksi halde ComboBox
         // listesinde bulunmayan bir değer atanır ve seçim boş görünürdü.
-        if (!string.IsNullOrEmpty(_initialType) && TypeOptions.Contains(_initialType))
-            SelectedType = _initialType;   // OnSelectedTypeChanged yüklemeyi tetikler
+        // Panelden tür dağılımına tıklanarak gelindiyse o tür baştan seçili gelir.
+        if (!string.IsNullOrEmpty(_initialType) &&
+            TypeOptions.FirstOrDefault(o => o.Value == _initialType) is { } match)
+            SelectedType = match;   // OnSelectedTypeChanged yüklemeyi tetikler
         else
             await LoadAsync();
     }
@@ -162,13 +159,14 @@ public partial class ContractListViewModel : ViewModelBase
         try
         {
             var types = await _contractService.GetContractTypeOptionsAsync(_currentUser);
-            TypeOptions = new ObservableCollection<string>(new[] { AllTypes }.Concat(types));
+            TypeOptions = new ObservableCollection<FilterOption>(
+                new[] { AllTypesOption() }.Concat(types.Select(t => new FilterOption(t, t))));
         }
         catch
         {
             // Tür listesi alınamazsa filtre yalnızca "Tüm türler" ile çalışır;
             // ekranın geri kalanı etkilenmemeli.
-            TypeOptions = new ObservableCollection<string> { AllTypes };
+            TypeOptions = new ObservableCollection<FilterOption> { AllTypesOption() };
         }
     }
 
@@ -285,9 +283,9 @@ public partial class ContractListViewModel : ViewModelBase
 
         // SelectedType'ı doğrudan atamak OnSelectedTypeChanged üzerinden ikinci bir
         // yükleme tetikler; arama kutusundaki desenin aynısı.
-        if (SelectedType != AllTypes)
+        if (SelectedType is { IsAll: false })
         {
-            SelectedType = AllTypes;
+            SelectedType = TypeOptions.FirstOrDefault(o => o.IsAll) ?? AllTypesOption();
             return;
         }
 

@@ -80,7 +80,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     // pasif kaldığı için, kaç maddenin kaldığı ekranda yazılı olmalı — eskiden buton
     // sebepsizce tıklanamaz görünüyordu.
     private int CheckedCount => ChecklistItems.Count(i => i.IsChecked);
-    public string ChecklistProgressText => $"{CheckedCount} / {ChecklistItems.Count} madde";
+    public string ChecklistProgressText => Strings.T("Wiz.ChecklistProgress", CheckedCount, ChecklistItems.Count);
     public double ChecklistRatio => ChecklistItems.Count == 0
         ? 0
         : (double)CheckedCount / ChecklistItems.Count;

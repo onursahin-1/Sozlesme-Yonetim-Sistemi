@@ -243,6 +243,13 @@ yazıldığından başka bir şey göstermek olurdu. Açılır liste değerleri 
 veritabanına yazılıyor; çevrilseydi aynı sözleşme iki dilde iki farklı değer
 taşırdı.
 
+**Bildirimler de anahtar olarak saklanıyor.** `Notification.TitleKey` /
+`MessageKey` / `MessageArgs`; metin okunduğu anda kuruluyor. Bildirim geçici bir
+mesaj, denetim kaydı gibi kurumsal kayıt değil — bu yüzden "kaydedilmiş olan
+yazıldığı dilde kalır" kuralı burada uygulanmıyor. Parametrelerin bazıları
+kendisi de anahtar olabiliyor (konu adı, durum adı); `Strings.Has` ile ayırt
+ediliyor. Anahtarı olmayan eski kayıtlar saklanmış metne düşüyor.
+
 **Tarih ve tutar biçimi dile bağlı değil.** Her iki dilde de `tr-TR`
 (31.12.2026 · 15.678,00 TL). Şirket içi bir sistem; sözleşme tutarı ve tarihi
 Türk mevzuatına göre yazılıyor ve aynı sözleşmenin PDF'i iki dilde farklı

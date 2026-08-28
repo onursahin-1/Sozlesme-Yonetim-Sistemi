@@ -132,19 +132,30 @@ public partial class UserManagementViewModel : ViewModelBase
         Enum.GetValues<UserRole>().Select(r => new RoleOption(r, UserRoleHelper.ToLabel(r))).ToArray();
 
     // Filtre listesi: rollere ek olarak "Tüm roller".
-    public string[] RoleFilterOptions { get; } =
-        new[] { TumRoller }.Concat(Enum.GetValues<UserRole>().Select(UserRoleHelper.ToLabel)).ToArray();
+    // Seçeneğin DEĞERİ rolün kendisi (enum adı), ETİKETİ çevrilmiş metin.
+    // Eskiden filtre, satırdaki çevrilmiş rol etiketiyle karşılaştırılıyordu;
+    // etiket çevrilebilir olduğu an bu karşılaştırma kırılganlaşır.
+    public FilterOption[] RoleFilterOptions { get; } =
+        new[] { AllRolesOption() }
+            .Concat(Enum.GetValues<UserRole>().Select(r => new FilterOption(r.ToString(), UserRoleHelper.ToLabel(r))))
+            .ToArray();
+
+    private static FilterOption AllRolesOption() => new(null, Strings.T("Usr.AllRoles"));
+    private static FilterOption AllStatusOption() => new(null, Strings.T("Common.All"));
 
     // Açılır listede görünen metin AYNI ZAMANDA "filtre yok" işareti; sabit
     // olamaz çünkü dile bağlı. Dil değişince sayfa baştan kurulduğu için işaret
     // ve liste birlikte yenileniyor.
-    private static string TumRoller => Strings.T("Usr.AllRoles");
-    private static string TumDurumlar => Strings.T("Common.All");
+
 
     // Alan değil ÖZELLİK: seçenekler o anki dilden kuruluyor. Sabit dizi olsaydı
     // uygulama açılışındaki dile kilitlenirdi.
-    public string[] StatusFilterOptions =>
-        [TumDurumlar, Strings.T("Usr.Active"), Strings.T("Usr.Disabled")];
+    public FilterOption[] StatusFilterOptions =>
+    [
+        AllStatusOption(),
+        new("active", Strings.T("Usr.Active")),
+        new("disabled", Strings.T("Usr.Disabled")),
+    ];
 
     // Kaynak liste; ekranda gösterilen Users bunun filtrelenmiş hâli.
     private List<UserRowViewModel> _allUsers = new();
@@ -162,33 +173,33 @@ public partial class UserManagementViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedRoleFilter { get; set; } = TumRoller;
+    public partial FilterOption SelectedRoleFilter { get; set; } = AllRolesOption();
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedStatusFilter { get; set; } = TumDurumlar;
+    public partial FilterOption SelectedStatusFilter { get; set; } = AllStatusOption();
 
     partial void OnSearchTextChanged(string value) => ApplyFilters();
-    partial void OnSelectedRoleFilterChanged(string value) => ApplyFilters();
-    partial void OnSelectedStatusFilterChanged(string value) => ApplyFilters();
+    partial void OnSelectedRoleFilterChanged(FilterOption value) => ApplyFilters();
+    partial void OnSelectedStatusFilterChanged(FilterOption value) => ApplyFilters();
 
     public bool HasActiveFilters =>
         !string.IsNullOrWhiteSpace(SearchText)
-        || SelectedRoleFilter != TumRoller
-        || SelectedStatusFilter != TumDurumlar;
+        || SelectedRoleFilter is { IsAll: false }
+        || SelectedStatusFilter is { IsAll: false };
 
     public bool IsEmpty => !IsLoading && Users.Count == 0;
 
     public string CountText => _allUsers.Count == Users.Count
-        ? $"{Users.Count} kullanıcı"
-        : $"{Users.Count} / {_allUsers.Count} kullanıcı";
+        ? Strings.T("Usr.CountAll", Users.Count)
+        : Strings.T("Usr.CountFiltered", Users.Count, _allUsers.Count);
 
     [RelayCommand]
     private void ClearFilters()
     {
         SearchText = string.Empty;
-        SelectedRoleFilter = TumRoller;
-        SelectedStatusFilter = TumDurumlar;
+        SelectedRoleFilter = RoleFilterOptions[0];
+        SelectedStatusFilter = StatusFilterOptions[0];
     }
 
     private void ApplyFilters()
@@ -202,12 +213,12 @@ public partial class UserManagementViewModel : ViewModelBase
                 || u.Username.Contains(term, StringComparison.OrdinalIgnoreCase)
                 || (u.Department ?? string.Empty).Contains(term, StringComparison.OrdinalIgnoreCase));
 
-        if (SelectedRoleFilter != TumRoller)
-            query = query.Where(u => u.RoleLabel == SelectedRoleFilter);
+        if (SelectedRoleFilter is { Value: { } roleName })
+            query = query.Where(u => u.Role.ToString() == roleName);
 
-        if (SelectedStatusFilter == Strings.T("Usr.Active"))
+        if (SelectedStatusFilter?.Value == "active")
             query = query.Where(u => !u.IsDisabled);
-        else if (SelectedStatusFilter == Strings.T("Usr.Disabled"))
+        else if (SelectedStatusFilter?.Value == "disabled")
             query = query.Where(u => u.IsDisabled);
 
         Users = new ObservableCollection<UserRowViewModel>(query);
@@ -389,7 +400,7 @@ public partial class UserManagementViewModel : ViewModelBase
                 _allUsers.Add(new UserRowViewModel(created) { IsSelf = false });
                 ApplyFilters();
 
-                SuccessMessage = $"{created.FullName} kullanıcısı oluşturuldu.";
+                SuccessMessage = Strings.T("Usr.Created", created.FullName);
                 ShowNewUserForm = false;
             }
             catch (Exception ex)
@@ -434,7 +445,7 @@ public partial class UserManagementViewModel : ViewModelBase
 
                 // Kullanıcının bunu ilk girişinde değiştireceğini yöneticinin bilmesi
                 // gerekiyor: aksi halde "şifreyi verdim ama çalışmıyor" diye geri döner.
-                SuccessMessage = $"{row.FullName} kullanıcısının şifresi sıfırlandı. " +
+                SuccessMessage = Strings.T("Usr.PasswordReset", row.FullName) +
                                  Strings.T("Usr.FirstLoginNotice");
                 row.IsResettingPassword = false;
                 row.NewPasswordText = string.Empty;
@@ -476,8 +487,8 @@ public partial class UserManagementViewModel : ViewModelBase
                 ApplyFilters();
 
                 SuccessMessage = updated.IsDisabled
-                    ? $"{updated.FullName} devre dışı bırakıldı."
-                    : $"{updated.FullName} yeniden etkinleştirildi.";
+                    ? Strings.T("Usr.Disabled2", updated.FullName)
+                    : Strings.T("Usr.Enabled2", updated.FullName);
             }
             catch (Exception ex)
             {

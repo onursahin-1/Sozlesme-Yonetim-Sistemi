@@ -37,17 +37,23 @@ public class ContractService
     // diye bildirmek rozeti şişirir ve gerçek işleri görünmez kılar. SYB kendi
     // talebini işlediğinde (talebi de sözleşmeyi de aynı kişi yürütüyor) tam olarak
     // bu oluyordu.
-    private async Task NotifyAsync(IEnumerable<int> userIds, int contractId, NotificationType type, string title, string message, int? excludeUserId = null)
+    // Metin değil ANAHTAR saklanıyor: bildirimin dili, yazıldığı an değil OKUNDUĞU
+    // an belirleniyor. Servis katmanı hangi dilde çalışıldığını bilmiyor.
+    private async Task NotifyAsync(IEnumerable<int> userIds, int contractId, NotificationType type,
+        string titleKey, string messageKey, object?[]? args = null, int? excludeUserId = null)
     {
         if (_notifications is null) return;
+
+        var argsJson = NotificationArgs.Serialize(args);
 
         var list = userIds.Distinct().Where(id => id != excludeUserId).Select(id => new Notification
         {
             UserId = id,
             ContractId = contractId,
             Type = type,
-            Title = title,
-            Message = message,
+            TitleKey = titleKey,
+            MessageKey = messageKey,
+            MessageArgs = argsJson,
             CreatedAt = DateTime.Now
         }).ToList();
 
@@ -92,7 +98,7 @@ public class ContractService
 
         var userIds = await GetActiveUserIdsByRoleAsync(role.Value);
         await NotifyAsync(userIds, contract.Id, NotificationType.OnayBekliyor,
-            "Onayınızı bekliyor", $"\"{contract.Title}\" {konu} onayınızı bekliyor.");
+            "Ntf.AwaitingYouTitle", "Ntf.AwaitingYou", [contract.Title, konu]);
     }
     private async Task LogAuditAsync(int contractId, string action, int actingUserId, string? detail)
     {
@@ -199,14 +205,14 @@ public class ContractService
                     items.Add(new PendingWorkItem(
                         "Work.RequestsToConvert",
                         "Work.RequestsToConvertSub",
-                        yaratilacak, "sozlesmeYarat", "#7C3AED"));
+                        yaratilacak, "sozlesmeYarat", "ProcessSolid"));
 
                 var sonKontrol = await _contracts.CountByStageAsync(1);
                 if (sonKontrol > 0)
                     items.Add(new PendingWorkItem(
                         "Work.AwaitingYourFinalCheck",
                         "Work.AwaitingYourFinalCheckSub",
-                        sonKontrol, "sozlesmeKontrol", "#B06A00")
+                        sonKontrol, "sozlesmeKontrol", "WarningSolid")
                     { OldestWaitingDays = await OldestWaitingDaysAsync(1) });
                 break;
 
@@ -216,7 +222,7 @@ public class ContractService
                     items.Add(new PendingWorkItem(
                         "Work.AwaitingYourApproval",
                         "Work.AwaitingYourApprovalSub",
-                        mudurOnay, "onayBekleyen", "#2D6EA8")
+                        mudurOnay, "onayBekleyen", "AccentSolid")
                     { OldestWaitingDays = await OldestWaitingDaysAsync(2) });
                 break;
 
@@ -226,7 +232,7 @@ public class ContractService
                     items.Add(new PendingWorkItem(
                         "Work.RequestsNeedingFix",
                         "Work.RequestsNeedingFixSub",
-                        reddedilen, "talepList", "#A32D2D"));
+                        reddedilen, "talepList", "DangerSolid"));
                 break;
         }
 
@@ -462,7 +468,7 @@ public class ContractService
         // olan SYB'nin talepten haberi olmalı — aksi halde listeyi elle taramak gerekir.
         var sybIds = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
         await NotifyAsync(sybIds, contract.Id, NotificationType.SozlesmeOlayi,
-            "Yeni sözleşme talebi", $"\"{contract.Title}\" için yeni bir sözleşme talebi oluşturuldu.");
+            "Ntf.NewRequestTitle", "Ntf.NewRequest", [contract.Title]);
 
         return contract;
     }
@@ -489,7 +495,7 @@ public class ContractService
         // güncellenmiş talebi tekrar ele alması gerektiğini bilmesi lazım.
         var sybIds = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
         await NotifyAsync(sybIds, contract.Id, NotificationType.SozlesmeOlayi,
-            "Talep güncellendi", $"\"{contract.Title}\" talebi düzenlenip yeniden gönderildi.");
+            "Ntf.RequestUpdatedTitle", "Ntf.RequestUpdated", [contract.Title]);
     }
     // Henüz sözleşmeye dönüşmemiş bir talebin (Status = Talep, Stage = 0) SYB tarafından
     // reddedilmesi. DecideApprovalAsync yalnızca Stage 1-2 için çalıştığı için bu aşamada
@@ -557,14 +563,13 @@ public class ContractService
 
         await _contracts.ApplyDecisionAsync(contract, log, auditLog);
 
-        var (baslik, mesaj) = allowResubmit
-            ? ("Talebiniz iade edildi",
-               $"\"{contract.Title}\" talebi düzeltilmek üzere iade edildi. Gerekçe: {note}")
-            : ("Talebiniz reddedildi",
-               $"\"{contract.Title}\" talebi reddedildi ve kapatıldı. Gerekçe: {note}");
+        var (baslikKey, mesajKey) = allowResubmit
+            ? ("Ntf.RequestReturnedTitle", "Ntf.RequestReturned")
+            : ("Ntf.RequestRejectedTitle", "Ntf.RequestRejected");
 
         await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id,
-            NotificationType.TalepSonucu, baslik, mesaj, excludeUserId: actingUser.Id);
+            NotificationType.TalepSonucu, baslikKey, mesajKey, [contract.Title, note],
+            excludeUserId: actingUser.Id);
     }
 
     public async Task AddAttachmentAsync(Attachment attachment, User actingUser)
@@ -711,11 +716,11 @@ public class ContractService
         // kendi talebiyse doğrudan Stage 2'ye (yönetim onayı) taşındı.
         // Bu bildirim olmadan zincir hiç başlamıyor, sonraki aşamaların bildirimleri de
         // dolayısıyla tetiklenmiyordu.
-        await NotifyStageOwnersAsync(contract, "sözleşmesi");
+        await NotifyStageOwnersAsync(contract, "Subj.Contract");
 
         // Talebi açan kişi de sözleşmesinin oluşturulup onaya girdiğini görsün.
         await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
-            "Sözleşmeniz oluşturuldu", $"\"{contract.Title}\" sözleşmesi oluşturuldu ve onay sürecine girdi.");
+            "Ntf.ContractCreatedTitle", "Ntf.ContractCreated", [contract.Title]);
     }
     public async Task<Contract?> GetContractDetailAsync(int id, User currentUser)
     {
@@ -775,9 +780,11 @@ public class ContractService
             throw new AppException(AppError.RejectionNoteRequired);
         // Bildirim metninde kullanılacak konu, aşağıdaki durum değişikliklerinden ÖNCE
         // saklanır: karar uygulandığında PendingEdit/PendingTermination temizlenebiliyor.
-        var bildirimKonusu = contract.PendingTermination ? "fesih talebi"
-            : contract.PendingEdit ? "düzenleme talebi"
-            : "sözleşmesi";
+        // Konu da bir ÇEVİRİ ANAHTARI: bildirim metninin içine gömülen bu kelime de
+        // okuyanın dilinde görünmeli.
+        var bildirimKonusu = contract.PendingTermination ? "Subj.Termination"
+            : contract.PendingEdit ? "Subj.Edit"
+            : "Subj.Contract";
         var log = new ApprovalLog
         {
             StepNumber = contract.Stage,
@@ -944,12 +951,13 @@ public class ContractService
         else
         {
             // Süreç tamamlandı ya da talep sahibine geri döndü — sonucu talebi açan kişi görsün.
-            var (baslik, mesaj) = decision == ApprovalDecision.Onay
-                ? ("Talebiniz onaylandı", $"\"{contract.Title}\" {bildirimKonusu} onaylandı.")
-                : ("Talebiniz reddedildi", $"\"{contract.Title}\" {bildirimKonusu} reddedildi. Gerekçe: {note}");
+            var (baslikKey, mesajKey) = decision == ApprovalDecision.Onay
+                ? ("Ntf.DecisionApprovedTitle", "Ntf.DecisionApproved")
+                : ("Ntf.DecisionRejectedTitle", "Ntf.DecisionRejected");
 
             await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id,
-                NotificationType.TalepSonucu, baslik, mesaj, excludeUserId: actingUser.Id);
+                NotificationType.TalepSonucu, baslikKey, mesajKey,
+                [contract.Title, bildirimKonusu, note], excludeUserId: actingUser.Id);
         }
     }
 
@@ -1039,9 +1047,9 @@ public class ContractService
         await _contracts.ApplyEditAsync(contract, revision, editAuditLog);
 
         // Düzenleme onay sürecine girdi: 1. aşamadan sorumlu SYB'ye ve sözleşme sahibine haber ver.
-        await NotifyStageOwnersAsync(contract, "düzenleme talebi");
+        await NotifyStageOwnersAsync(contract, "Subj.Edit");
         await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
-            "Sözleşmede düzenleme", $"\"{contract.Title}\" sözleşmesinde düzenleme yapıldı ve onaya gönderildi. Gerekçe: {reason}");
+            "Ntf.ContractAmendedTitle", "Ntf.ContractAmended", [contract.Title, reason]);
     }
     // Uyarı durumu da eklendi: EnsureContractIsLive Aktif/Uyarı/İhlal üçlüsüne izin
     // veriyor ama bu liste yalnızca Aktif ve İhlal döndürüyordu. Sonuç: bitişine 30
@@ -1084,7 +1092,7 @@ public class ContractService
         var ihlalHedefleri = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
         ihlalHedefleri.Add(contract.CreatedByUserId);
         await NotifyAsync(ihlalHedefleri, contract.Id, NotificationType.SozlesmeOlayi,
-            "İhlal bildirildi", $"\"{contract.Title}\" sözleşmesinde ihlal bildirildi ({violationType}).");
+            "Ntf.ViolationReportedTitle", "Ntf.ViolationReported", [contract.Title, violationType]);
     }
     // Bir ihlalin giderildiğini kaydeder. Sözleşmenin başka açık ihlali kalmamışsa
     // durumu normale döner.
@@ -1134,11 +1142,12 @@ public class ContractService
         var hedefler = await GetActiveUserIdsByRoleAsync(UserRole.SYB);
         hedefler.Add(contract.CreatedByUserId);
 
-        var mesaj = statusChanged
-            ? $"\"{contract.Title}\" sözleşmesindeki ihlal giderildi; sözleşme yeniden {ContractStatusText(contract.Status)} durumuna döndü."
-            : $"\"{contract.Title}\" sözleşmesinde bir ihlal giderildi. Sözleşmede hâlâ açık ihlal var.";
-
-        await NotifyAsync(hedefler, contract.Id, NotificationType.SozlesmeOlayi, "İhlal giderildi", mesaj);
+        // Durum adı da anahtar olarak taşınıyor; metnin içine gömülen bir kelime de
+        // okuyanın dilinde görünmeli.
+        await NotifyAsync(hedefler, contract.Id, NotificationType.SozlesmeOlayi,
+            "Ntf.ViolationResolvedTitle",
+            statusChanged ? "Ntf.ViolationResolvedBack" : "Ntf.ViolationResolvedMore",
+            statusChanged ? [contract.Title, ContractStatusKey(contract.Status)] : [contract.Title]);
     }
 
     // Yürürlükteki bir sözleşmenin bitiş tarihine göre alacağı durum.
@@ -1152,11 +1161,12 @@ public class ContractService
         return endDate.Value.Date <= today.AddDays(30) ? ContractStatus.Uyari : ContractStatus.Aktif;
     }
 
-    private static string ContractStatusText(ContractStatus status) => status switch
+    // Metin değil ANAHTAR: bildirim cümlesinin içine giren durum adı da çevrilmeli.
+    private static string ContractStatusKey(ContractStatus status) => status switch
     {
-        ContractStatus.Aktif => "Aktif",
-        ContractStatus.Uyari => "Bitiş Yaklaşıyor",
-        ContractStatus.Tamamlandi => "Tamamlandı",
+        ContractStatus.Aktif => "Status.Live",
+        ContractStatus.Uyari => "Card.StatusExpiring",
+        ContractStatus.Tamamlandi => "Card.StatusCompleted",
         _ => status.ToString()
     };
 
@@ -1233,9 +1243,9 @@ public class ContractService
         };
         await _contracts.ApplyTerminationRequestAsync(contract, termination, terminationAuditLog);
 
-        await NotifyStageOwnersAsync(contract, "fesih talebi");
+        await NotifyStageOwnersAsync(contract, "Subj.Termination");
         await NotifyAsync(new[] { contract.CreatedByUserId }, contract.Id, NotificationType.SozlesmeOlayi,
-            "Fesih talebi", $"\"{contract.Title}\" sözleşmesi için fesih talebi oluşturuldu. Gerekçe: {reason}");
+            "Ntf.TerminationRequestedTitle", "Ntf.TerminationRequested", [contract.Title, reason]);
     }
     public async Task<List<string>> GetAuditLogUserOptionsAsync(User currentUser)
     {

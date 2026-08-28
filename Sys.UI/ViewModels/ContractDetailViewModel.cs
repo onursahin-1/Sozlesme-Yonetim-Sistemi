@@ -409,11 +409,11 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
     {
         get
         {
-            if (Detail?.EndDate is not { } end) return "Aktif";
+            if (Detail?.EndDate is not { } end) return Strings.T("Status.Live");
 
             var today = DateTime.Today;
-            if (end.Date < today) return "Tamamlandı";
-            return end.Date <= today.AddDays(30) ? Strings.T("Card.StatusExpiring") : "Aktif";
+            if (end.Date < today) return Strings.T("Card.StatusCompleted");
+            return end.Date <= today.AddDays(30) ? Strings.T("Card.StatusExpiring") : Strings.T("Status.Live");
         }
     }
 

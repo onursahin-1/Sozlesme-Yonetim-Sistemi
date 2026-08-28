@@ -67,11 +67,13 @@ public partial class AuditLogViewModel : ViewModelBase
 
 
     [ObservableProperty]
-    public partial ObservableCollection<string> UserOptions { get; set; } = new();
+    public partial ObservableCollection<FilterOption> UserOptions { get; set; } = new() { AllUsersOption() };
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedUser { get; set; } = Strings.T("Common.All");
+    public partial FilterOption SelectedUser { get; set; } = AllUsersOption();
+
+    private static FilterOption AllUsersOption() => new(null, Strings.T("Common.All"));
 
     [ObservableProperty]
     public partial DateTimeOffset? StartDate { get; set; }
@@ -81,24 +83,24 @@ public partial class AuditLogViewModel : ViewModelBase
 
     // İşlem türü filtresi. "Tüm şifre sıfırlamaları" ya da "tüm ek silmeleri" gibi
     // denetim soruları kullanıcı ve tarihle cevaplanamıyordu.
-    // Görünen etiketler kataloğdan; seçim ham işlem adına çevriliyor.
-    public ObservableCollection<string> ActionOptions { get; } = new(
-        new[] { TumIslemler }.Concat(AuditActionCatalog.Actions.Select(a => a.Label)));
+    // Seçenek DEĞERİ ham işlem adı (veritabanındaki kod), ETİKETİ kataloğun
+    // çevrilmiş metni. Eskiden etiketten koda geri arama yapılıyordu; etiket
+    // çevrilebilir olduğu an bu arama kırılgan hale gelir.
+    public ObservableCollection<FilterOption> ActionOptions { get; } = new(
+        new[] { AllActionsOption() }
+            .Concat(AuditActionCatalog.Actions.Select(a => new FilterOption(a.Key, a.Label))));
 
-    // Açılır listede görünen metin AYNI ZAMANDA "filtre yok" işareti. Sözleşme
-    // listesindeki AllTypes ile aynı durum: dil değişince sayfa baştan kurulduğu
-    // için işaret ve liste birlikte yenileniyor.
-    private static string TumIslemler => Strings.T("Audit.AllActions");
+    private static FilterOption AllActionsOption() => new(null, Strings.T("Audit.AllActions"));
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedAction { get; set; } = TumIslemler;
+    public partial FilterOption SelectedAction { get; set; } = AllActionsOption();
 
-    partial void OnSelectedActionChanged(string value) => ReloadFromFirstPage();
+    partial void OnSelectedActionChanged(FilterOption value) => ReloadFromFirstPage();
 
     public bool HasActiveFilters =>
-        (SelectedUser is not null && SelectedUser != Strings.T("Common.All"))
-        || SelectedAction != TumIslemler
+        SelectedUser is { IsAll: false }
+        || SelectedAction is { IsAll: false }
         || StartDate is not null
         || EndDate is not null;
 
@@ -126,7 +128,7 @@ public partial class AuditLogViewModel : ViewModelBase
     public bool CanGoPrevious => CurrentPage > 1;
     public bool CanGoNext => CurrentPage < TotalPages;
 
-    partial void OnSelectedUserChanged(string value) => ReloadFromFirstPage();
+    partial void OnSelectedUserChanged(FilterOption value) => ReloadFromFirstPage();
     partial void OnStartDateChanged(DateTimeOffset? value)
     {
         OnPropertyChanged(nameof(HasActiveFilters));
@@ -145,8 +147,8 @@ public partial class AuditLogViewModel : ViewModelBase
     private async Task ClearFilters()
     {
         _isInitializing = true;
-        SelectedUser = Strings.T("Common.All");
-        SelectedAction = TumIslemler;
+        SelectedUser = UserOptions.FirstOrDefault(o => o.IsAll) ?? AllUsersOption();
+        SelectedAction = ActionOptions.First(o => o.IsAll);
         StartDate = null;
         EndDate = null;
         _isInitializing = false;
@@ -183,9 +185,14 @@ public partial class AuditLogViewModel : ViewModelBase
     {
         try
         {
-            var users = new List<string> { "Tümü" };
-            users.AddRange(await _contractService.GetAuditLogUserOptionsAsync(_currentUser));
-            UserOptions = new ObservableCollection<string>(users);
+            // Burada "Tümü" SABİT METİN olarak yazılıydı; seçili değer ise
+            // sözlükten geliyordu. İngilizce modda liste "Tümü" ile başlıyor ama
+            // seçili değer "All" oluyordu — hiçbiriyle eşleşmiyor, kutu boş
+            // görünüyordu. Aynı bilginin iki yerde ayrı yazılmasının sonucu.
+            var options = new List<FilterOption> { AllUsersOption() };
+            options.AddRange((await _contractService.GetAuditLogUserOptionsAsync(_currentUser))
+                .Select(u => new FilterOption(u, u)));
+            UserOptions = new ObservableCollection<FilterOption>(options);
         }
         catch (Exception ex)
         {
@@ -241,12 +248,10 @@ public partial class AuditLogViewModel : ViewModelBase
     // Sayfalama ve dışa aktarma aynı filtreleri kullanıyor; tek yerden üretiliyor.
     private (string? User, DateTime? Start, DateTime? End, string? Action) CurrentFilters()
     {
-        string? userFilter = string.IsNullOrEmpty(SelectedUser) || SelectedUser == Strings.T("Common.All") ? null : SelectedUser;
-
-        // Açılır listede okunabilir etiket görünüyor; sorguya ham işlem adı gider.
-        string? actionFilter = SelectedAction == TumIslemler
-            ? null
-            : AuditActionCatalog.Actions.FirstOrDefault(a => a.Label == SelectedAction)?.Key;
+        // Sorguya giden değer etiketten değil seçeneğin KENDİ değerinden geliyor;
+        // etiketten koda geri arama yapmaya gerek kalmıyor.
+        var userFilter = SelectedUser?.Value;
+        var actionFilter = SelectedAction?.Value;
 
         return (userFilter, StartDate?.Date, EndDate?.Date, actionFilter);
     }

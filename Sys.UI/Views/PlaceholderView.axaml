@@ -13,8 +13,7 @@
 
     <StackPanel Margin="20">
         <TextBlock FontSize="14" Foreground="Gray">
-            <Run Text="{Binding Title}"/>
-            <Run Text=" — bu ekran yakında eklenecek."/>
+            <Run Text="{Binding ComingSoonText}"/>
         </TextBlock>
     </StackPanel>
 

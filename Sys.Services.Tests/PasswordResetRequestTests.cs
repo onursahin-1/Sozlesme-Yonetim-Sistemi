@@ -118,7 +118,7 @@ public class PasswordResetRequestTests
         Assert.Equal(NotificationType.SifreSifirlamaTalebi, notifications.Added[0].Type);
     }
 
-    // Bilinmeyen kullanıcı adında bildirim metni farklı olur — bu Admin'e
+    // Bilinmeyen kullanıcı adında bildirim farklı olur — bu Admin'e
     // yöneliktir, giriş ekranındaki kullanıcıya değil. Gizlilik kuralı giriş
     // ekranı için geçerli; Admin zaten sistemi yönetiyor.
     [Fact]
@@ -128,7 +128,9 @@ public class PasswordResetRequestTests
 
         await service.RequestPasswordResetAsync("olmayan");
 
-        Assert.Contains("bulunamadı", notifications.Added[0].Message);
+        // Metin değil ANAHTAR sınanıyor: bildirim artık üretildiği anda metne
+        // dönüşmüyor, okunduğu anda okuyanın dilinde kuruluyor.
+        Assert.Equal("Ntf.PasswordResetUnknown", notifications.Added[0].MessageKey);
     }
 
     // Bildirim üretilemese bile talep kaydedilmiş olmalı: bildirim kritik

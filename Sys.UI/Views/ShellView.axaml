@@ -261,7 +261,7 @@
 						</Button>
 						<Button Classes="flat" IsVisible="{Binding HasReadNotifications}"
 								Command="{Binding DeleteReadNotificationsCommand}"
-								ToolTip.Tip="Okunmuş bildirimlerin hepsini siler">
+								ToolTip.Tip="{Binding [Notif.DeleteReadHint], Source={x:Static loc:Strings.Current}}">
 							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 									CornerRadius="7" Padding="10,5">
 								<TextBlock Text="{Binding [Notif.DeleteRead], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource DangerBase}"/>
@@ -317,7 +317,7 @@
                                                 IsVisible="{Binding IsRead}"
                                                 Command="{Binding $parent[UserControl].((vm:ShellViewModel)DataContext).DeleteNotificationCommand}"
                                                 CommandParameter="{Binding}"
-                                                ToolTip.Tip="Bu bildirimi sil">
+                                                ToolTip.Tip="{Binding [Notif.DeleteOneHint], Source={x:Static loc:Strings.Current}}">
 											<Border Background="Transparent" Width="22" Height="22" CornerRadius="11">
 												<Path Stroke="{DynamicResource TextFaintAlt}" StrokeThickness="1.6" StrokeLineCap="Round"
 													  Fill="Transparent" Width="9" Height="9" Stretch="Uniform"

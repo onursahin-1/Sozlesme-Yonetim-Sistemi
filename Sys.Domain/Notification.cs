@@ -27,8 +27,29 @@ public class Notification
     public int? ContractId { get; set; }
 
     public NotificationType Type { get; set; }
+
+    // ESKİ KAYITLAR için hazır metin. Bu alanlar, bildirimler çeviri anahtarına
+    // geçmeden önce üretilmiş kayıtlarda dolu; yeni kayıtlarda boş kalıyor.
+    // Geçmişi toplu güncellemek yerine iki biçimin bir arada yaşamasına izin
+    // verildi — eski bildirim zaten birkaç gün içinde okunup siliniyor.
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+
+    // YENİ KAYITLAR için çeviri anahtarı ve parametreleri.
+    //
+    // Bildirim, denetim kaydından farklı olarak KURUMSAL KAYIT DEĞİL: kimse üç ay
+    // sonra bir bildirimin metnine dayanarak karar vermiyor. Bu yüzden "kaydedilmiş
+    // olan yazıldığı dilde kalır" kuralı burada geçerli değil; metin gösterim
+    // anında, okuyanın dilinde kuruluyor.
+    //
+    // Servis katmanı yine metin üretmiyor — hata kodlarında olduğu gibi yalnızca
+    // "ne oldu"yu söylüyor.
+    public string? TitleKey { get; set; }
+    public string? MessageKey { get; set; }
+
+    // Mesajdaki {0}, {1}... yerlerine girecek değerler; JSON dizi olarak saklanır.
+    // Sözleşme başlığı, gerekçe metni, gün sayısı gibi ÇEVRİLMEYEN veriler.
+    public string? MessageArgs { get; set; }
 
     public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }

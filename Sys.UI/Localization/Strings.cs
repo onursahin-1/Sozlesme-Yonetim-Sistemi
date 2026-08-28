@@ -43,6 +43,13 @@ public sealed class Strings : INotifyPropertyChanged
 
     public static string T(string key, params object?[] args) => string.Format(T(key), args);
 
+    // Bir dizgenin çeviri anahtarı olup olmadığı. Bildirim parametrelerinde
+    // kullanılıyor: bazıları anahtar (konu adı, durum adı), bazıları ham veri
+    // (sözleşme başlığı, kullanıcının yazdığı gerekçe). İkisini ayırmanın tek
+    // güvenilir yolu sözlükte aramak — "Subj.Edit" gibi bir başlık yazan olursa
+    // yanlış çevrilir, ama bu ihtimal metnin yarısını kodda bırakmaktan iyidir.
+    public static bool Has(string key) => Map.ContainsKey(key);
+
     // Sözlükte tanımlı tüm anahtarlar — kullanılmayan anahtar taraması için.
     public static IReadOnlyCollection<string> Keys => Map.Keys;
 
@@ -73,9 +80,13 @@ public sealed class Strings : INotifyPropertyChanged
         ["Shell.ThemeToDark"] = ("Koyu moda geç", "Switch to dark mode"),
         ["Shell.LanguageToEnglish"] = ("Switch to English", "Switch to English"),
         ["Shell.LanguageToTurkish"] = ("Türkçe'ye geç", "Türkçe'ye geç"),
+        ["Shell.AppTitle"] = ("SYS — Sözleşme Yönetim Sistemi", "SYS — Contract Management System"),
+        ["Shell.ComingSoon"] = ("{0} — bu ekran yakında eklenecek.", "{0} — this screen is coming soon."),
         ["Shell.Notifications"] = ("Bildirimler", "Notifications"),
 
         // --- Bildirim paneli ---
+        ["Notif.DeleteReadHint"] = ("Okunmuş bildirimlerin hepsini siler", "Deletes all read notifications"),
+        ["Notif.DeleteOneHint"] = ("Bu bildirimi sil", "Delete this notification"),
         ["Notif.MarkAllRead"] = ("Tümünü okundu işaretle", "Mark all as read"),
         ["Notif.DeleteRead"] = ("Okunanları sil", "Delete read"),
         ["Notif.Empty"] = ("Henüz bildiriminiz yok.", "You have no notifications yet."),
@@ -829,6 +840,12 @@ public sealed class Strings : INotifyPropertyChanged
                               "An error occurred while loading users: {0}"),
         ["Usr.FieldsRequired"] = ("Kullanıcı adı, ad soyad ve şifre zorunludur.",
                                   "Username, full name and password are required."),
+        ["Usr.CountAll"] = ("{0} kullanıcı", "{0} users"),
+        ["Usr.CountFiltered"] = ("{0} / {1} kullanıcı", "{0} of {1} users"),
+        ["Usr.Created"] = ("{0} kullanıcısı oluşturuldu.", "The user {0} was created."),
+        ["Usr.PasswordReset"] = ("{0} kullanıcısının şifresi sıfırlandı. ", "The password for {0} was reset. "),
+        ["Usr.Disabled2"] = ("{0} devre dışı bırakıldı.", "{0} was disabled."),
+        ["Usr.Enabled2"] = ("{0} yeniden etkinleştirildi.", "{0} was re-enabled."),
         ["Usr.FirstLoginNotice"] = ("Kullanıcı ilk girişinde kendi şifresini belirleyecek.",
                                     "The user will set their own password at first sign-in."),
 
@@ -1067,6 +1084,68 @@ public sealed class Strings : INotifyPropertyChanged
         ["Xls.EntityType"] = ("Kayıt Türü", "Record Type"),
         ["Xls.EntityId"] = ("Kayıt No", "Record No"),
         ["Xls.Detail"] = ("Ayrıntı", "Detail"),
+
+        // --- Bildirim metinleri ---
+        //
+        // Bildirimler veritabanında ANAHTAR olarak saklanıyor; metin okunduğu anda,
+        // okuyanın dilinde kuruluyor. Bildirim geçici bir mesaj — denetim kaydı gibi
+        // kurumsal kayıt değil, o yüzden "yazıldığı dilde kalır" kuralı burada
+        // uygulanmıyor.
+        ["Ntf.AwaitingYouTitle"] = ("Onayınızı bekliyor", "Awaiting your approval"),
+        ["Ntf.AwaitingYou"] = ("\"{0}\" {1} onayınızı bekliyor.", "The {1} for \"{0}\" is awaiting your approval."),
+        ["Ntf.NewRequestTitle"] = ("Yeni sözleşme talebi", "New contract request"),
+        ["Ntf.NewRequest"] = ("\"{0}\" için yeni bir sözleşme talebi oluşturuldu.",
+                              "A new contract request was created for \"{0}\"."),
+        ["Ntf.RequestUpdatedTitle"] = ("Talep güncellendi", "Request updated"),
+        ["Ntf.RequestUpdated"] = ("\"{0}\" talebi düzenlenip yeniden gönderildi.",
+                                  "The request \"{0}\" was edited and resubmitted."),
+        ["Ntf.RequestReturnedTitle"] = ("Talebiniz iade edildi", "Your request was returned"),
+        ["Ntf.RequestReturned"] = ("\"{0}\" talebi düzeltilmek üzere iade edildi. Gerekçe: {1}",
+                                   "The request \"{0}\" was returned for correction. Reason: {1}"),
+        ["Ntf.RequestRejectedTitle"] = ("Talebiniz reddedildi", "Your request was rejected"),
+        ["Ntf.RequestRejected"] = ("\"{0}\" talebi reddedildi ve kapatıldı. Gerekçe: {1}",
+                                   "The request \"{0}\" was rejected and closed. Reason: {1}"),
+        ["Ntf.ContractCreatedTitle"] = ("Sözleşmeniz oluşturuldu", "Your contract was created"),
+        ["Ntf.ContractCreated"] = ("\"{0}\" sözleşmesi oluşturuldu ve onay sürecine girdi.",
+                                   "The contract \"{0}\" was created and entered the approval process."),
+        ["Ntf.DecisionApprovedTitle"] = ("Talebiniz onaylandı", "Your request was approved"),
+        ["Ntf.DecisionApproved"] = ("\"{0}\" {1} onaylandı.", "The {1} for \"{0}\" was approved."),
+        ["Ntf.DecisionRejectedTitle"] = ("Talebiniz reddedildi", "Your request was rejected"),
+        ["Ntf.DecisionRejected"] = ("\"{0}\" {1} reddedildi. Gerekçe: {2}",
+                                    "The {1} for \"{0}\" was rejected. Reason: {2}"),
+        ["Ntf.ContractAmendedTitle"] = ("Sözleşmede düzenleme", "Contract amended"),
+        ["Ntf.ContractAmended"] = ("\"{0}\" sözleşmesinde düzenleme yapıldı ve onaya gönderildi. Gerekçe: {1}",
+                                   "The contract \"{0}\" was amended and sent for approval. Reason: {1}"),
+        ["Ntf.ViolationReportedTitle"] = ("İhlal bildirildi", "Violation reported"),
+        ["Ntf.ViolationReported"] = ("\"{0}\" sözleşmesinde ihlal bildirildi ({1}).",
+                                     "A violation was reported on the contract \"{0}\" ({1})."),
+        ["Ntf.ViolationResolvedTitle"] = ("İhlal giderildi", "Violation resolved"),
+        ["Ntf.ViolationResolvedBack"] = ("\"{0}\" sözleşmesindeki ihlal giderildi; sözleşme yeniden {1} durumuna döndü.",
+                                         "The violation on \"{0}\" was resolved; the contract returned to {1}."),
+        ["Ntf.ViolationResolvedMore"] = ("\"{0}\" sözleşmesinde bir ihlal giderildi. Sözleşmede hâlâ açık ihlal var.",
+                                         "A violation on \"{0}\" was resolved. The contract still has open violations."),
+        ["Ntf.TerminationRequestedTitle"] = ("Fesih talebi", "Termination request"),
+        ["Ntf.TerminationRequested"] = ("\"{0}\" sözleşmesi için fesih talebi oluşturuldu. Gerekçe: {1}",
+                                        "A termination request was created for the contract \"{0}\". Reason: {1}"),
+        ["Ntf.UpcomingEndTitle"] = ("Yaklaşan bitiş tarihi", "Upcoming expiry"),
+        ["Ntf.EndsToday"] = ("\"{0}\" sözleşmesinin süresi bugün doluyor.", "The contract \"{0}\" expires today."),
+        ["Ntf.EndsInDays"] = ("\"{0}\" sözleşmesinin bitişine {1} gün kaldı.",
+                              "The contract \"{0}\" expires in {1} days."),
+        ["Ntf.PasswordResetTitle"] = ("Şifre sıfırlama talebi", "Password reset request"),
+        ["Ntf.PasswordReset"] = ("{0} ({1}) şifre sıfırlama talebinde bulundu.",
+                                 "{0} ({1}) requested a password reset."),
+        ["Ntf.PasswordResetUnknown"] = ("\"{0}\" kullanıcı adıyla şifre sıfırlama talebi geldi, ancak bu kullanıcı adı sistemde bulunamadı.",
+                                        "A password reset was requested for \"{0}\", but that username was not found."),
+
+        // Bildirim cümlesinin içine giren konu adları
+        ["Subj.Contract"] = ("sözleşmesi", "contract"),
+        ["Subj.Edit"] = ("düzenleme talebi", "amendment request"),
+        ["Subj.Termination"] = ("fesih talebi", "termination request"),
+
+        // Bildirim zaman etiketi
+        ["Notif.MinutesAgo"] = ("{0} dk önce", "{0} min ago"),
+        ["Notif.HoursAgo"] = ("{0} saat önce", "{0} hours ago"),
+        ["Notif.DaysAgo"] = ("{0} gün önce", "{0} days ago"),
 
         // --- Roller ---
         ["Role.Personel"] = ("Personel", "Employee"),
