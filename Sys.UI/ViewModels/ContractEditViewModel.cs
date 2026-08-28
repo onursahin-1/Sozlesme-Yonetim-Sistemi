@@ -11,8 +11,17 @@ using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
-public partial class ContractEditViewModel : ViewModelBase
+public partial class ContractEditViewModel : ViewModelBase, IHasUnsavedInput
 {
+    // Sözleşme seçilmişse form kurulmuş demektir; gerekçe ya da yeni değerlerden
+    // biri girilmişse kesinlikle veri var.
+    public bool HasUnsavedInput =>
+        SelectedContract is not null
+        || !string.IsNullOrWhiteSpace(Reason)
+        || !string.IsNullOrWhiteSpace(NewTotalAmountText)
+        || !string.IsNullOrWhiteSpace(NewDescription)
+        || NewEndDate is not null;
+
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;

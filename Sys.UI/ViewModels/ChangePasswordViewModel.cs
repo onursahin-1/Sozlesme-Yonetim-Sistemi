@@ -11,8 +11,13 @@ namespace Sys.UI.ViewModels;
 // Kullanıcının kendi şifresini değiştirdiği ekran. Admin'in "şifre sıfırlama"
 // işlevinden farkı: mevcut şifre doğrulanır ve yeni şifreyi kullanıcıdan başka
 // kimse bilmez.
-public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
+public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler, IHasUnsavedInput
 {
+    public bool HasUnsavedInput =>
+        !string.IsNullOrEmpty(CurrentPassword)
+        || !string.IsNullOrEmpty(NewPassword)
+        || !string.IsNullOrEmpty(NewPasswordRepeat);
+
     private readonly AuthService _authService;
     private readonly User _currentUser;
 

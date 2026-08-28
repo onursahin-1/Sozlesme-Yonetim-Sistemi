@@ -61,8 +61,11 @@ public class WizardStepViewModel
     public bool ShowHint => IsCurrent;
 }
 
-public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
+public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler, IHasUnsavedInput
 {
+    // Sihirbazda talep seçilmişse ya da ilk adımdan ilerlenmişse veri var.
+    public bool HasUnsavedInput => SelectedRequest is not null || CurrentStep > 1;
+
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;

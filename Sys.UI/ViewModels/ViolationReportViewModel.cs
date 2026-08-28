@@ -12,8 +12,13 @@ using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
-public partial class ViolationReportViewModel : ViewModelBase
+public partial class ViolationReportViewModel : ViewModelBase, IHasUnsavedInput
 {
+    public bool HasUnsavedInput =>
+        SelectedContract is not null
+        || !string.IsNullOrWhiteSpace(Description)
+        || SelectedFilePath is not null;
+
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;

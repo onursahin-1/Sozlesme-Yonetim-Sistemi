@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
@@ -104,15 +103,15 @@
 					<StackPanel Spacing="18">
 
 						<StackPanel Spacing="1">
-							<TextBlock Classes="display" Text="{Binding [Wiz.Basics], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Wiz.Basics}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-							<TextBlock Text="{Binding [Form.RequiredHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+							<TextBlock Text="{DynamicResource Form.RequiredHint}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="{Binding [Wiz.PickRequest], Source={x:Static loc:Strings.Current}}"/>
+								<Run Text="{DynamicResource Wiz.PickRequest}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<ComboBox ItemsSource="{Binding PendingRequests}" SelectedItem="{Binding SelectedRequest}"
@@ -129,14 +128,14 @@
 							</ComboBox>
 							<TextBlock Classes="fieldError" Text="{Binding RequestError}"
 									   IsVisible="{Binding RequestError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-							<TextBlock Classes="formHint" Text="{Binding [Wiz.NoPendingRequests], Source={x:Static loc:Strings.Current}}"
+							<TextBlock Classes="formHint" Text="{DynamicResource Wiz.NoPendingRequests}"
 									   IsVisible="{Binding !PendingRequests.Count}"/>
 						</StackPanel>
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Wiz.StartDate], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Wiz.StartDate}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<DatePicker SelectedDate="{Binding StartDate}"/>
@@ -145,7 +144,7 @@
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Wiz.EndDate], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Wiz.EndDate}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<DatePicker SelectedDate="{Binding EndDate}"/>
@@ -157,7 +156,7 @@
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Field.PaymentPeriod], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Field.PaymentPeriod}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<ComboBox ItemsSource="{Binding PaymentPeriodOptions}"
@@ -166,7 +165,7 @@
 										   IsVisible="{Binding PaymentPeriodError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
-								<TextBlock Classes="formLabel" Text="{Binding [Field.CompanyType], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="formLabel" Text="{DynamicResource Field.CompanyType}"/>
 								<ComboBox ItemsSource="{Binding CompanyTypeOptions}"
 										  SelectedItem="{Binding SelectedCompanyType}" HorizontalAlignment="Stretch"/>
 							</StackPanel>
@@ -174,10 +173,10 @@
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="{Binding [Field.SapCode], Source={x:Static loc:Strings.Current}}"/>
+								<Run Text="{DynamicResource Field.SapCode}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
-							<TextBox Text="{Binding SapCariKodu}" PlaceholderText="{Binding [Wiz.SapPlaceholder], Source={x:Static loc:Strings.Current}}"/>
+							<TextBox Text="{Binding SapCariKodu}" PlaceholderText="{DynamicResource Wiz.SapPlaceholder}"/>
 							<TextBlock Classes="fieldError" Text="{Binding SapCariKoduError}"
 									   IsVisible="{Binding SapCariKoduError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 						</StackPanel>
@@ -191,9 +190,9 @@
 					<StackPanel Spacing="16">
 
 						<StackPanel Spacing="1">
-							<TextBlock Classes="display" Text="{Binding [Wiz.LineItems], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Wiz.LineItems}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-							<TextBlock Text="{Binding [Wiz.ItemsHint], Source={x:Static loc:Strings.Current}}"
+							<TextBlock Text="{DynamicResource Wiz.ItemsHint}"
 									   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
@@ -212,10 +211,10 @@
 
 						<!-- Sütun başlıkları: hangi kutunun ne olduğu yazmıyordu -->
 						<Grid ColumnDefinitions="*,80,110,130,Auto" ColumnSpacing="8" Margin="0,2,0,0">
-							<TextBlock Grid.Column="0" Classes="tableHead" Text="{Binding [Wiz.Definition], Source={x:Static loc:Strings.Current}}"/>
-							<TextBlock Grid.Column="1" Classes="tableHead" Text="{Binding [Field.Quantity], Source={x:Static loc:Strings.Current}}"/>
-							<TextBlock Grid.Column="2" Classes="tableHead" Text="{Binding [Wiz.Unit], Source={x:Static loc:Strings.Current}}"/>
-							<TextBlock Grid.Column="3" Classes="tableHead" Text="{Binding [Field.UnitPrice], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
+							<TextBlock Grid.Column="0" Classes="tableHead" Text="{DynamicResource Wiz.Definition}"/>
+							<TextBlock Grid.Column="1" Classes="tableHead" Text="{DynamicResource Field.Quantity}"/>
+							<TextBlock Grid.Column="2" Classes="tableHead" Text="{DynamicResource Wiz.Unit}"/>
+							<TextBlock Grid.Column="3" Classes="tableHead" Text="{DynamicResource Field.UnitPrice}" TextAlignment="Right"/>
 							<TextBlock Grid.Column="4" Classes="tableHead" Text="" Width="34"/>
 						</Grid>
 
@@ -223,7 +222,7 @@
 							<ItemsControl.ItemTemplate>
 								<DataTemplate x:DataType="vm:ContractItemRowViewModel">
 									<Grid ColumnDefinitions="*,80,110,130,Auto" ColumnSpacing="8" Margin="0,0,0,8">
-										<TextBox Grid.Column="0" PlaceholderText="{Binding [Wiz.ItemPlaceholder], Source={x:Static loc:Strings.Current}}" Text="{Binding Description}"/>
+										<TextBox Grid.Column="0" PlaceholderText="{DynamicResource Wiz.ItemPlaceholder}" Text="{Binding Description}"/>
 										<TextBox Grid.Column="1" Text="{Binding QuantityText}" TextAlignment="Right"/>
 										<ComboBox Grid.Column="2" HorizontalAlignment="Stretch"
 												  ItemsSource="{Binding Source={x:Static vm:ContractItemRowViewModel.UnitOptions}}"
@@ -231,7 +230,7 @@
 										<TextBox Grid.Column="3" Text="{Binding UnitPriceText}" TextAlignment="Right"
 												 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 										<Button Grid.Column="4" Classes="flat" Command="{Binding RemoveCommand}"
-												ToolTip.Tip="{Binding [Wiz.DeleteItem], Source={x:Static loc:Strings.Current}}" VerticalAlignment="Center">
+												ToolTip.Tip="{DynamicResource Wiz.DeleteItem}" VerticalAlignment="Center">
 											<Border Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 													CornerRadius="7" Width="34" Height="34">
 												<Path Stroke="{DynamicResource DangerBase}" StrokeThickness="1.8" StrokeLineCap="Round"
@@ -252,7 +251,7 @@
 									<Path Stroke="{DynamicResource TextBody}" StrokeThickness="2" StrokeLineCap="Round"
 										  Fill="Transparent" Width="12" Height="12" Stretch="Uniform"
 										  VerticalAlignment="Center" Data="M12 5v14M5 12h14"/>
-									<TextBlock Text="{Binding [Wiz.AddItem], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
+									<TextBlock Text="{DynamicResource Wiz.AddItem}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
 											   VerticalAlignment="Center"/>
 								</StackPanel>
 							</Border>
@@ -262,12 +261,12 @@
 
 						<!-- Para birimi kalem bazında değil sözleşme bazında seçilir; kur dönüşümü yapılmaz. -->
 						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Text="{Binding [Wiz.Currency], Source={x:Static loc:Strings.Current}}" FontSize="12" Foreground="{DynamicResource TextLabel}"
+							<TextBlock Grid.Column="0" Text="{DynamicResource Wiz.Currency}" FontSize="12" Foreground="{DynamicResource TextLabel}"
 									   FontWeight="SemiBold" VerticalAlignment="Center"/>
 							<ComboBox Grid.Column="1" Width="140" HorizontalAlignment="Left"
 									  ItemsSource="{Binding CurrencyOptions}" SelectedItem="{Binding SelectedCurrency}"/>
 							<StackPanel Grid.Column="2" Spacing="1" HorizontalAlignment="Right">
-								<TextBlock Classes="summaryLabel" Text="{Binding [Wiz.Total], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
+								<TextBlock Classes="summaryLabel" Text="{DynamicResource Wiz.Total}" TextAlignment="Right"/>
 								<TextBlock Classes="display" Text="{Binding ToplamText}" FontSize="21"
 										   FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" TextAlignment="Right"/>
 							</StackPanel>
@@ -296,9 +295,9 @@
 
 							<Grid ColumnDefinitions="*,Auto">
 								<StackPanel Grid.Column="0" Spacing="2">
-									<TextBlock Classes="display" Text="{Binding [Wiz.Checklist], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+									<TextBlock Classes="display" Text="{DynamicResource Wiz.Checklist}" FontSize="15.5"
 											   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-									<TextBlock Text="{Binding [Wiz.ChecklistNotice], Source={x:Static loc:Strings.Current}}"
+									<TextBlock Text="{DynamicResource Wiz.ChecklistNotice}"
 											   FontSize="11" Foreground="{DynamicResource TextFaintAlt}" TextWrapping="Wrap"/>
 								</StackPanel>
 								<TextBlock Grid.Column="1" Text="{Binding ChecklistProgressText}"
@@ -320,7 +319,7 @@
 							</ItemsControl>
 
 							<TextBlock IsVisible="{Binding ShowChecklistWarning}"
-									   Text="{Binding [Wiz.ChecklistRequired], Source={x:Static loc:Strings.Current}}"
+									   Text="{DynamicResource Wiz.ChecklistRequired}"
 									   FontSize="11" Foreground="{DynamicResource WarningBase}" TextWrapping="Wrap"/>
 						</StackPanel>
 					</Border>
@@ -334,8 +333,8 @@
 							Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 							CornerRadius="10" Padding="14,12">
 						<StackPanel Spacing="7">
-							<TextBlock Text="{Binding [Wiz.ExistingFiles], Source={x:Static loc:Strings.Current}}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource WarningTextAlt}"/>
-							<TextBlock Text="{Binding [Wiz.ExistingFilesHint], Source={x:Static loc:Strings.Current}}"
+							<TextBlock Text="{DynamicResource Wiz.ExistingFiles}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource WarningTextAlt}"/>
+							<TextBlock Text="{DynamicResource Wiz.ExistingFilesHint}"
 									   FontSize="11" Foreground="{DynamicResource WarningTextAlt}" TextWrapping="Wrap"/>
 							<ItemsControl ItemsSource="{Binding ExistingAttachments}">
 								<ItemsControl.ItemTemplate>
@@ -353,9 +352,9 @@
 						<StackPanel Spacing="18">
 
 							<StackPanel Spacing="1">
-								<TextBlock Classes="display" Text="{Binding [Wiz.Documents], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+								<TextBlock Classes="display" Text="{DynamicResource Wiz.Documents}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="{Binding [Wiz.ContractFileHint], Source={x:Static loc:Strings.Current}}"
+								<TextBlock Text="{DynamicResource Wiz.ContractFileHint}"
 										   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 							<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
@@ -363,15 +362,15 @@
 							<!-- Sözleşme dosyası -->
 							<StackPanel Spacing="8">
 								<Grid ColumnDefinitions="*,Auto">
-									<TextBlock Grid.Column="0" Classes="formLabel" Text="{Binding [Wiz.ContractFile], Source={x:Static loc:Strings.Current}}" Margin="0"/>
+									<TextBlock Grid.Column="0" Classes="formLabel" Text="{DynamicResource Wiz.ContractFile}" Margin="0"/>
 									<Button Grid.Column="1" Classes="flat" Click="OnPickSozlesmeFileClick">
 										<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 												CornerRadius="7" Padding="12,6">
-											<TextBlock Text="{Binding [Wiz.AddFile], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+											<TextBlock Text="{DynamicResource Wiz.AddFile}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 										</Border>
 									</Button>
 								</Grid>
-								<TextBlock Classes="formHint" Text="{Binding [Wiz.NoFiles], Source={x:Static loc:Strings.Current}}" Margin="0"
+								<TextBlock Classes="formHint" Text="{DynamicResource Wiz.NoFiles}" Margin="0"
 										   IsVisible="{Binding !SozlesmeFileNames.Count}"/>
 								<ItemsControl ItemsSource="{Binding SozlesmeFileNames}">
 									<ItemsControl.ItemTemplate>
@@ -389,7 +388,7 @@
 													<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
 															Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveSozlesmeFileCommand}"
 															CommandParameter="{Binding}">
-														<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
+														<TextBlock Text="{DynamicResource Form.Remove}" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
 													</Button>
 												</Grid>
 											</Border>
@@ -401,15 +400,15 @@
 							<!-- Ekler -->
 							<StackPanel Spacing="8">
 								<Grid ColumnDefinitions="*,Auto">
-									<TextBlock Grid.Column="0" Classes="formLabel" Text="{Binding [Wiz.Annexes], Source={x:Static loc:Strings.Current}}" Margin="0"/>
+									<TextBlock Grid.Column="0" Classes="formLabel" Text="{DynamicResource Wiz.Annexes}" Margin="0"/>
 									<Button Grid.Column="1" Classes="flat" Click="OnPickEkFileClick">
 										<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 												CornerRadius="7" Padding="12,6">
-											<TextBlock Text="{Binding [Wiz.AddFile], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+											<TextBlock Text="{DynamicResource Wiz.AddFile}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 										</Border>
 									</Button>
 								</Grid>
-								<TextBlock Classes="formHint" Text="{Binding [Wiz.NoFiles], Source={x:Static loc:Strings.Current}}" Margin="0"
+								<TextBlock Classes="formHint" Text="{DynamicResource Wiz.NoFiles}" Margin="0"
 										   IsVisible="{Binding !EkFileNames.Count}"/>
 								<ItemsControl ItemsSource="{Binding EkFileNames}">
 									<ItemsControl.ItemTemplate>
@@ -427,7 +426,7 @@
 													<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
 															Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveEkFileCommand}"
 															CommandParameter="{Binding}">
-														<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
+														<TextBlock Text="{DynamicResource Form.Remove}" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
 													</Button>
 												</Grid>
 											</Border>
@@ -439,15 +438,15 @@
 							<!-- Teminat -->
 							<StackPanel Spacing="8">
 								<Grid ColumnDefinitions="*,Auto">
-									<TextBlock Grid.Column="0" Classes="formLabel" Text="{Binding [Wiz.Guarantee], Source={x:Static loc:Strings.Current}}" Margin="0"/>
+									<TextBlock Grid.Column="0" Classes="formLabel" Text="{DynamicResource Wiz.Guarantee}" Margin="0"/>
 									<Button Grid.Column="1" Classes="flat" Click="OnPickTeminatFileClick">
 										<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 												CornerRadius="7" Padding="12,6">
-											<TextBlock Text="{Binding [Wiz.AddFile], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+											<TextBlock Text="{DynamicResource Wiz.AddFile}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 										</Border>
 									</Button>
 								</Grid>
-								<TextBlock Classes="formHint" Text="{Binding [Wiz.NoFiles], Source={x:Static loc:Strings.Current}}" Margin="0"
+								<TextBlock Classes="formHint" Text="{DynamicResource Wiz.NoFiles}" Margin="0"
 										   IsVisible="{Binding !TeminatFileNames.Count}"/>
 								<ItemsControl ItemsSource="{Binding TeminatFileNames}">
 									<ItemsControl.ItemTemplate>
@@ -465,7 +464,7 @@
 													<Button Grid.Column="2" Classes="flat" VerticalAlignment="Center"
 															Command="{Binding $parent[UserControl].((vm:ContractWizardViewModel)DataContext).RemoveTeminatFileCommand}"
 															CommandParameter="{Binding}">
-														<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
+														<TextBlock Text="{DynamicResource Form.Remove}" Foreground="{DynamicResource DangerBase}" FontSize="11"/>
 													</Button>
 												</Grid>
 											</Border>
@@ -494,7 +493,7 @@
 					Command="{Binding BackCommand}">
 				<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 						CornerRadius="7" Padding="12,6">
-					<TextBlock Text="{Binding [Wiz.BackToContracts], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
+					<TextBlock Text="{DynamicResource Wiz.BackToContracts}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
 				</Border>
 			</Button>
 
@@ -502,7 +501,7 @@
 			<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 					CornerRadius="12" Padding="18,16">
 				<StackPanel Spacing="14">
-					<TextBlock Classes="sectionLabel" Text="{Binding [Wiz.Steps], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="sectionLabel" Text="{DynamicResource Wiz.Steps}"/>
 					<ItemsControl ItemsSource="{Binding Steps}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate x:DataType="vm:WizardStepViewModel">
@@ -533,23 +532,23 @@
 			<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 					CornerRadius="12" Padding="18,16">
 				<StackPanel Spacing="14">
-					<TextBlock Classes="sectionLabel" Text="{Binding [Form.Summary], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="sectionLabel" Text="{DynamicResource Form.Summary}"/>
 
 					<StackPanel Spacing="3">
-						<TextBlock Classes="summaryLabel" Text="{Binding [Wiz.Request], Source={x:Static loc:Strings.Current}}"/>
+						<TextBlock Classes="summaryLabel" Text="{DynamicResource Wiz.Request}"/>
 						<StackPanel IsVisible="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNotNull}}"
 									Spacing="1">
 							<TextBlock Classes="summaryValue" Text="{Binding SelectedRequest.Title}"/>
 							<TextBlock Text="{Binding SelectedRequest.CompanyName}" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
 									   TextWrapping="Wrap"/>
 						</StackPanel>
-						<TextBlock Classes="summaryEmpty" Text="{Binding [Form.NotSelected], Source={x:Static loc:Strings.Current}}"
+						<TextBlock Classes="summaryEmpty" Text="{DynamicResource Form.NotSelected}"
 								   IsVisible="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNull}}"/>
 					</StackPanel>
 
 					<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
 						<StackPanel Grid.Column="0" Spacing="3">
-							<TextBlock Classes="summaryLabel" Text="{Binding [Field.StartDate], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.StartDate}"/>
 							<TextBlock Classes="summaryValue" FontSize="12"
 									   Text="{Binding StartDate, StringFormat='{}{0:dd.MM.yyyy}'}"
 									   IsVisible="{Binding StartDate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
@@ -557,7 +556,7 @@
 									   IsVisible="{Binding StartDate, Converter={x:Static ObjectConverters.IsNull}}"/>
 						</StackPanel>
 						<StackPanel Grid.Column="1" Spacing="3">
-							<TextBlock Classes="summaryLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.EndDate}"/>
 							<TextBlock Classes="summaryValue" FontSize="12"
 									   Text="{Binding EndDate, StringFormat='{}{0:dd.MM.yyyy}'}"
 									   IsVisible="{Binding EndDate, Converter={x:Static ObjectConverters.IsNotNull}}"/>
@@ -570,7 +569,7 @@
 
 					<Grid ColumnDefinitions="*,Auto">
 						<StackPanel Grid.Column="0" Spacing="3">
-							<TextBlock Classes="summaryLabel" Text="{Binding [Field.TotalAmount], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.TotalAmount}"/>
 							<TextBlock Text="{Binding Items.Count, StringFormat='{}{0} kalem'}"
 									   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
@@ -586,7 +585,7 @@
 				<Button Classes="flat" HorizontalAlignment="Stretch" IsVisible="{Binding !IsStep3}"
 						Command="{Binding NextStepCommand}">
 					<Border Background="{DynamicResource AccentSolid}" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="{Binding [Wiz.Next], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
+						<TextBlock Text="{DynamicResource Wiz.Next}" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>
@@ -594,7 +593,7 @@
 				<Button Classes="flat" HorizontalAlignment="Stretch" IsVisible="{Binding IsStep3}"
 						Command="{Binding SubmitCommand}" IsEnabled="{Binding CanSubmit}">
 					<Border Background="{DynamicResource SuccessSolid}" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="{Binding [Wiz.Save], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
+						<TextBlock Text="{DynamicResource Wiz.Save}" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>
@@ -603,7 +602,7 @@
 						Command="{Binding PreviousStepCommand}">
 					<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 							CornerRadius="9" Padding="18,11">
-						<TextBlock Text="{Binding [Wiz.Back], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"
+						<TextBlock Text="{DynamicResource Wiz.Back}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>

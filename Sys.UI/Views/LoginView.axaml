@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -39,9 +38,19 @@
 
                     <StackPanel Spacing="18" HorizontalAlignment="Center">
                         <Border Background="{DynamicResource WarningBright}" Height="2" Width="48" HorizontalAlignment="Center"/>
-                        <TextBlock Classes="display" Text="{Binding [Login.BrandTitle], Source={x:Static loc:Strings.Current}}"
+                        <!--
+                          TextWrapping bir güvenlik ağı: metindeki satır sonu tercih
+                          edilen kırılma noktasını veriyor ama sığmayan bir satır varsa
+                          kendiliğinden bölünüyor.
+                          Buna ihtiyaç oldu çünkü İngilizce karşılık Türkçesinden uzun:
+                          "YÖNETİM SİSTEMİ" sığarken "MANAGEMENT SYSTEM" panelden taşıp
+                          kırpılıyordu. Sabit ölçüye göre ayarlanmış bir yerleşim, tek
+                          dil için doğru olup diğerinde bozulur.
+                        -->
+                        <TextBlock Classes="display" Text="{DynamicResource Login.BrandTitle}"
                                    Foreground="{DynamicResource ShellTextBright}" FontSize="29" FontWeight="SemiBold"
                                    LineHeight="40" LetterSpacing="1.5"
+                                   TextWrapping="Wrap"
                                    TextAlignment="Center" HorizontalAlignment="Center"/>
                     </StackPanel>
 
@@ -59,19 +68,19 @@
                         Width="340" Spacing="16">
 
                 <StackPanel Spacing="6" Margin="0,0,0,8">
-                    <TextBlock Classes="display" Text="{Binding [Login.Welcome], Source={x:Static loc:Strings.Current}}" FontSize="28" FontWeight="SemiBold"
+                    <TextBlock Classes="display" Text="{DynamicResource Login.Welcome}" FontSize="28" FontWeight="SemiBold"
                                Foreground="{DynamicResource LoginFormText}" LetterSpacing="-0.4"/>
-                    <TextBlock Text="{Binding [Login.Subtitle], Source={x:Static loc:Strings.Current}}"
+                    <TextBlock Text="{DynamicResource Login.Subtitle}"
                                FontSize="13" Foreground="{DynamicResource LoginFormMuted}"/>
                 </StackPanel>
 
                 <StackPanel Spacing="7">
-                    <TextBlock Text="{Binding [Login.Username], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
+                    <TextBlock Text="{DynamicResource Login.Username}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
                     <TextBox x:Name="UsernameBox" Text="{Binding Username}" KeyDown="OnCredentialKeyDown"
                              Background="{DynamicResource LoginInputBg}" Foreground="{DynamicResource LoginFormText}"
                              BorderBrush="{DynamicResource LoginFormBorder}" BorderThickness="1" CornerRadius="6"
                              Padding="12,10" FontSize="13"
-                             PlaceholderText="{Binding [Login.UsernamePlaceholder], Source={x:Static loc:Strings.Current}}"/>
+                             PlaceholderText="{DynamicResource Login.UsernamePlaceholder}"/>
                 </StackPanel>
 
                 <StackPanel Spacing="7">
@@ -82,11 +91,11 @@
                       sadece kutu odaktayken ve kilit açıkken beliriyor.
                     -->
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0" Text="{Binding [Login.Password], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{DynamicResource Login.Password}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
                         <StackPanel Grid.Column="1" x:Name="CapsLockWarning" IsVisible="False"
                                     Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                             <Path Fill="{DynamicResource DangerBase}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
-                            <TextBlock Text="{Binding [Login.CapsLock], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource DangerBase}"
+                            <TextBlock Text="{DynamicResource Login.CapsLock}" FontSize="11" Foreground="{DynamicResource DangerBase}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
@@ -109,16 +118,16 @@
                 <!-- Birincil eylem: grafit dolgu. Renk yerine koyuluk kontrastıyla öne çıkıyor. -->
                 <Button Classes="flat" HorizontalAlignment="Stretch" Margin="0,6,0,0"
                         Command="{Binding LoginCommand}"
-                        ToolTip.Tip="{Binding [Login.SubmitHint], Source={x:Static loc:Strings.Current}}">
+                        ToolTip.Tip="{DynamicResource Login.SubmitHint}">
                     <Border Background="{DynamicResource AccentSolid}" CornerRadius="6" Padding="14,12">
-                        <TextBlock Text="{Binding [Login.Submit], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13.5" FontWeight="SemiBold"
+                        <TextBlock Text="{DynamicResource Login.Submit}" Foreground="{DynamicResource TextOnAccent}" FontSize="13.5" FontWeight="SemiBold"
                                    LetterSpacing="0.2" HorizontalAlignment="Center"/>
                     </Border>
                 </Button>
 
                 <Button Classes="flat" HorizontalAlignment="Center" Margin="0,2,0,0"
                         Command="{Binding ToggleForgotPasswordCommand}">
-                    <TextBlock Text="{Binding [Login.ForgotPassword], Source={x:Static loc:Strings.Current}}" FontSize="12" Foreground="{DynamicResource LoginFormMuted}"/>
+                    <TextBlock Text="{DynamicResource Login.ForgotPassword}" FontSize="12" Foreground="{DynamicResource LoginFormMuted}"/>
                 </Button>
 
                 <!-- Şifre sıfırlama talebi: e-posta altyapısı olmadığı için otomatik
@@ -127,19 +136,19 @@
                         Background="{DynamicResource LoginInputBg}" BorderBrush="{DynamicResource LoginFormBorderAlt}" BorderThickness="1"
                         CornerRadius="8" Padding="16" Margin="0,2,0,0">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="{Binding [Login.ForgotHint], Source={x:Static loc:Strings.Current}}"
+                        <TextBlock Text="{DynamicResource Login.ForgotHint}"
                                    FontSize="11.5" Foreground="{DynamicResource LoginFormMuted}" TextWrapping="Wrap" LineHeight="17"/>
 
                         <TextBox Text="{Binding ForgotUsername}" Background="{DynamicResource LoginInputBg}" Foreground="{DynamicResource LoginFormText}"
                                  BorderBrush="{DynamicResource LoginFormBorder}" BorderThickness="1" CornerRadius="6"
                                  Padding="12,9" FontSize="13"
-                                 PlaceholderText="{Binding [Login.ForgotPlaceholder], Source={x:Static loc:Strings.Current}}" KeyDown="OnForgotKeyDown"/>
+                                 PlaceholderText="{DynamicResource Login.ForgotPlaceholder}" KeyDown="OnForgotKeyDown"/>
 
                         <Button Classes="flat" HorizontalAlignment="Left"
                                 IsEnabled="{Binding !IsSubmittingReset}"
                                 Command="{Binding SubmitPasswordResetRequestCommand}">
                             <Border Background="{DynamicResource WarningBright}" CornerRadius="6" Padding="16,8">
-                                <TextBlock Text="{Binding [Login.SendRequest], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="{DynamicResource Login.SendRequest}" Foreground="{DynamicResource TextOnAccent}" FontSize="12" FontWeight="SemiBold"/>
                             </Border>
                         </Button>
 

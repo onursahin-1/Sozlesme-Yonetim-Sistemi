@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -41,7 +40,7 @@
 			<TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
 					   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-			<TextBlock Text="{Binding [Common.Loading], Source={x:Static loc:Strings.Current}}" Foreground="Gray" IsVisible="{Binding IsLoading}"/>
+			<TextBlock Text="{DynamicResource Common.Loading}" Foreground="Gray" IsVisible="{Binding IsLoading}"/>
 
 			<StackPanel IsVisible="{Binding !IsLoading}" Spacing="18">
 
@@ -72,9 +71,9 @@
 									<TextBlock Classes="display" Text="{Binding Yururlukte}"
 											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBase}"
 											   LetterSpacing="-0.5"/>
-									<TextBlock Text="{Binding [Status.Live], Source={x:Static loc:Strings.Current}}" FontSize="12.5" FontWeight="SemiBold"
+									<TextBlock Text="{DynamicResource Status.Live}" FontSize="12.5" FontWeight="SemiBold"
 											   Foreground="{DynamicResource TextBody}"/>
-									<TextBlock Text="{Binding [Dash.LiveSubtitle], Source={x:Static loc:Strings.Current}}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
+									<TextBlock Text="{DynamicResource Dash.LiveSubtitle}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -93,9 +92,9 @@
 									<TextBlock Classes="display" Text="{Binding OnayBekliyor}"
 											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource AccentBase}"
 											   LetterSpacing="-0.5"/>
-									<TextBlock Text="{Binding [Status.PendingApproval], Source={x:Static loc:Strings.Current}}" FontSize="12.5" FontWeight="SemiBold"
+									<TextBlock Text="{DynamicResource Status.PendingApproval}" FontSize="12.5" FontWeight="SemiBold"
 											   Foreground="{DynamicResource TextBody}"/>
-									<TextBlock Text="{Binding [Dash.PendingSubtitle], Source={x:Static loc:Strings.Current}}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
+									<TextBlock Text="{DynamicResource Dash.PendingSubtitle}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -114,9 +113,9 @@
 									<TextBlock Classes="display" Text="{Binding Uyari}"
 											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource WarningBase}"
 											   LetterSpacing="-0.5"/>
-									<TextBlock Text="{Binding [Dash.ExpiryWarning], Source={x:Static loc:Strings.Current}}" FontSize="12.5" FontWeight="SemiBold"
+									<TextBlock Text="{DynamicResource Dash.ExpiryWarning}" FontSize="12.5" FontWeight="SemiBold"
 											   Foreground="{DynamicResource TextBody}"/>
-									<TextBlock Text="{Binding [Dash.ExpiryWarningSubtitle], Source={x:Static loc:Strings.Current}}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
+									<TextBlock Text="{DynamicResource Dash.ExpiryWarningSubtitle}" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -141,7 +140,7 @@
 									<TextBlock Classes="display" Text="{Binding OpenViolations}"
 											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource DangerBase}"
 											   LetterSpacing="-0.5"/>
-									<TextBlock Text="{Binding [Dash.OpenViolations], Source={x:Static loc:Strings.Current}}" FontSize="12.5" FontWeight="SemiBold"
+									<TextBlock Text="{DynamicResource Dash.OpenViolations}" FontSize="12.5" FontWeight="SemiBold"
 											   Foreground="{DynamicResource TextBody}"/>
 									<TextBlock Text="{Binding IhlalSubtitle}" FontSize="10.5"
 											   Foreground="{DynamicResource TextFaint}" TextWrapping="Wrap"/>
@@ -157,7 +156,7 @@
 				-->
 				<Border Classes="card" IsVisible="{Binding HasPendingWork}">
 					<StackPanel Spacing="12">
-						<TextBlock Classes="cardTitle" Text="{Binding [Dash.PendingWork], Source={x:Static loc:Strings.Current}}"/>
+						<TextBlock Classes="cardTitle" Text="{DynamicResource Dash.PendingWork}"/>
 						<ItemsControl ItemsSource="{Binding PendingWork}">
 							<ItemsControl.ItemTemplate>
 								<DataTemplate x:DataType="vm:PendingWorkRowViewModel">
@@ -212,8 +211,8 @@
 
 					<Border Grid.Column="0" Classes="card">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="cardTitle" Text="{Binding [Dash.TotalValue], Source={x:Static loc:Strings.Current}}"/>
-							<TextBlock Text="{Binding [Dash.NoLiveContracts], Source={x:Static loc:Strings.Current}}" FontSize="12" Foreground="{DynamicResource TextFaint}"
+							<TextBlock Classes="cardTitle" Text="{DynamicResource Dash.TotalValue}"/>
+							<TextBlock Text="{DynamicResource Dash.NoLiveContracts}" FontSize="12" Foreground="{DynamicResource TextFaint}"
 									   IsVisible="{Binding !HasActiveValue}"/>
 							<ItemsControl ItemsSource="{Binding ActiveValue}">
 								<ItemsControl.ItemTemplate>
@@ -226,7 +225,7 @@
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
 							</ItemsControl>
-							<TextBlock Text="{Binding [Dash.NoCurrencyConversion], Source={x:Static loc:Strings.Current}}"
+							<TextBlock Text="{DynamicResource Dash.NoCurrencyConversion}"
 									   FontSize="10.5" Foreground="{DynamicResource TextDisabled}" TextWrapping="Wrap"/>
 						</StackPanel>
 					</Border>
@@ -234,20 +233,20 @@
 					<Border Grid.Column="1" Classes="card">
 						<StackPanel Spacing="12">
 							<StackPanel Spacing="2">
-								<TextBlock Classes="cardTitle" Text="{Binding [Dash.ThisMonth], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="cardTitle" Text="{DynamicResource Dash.ThisMonth}"/>
 								<TextBlock Text="{Binding MonthLabel}" FontSize="11" Foreground="{DynamicResource TextDisabled}"/>
 							</StackPanel>
 
 							<Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-								<TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding [Dash.NewRequest], Source={x:Static loc:Strings.Current}}" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Dash.NewRequest}" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
 								<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MonthNewRequests}"
 										   FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
 
-								<TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding [Dash.Activated], Source={x:Static loc:Strings.Current}}" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
+								<TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource Dash.Activated}" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
 								<TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MonthActivated}"
 										   FontSize="15" FontWeight="Bold" Foreground="{DynamicResource SuccessBase}"/>
 
-								<TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding [Dash.Terminated], Source={x:Static loc:Strings.Current}}" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
+								<TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Dash.Terminated}" FontSize="12.5" Foreground="{DynamicResource TextBodyAlt}"/>
 								<TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MonthTerminated}"
 										   FontSize="15" FontWeight="Bold" Foreground="{DynamicResource DangerBase}"/>
 							</Grid>
@@ -277,7 +276,7 @@
 							  zincirinde bekleyen bir sözleşmesini burada bulamayan kullanıcı
 							  kartın çalışmadığını sanıyordu.
 							-->
-							<TextBlock Classes="cardTitle" Text="{Binding [Dash.TypeBreakdown], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="cardTitle" Text="{DynamicResource Dash.TypeBreakdown}"/>
 							<ItemsControl ItemsSource="{Binding TypeBreakdown}">
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="vm:TypeBreakdownRowViewModel">
@@ -312,8 +311,8 @@
 
 						<Border Classes="card">
 							<StackPanel Spacing="12">
-								<TextBlock Classes="cardTitle" Text="{Binding [Dash.UpcomingEndings], Source={x:Static loc:Strings.Current}}"/>
-								<TextBlock Text="{Binding [Dash.NoUpcoming], Source={x:Static loc:Strings.Current}}"
+								<TextBlock Classes="cardTitle" Text="{DynamicResource Dash.UpcomingEndings}"/>
+								<TextBlock Text="{DynamicResource Dash.NoUpcoming}"
 										   FontSize="12" Foreground="{DynamicResource TextFaint}"
 										   IsVisible="{Binding !UpcomingEndings.Count}"/>
 								<ItemsControl ItemsSource="{Binding UpcomingEndings}">
@@ -353,7 +352,7 @@
 																	BorderThickness="1" CornerRadius="9"
 																	Padding="8,2" HorizontalAlignment="Right"
 																	IsVisible="{Binding IsRenewed}">
-																<TextBlock Text="{Binding [Dash.Renewed], Source={x:Static loc:Strings.Current}}" FontSize="10"
+																<TextBlock Text="{DynamicResource Dash.Renewed}" FontSize="10"
 																		   FontWeight="SemiBold" Foreground="{DynamicResource SuccessText}"/>
 															</Border>
 														</StackPanel>
@@ -372,7 +371,7 @@
 						-->
 						<Border Classes="card" IsVisible="{Binding ShowRecentActivity}">
 							<StackPanel Spacing="12">
-								<TextBlock Classes="cardTitle" Text="{Binding [Dash.RecentActivity], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="cardTitle" Text="{DynamicResource Dash.RecentActivity}"/>
 								<ItemsControl ItemsSource="{Binding RecentActivity}">
 									<ItemsControl.ItemTemplate>
 										<DataTemplate x:DataType="vm:AuditLogRowViewModel">

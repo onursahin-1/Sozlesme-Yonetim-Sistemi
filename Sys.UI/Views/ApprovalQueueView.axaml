@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
@@ -77,14 +76,14 @@
 					IsVisible="{Binding ShowBackButton}" Command="{Binding BackCommand}">
 				<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 						CornerRadius="7" Padding="12,6">
-					<TextBlock Text="{Binding [Queue.BackToContracts], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
+					<TextBlock Text="{DynamicResource Queue.BackToContracts}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
 				</Border>
 			</Button>
 
 			<!-- Başlık burada tekrar yazılmıyor: kabuk (ShellView) zaten sayfa başlığını
 			     üstte gösteriyordu, ikisi birden görününce başlık iki kez yazılmış oluyordu. -->
 			<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="2,0,2,10">
-				<TextBlock Grid.Column="0" Classes="summaryLabel" Text="{Binding [Queue.Queue], Source={x:Static loc:Strings.Current}}" VerticalAlignment="Center"/>
+				<TextBlock Grid.Column="0" Classes="summaryLabel" Text="{DynamicResource Queue.Queue}" VerticalAlignment="Center"/>
 				<!-- Rozet toplam bekleyen sayısını gösterir, o sayfadakini değil -->
 				<Border Grid.Column="1" Background="{DynamicResource BorderFaintBlue}" CornerRadius="9" Padding="8,2">
 					<TextBlock Text="{Binding TotalCount}" Foreground="{DynamicResource AccentBase}"
@@ -115,7 +114,7 @@
 			<Border DockPanel.Dock="Top" IsVisible="{Binding !PendingContracts.Count}"
 					Background="{DynamicResource SurfaceSubtle}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 					CornerRadius="10" Padding="16,20">
-				<TextBlock Text="{Binding [Queue.Empty], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextFaintAlt}"
+				<TextBlock Text="{DynamicResource Queue.Empty}" Foreground="{DynamicResource TextFaintAlt}"
 						   FontSize="12" TextWrapping="Wrap" TextAlignment="Center"/>
 			</Border>
 
@@ -134,7 +133,7 @@
 								<!-- Tekrar inceleme olduğu, kayda tıklamadan önce de görünmeli -->
 								<Border IsVisible="{Binding WasRejected}" Background="{DynamicResource DangerSoftBg}"
 										CornerRadius="8" Padding="8,2" HorizontalAlignment="Left" Margin="0,3,0,0">
-									<TextBlock Text="{Binding [Queue.WasRejectedShort], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}"
+									<TextBlock Text="{DynamicResource Queue.WasRejectedShort}" Foreground="{DynamicResource DangerBase}"
 											   FontSize="10" FontWeight="Bold"/>
 								</Border>
 							</StackPanel>
@@ -148,7 +147,7 @@
 		<ScrollViewer Grid.Column="1">
 			<StackPanel Spacing="16" Margin="0,0,4,24">
 
-				<TextBlock Text="{Binding [Queue.PickFromQueue], Source={x:Static loc:Strings.Current}}"
+				<TextBlock Text="{DynamicResource Queue.PickFromQueue}"
 						   IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNull}}"
 						   Foreground="{DynamicResource TextFaintAlt}" FontSize="13" Margin="2,20,0,0"/>
 
@@ -160,7 +159,7 @@
 						Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 						CornerRadius="11" Padding="18,15">
 					<StackPanel Spacing="5">
-						<TextBlock Text="{Binding [Queue.WasRejected], Source={x:Static loc:Strings.Current}}" FontSize="11"
+						<TextBlock Text="{DynamicResource Queue.WasRejected}" FontSize="11"
 								   FontWeight="Bold" Foreground="{DynamicResource DangerBase}" LetterSpacing="0.5"/>
 						<TextBlock Text="{Binding PreviousRejectionInfo}" Foreground="{DynamicResource DangerDeep}"
 								   FontSize="12.5" TextWrapping="Wrap"/>
@@ -171,7 +170,7 @@
 						Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 						CornerRadius="11" Padding="18,15">
 					<StackPanel Spacing="5">
-						<TextBlock Text="{Binding [Queue.IsTermination], Source={x:Static loc:Strings.Current}}" FontSize="11"
+						<TextBlock Text="{DynamicResource Queue.IsTermination}" FontSize="11"
 								   FontWeight="Bold" Foreground="{DynamicResource DangerBase}" LetterSpacing="0.5"/>
 						<TextBlock Text="{Binding TerminationInfo}" Foreground="{DynamicResource DangerDeep}"
 								   FontSize="12.5" TextWrapping="Wrap"/>
@@ -182,7 +181,7 @@
 						Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 						CornerRadius="11" Padding="18,15">
 					<StackPanel Spacing="5">
-						<TextBlock Text="{Binding [Queue.IsRevision], Source={x:Static loc:Strings.Current}}" FontSize="11"
+						<TextBlock Text="{DynamicResource Queue.IsRevision}" FontSize="11"
 								   FontWeight="Bold" Foreground="{DynamicResource WarningBase}" LetterSpacing="0.5"/>
 						<TextBlock Text="{Binding RevisionInfo}" Foreground="{DynamicResource WarningDeep}"
 								   FontSize="12.5" TextWrapping="Wrap"/>
@@ -216,41 +215,41 @@
 							  ColumnSpacing="20" RowSpacing="16">
 
 							<StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.Type], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.Type}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailType}"/>
 							</StackPanel>
 							<StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.TaxNo], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.TaxNo}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailTaxNo}"/>
 							</StackPanel>
 							<StackPanel Grid.Row="0" Grid.Column="2" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.SapCode], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.SapCode}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailSapCariKodu}"/>
 							</StackPanel>
 
 							<StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.StartDate], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.StartDate}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailStart}"/>
 							</StackPanel>
 							<StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.EndDate}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailEnd}"/>
 							</StackPanel>
 							<StackPanel Grid.Row="1" Grid.Column="2" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.PaymentPeriod], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.PaymentPeriod}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailPeriod}"/>
 							</StackPanel>
 
 							<StackPanel Grid.Row="2" Grid.Column="0" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.Requester], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.Requester}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailRequester}"/>
 							</StackPanel>
 							<StackPanel Grid.Row="2" Grid.Column="1" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.CompanyType], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.CompanyType}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailCompanyType}"/>
 							</StackPanel>
 							<StackPanel Grid.Row="2" Grid.Column="2" Spacing="2">
-								<TextBlock Classes="fieldLabel" Text="{Binding [Field.RequestRefNo], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.RequestRefNo}"/>
 								<TextBlock Classes="fieldValue" Text="{Binding DetailRefNo}"/>
 							</StackPanel>
 						</Grid>
@@ -265,7 +264,7 @@
 						Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="24,20">
 					<StackPanel Spacing="10">
-						<TextBlock Classes="display" Text="{Binding [Field.Scope], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+						<TextBlock Classes="display" Text="{DynamicResource Field.Scope}" FontSize="15.5"
 								   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 						<TextBlock Text="{Binding DetailDescription}" FontSize="12.5"
 								   Foreground="{DynamicResource TextBody}" TextWrapping="Wrap" LineHeight="19"/>
@@ -278,20 +277,20 @@
 						CornerRadius="12" Padding="24,20">
 					<StackPanel Spacing="12">
 						<Grid ColumnDefinitions="*,Auto">
-							<TextBlock Grid.Column="0" Classes="display" Text="{Binding [Field.Items], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Grid.Column="0" Classes="display" Text="{DynamicResource Field.Items}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 							<StackPanel Grid.Column="1" Spacing="1">
-								<TextBlock Classes="summaryLabel" Text="{Binding [Field.TotalAmount], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
+								<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.TotalAmount}" TextAlignment="Right"/>
 								<TextBlock Classes="display" Text="{Binding DetailTotal}" FontSize="17"
 										   FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" TextAlignment="Right"/>
 							</StackPanel>
 						</Grid>
 
 						<Grid ColumnDefinitions="2*,90,*,*" ColumnSpacing="12">
-							<TextBlock Grid.Column="0" Classes="tableHead" Text="{Binding [Field.Description], Source={x:Static loc:Strings.Current}}"/>
-							<TextBlock Grid.Column="1" Classes="tableHead" Text="{Binding [Field.Quantity], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
-							<TextBlock Grid.Column="2" Classes="tableHead" Text="{Binding [Field.UnitPrice], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
-							<TextBlock Grid.Column="3" Classes="tableHead" Text="{Binding [Field.LineTotal], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
+							<TextBlock Grid.Column="0" Classes="tableHead" Text="{DynamicResource Field.Description}"/>
+							<TextBlock Grid.Column="1" Classes="tableHead" Text="{DynamicResource Field.Quantity}" TextAlignment="Right"/>
+							<TextBlock Grid.Column="2" Classes="tableHead" Text="{DynamicResource Field.UnitPrice}" TextAlignment="Right"/>
+							<TextBlock Grid.Column="3" Classes="tableHead" Text="{DynamicResource Field.LineTotal}" TextAlignment="Right"/>
 						</Grid>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
@@ -330,7 +329,7 @@
 						Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="24,20">
 					<StackPanel Spacing="12">
-						<TextBlock Classes="display" Text="{Binding [Queue.ViolationRecord], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+						<TextBlock Classes="display" Text="{DynamicResource Queue.ViolationRecord}" FontSize="15.5"
 								   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 						<ItemsControl ItemsSource="{Binding Violations}">
 							<ItemsControl.ItemTemplate>
@@ -368,7 +367,7 @@
 						Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="24,20">
 					<StackPanel Spacing="12">
-						<TextBlock Classes="display" Text="{Binding [Field.Files], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+						<TextBlock Classes="display" Text="{DynamicResource Field.Files}" FontSize="15.5"
 								   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 						<!--
 						  Kategori rozeti: kontrol listesi sözleşme dosyası ile ek/teminat
@@ -398,7 +397,7 @@
 													CommandParameter="{Binding RawAttachment}">
 												<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 														CornerRadius="6" Padding="12,5">
-													<TextBlock Text="{Binding [Field.Open], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+													<TextBlock Text="{DynamicResource Field.Open}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 												</Border>
 											</Button>
 										</Grid>
@@ -470,12 +469,12 @@
 				<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="18,16">
 					<StackPanel Spacing="12">
-						<TextBlock Classes="sectionLabel" Text="{Binding [Queue.Decision], Source={x:Static loc:Strings.Current}}"/>
+						<TextBlock Classes="sectionLabel" Text="{DynamicResource Queue.Decision}"/>
 
 						<StackPanel Spacing="5">
-							<TextBlock Text="{Binding [Field.Note], Source={x:Static loc:Strings.Current}}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource TextLabel}"/>
+							<TextBlock Text="{DynamicResource Field.Note}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource TextLabel}"/>
 							<TextBox Text="{Binding Note}" AcceptsReturn="True" Height="90" TextWrapping="Wrap"
-									 PlaceholderText="{Binding [Queue.NotePlaceholder], Source={x:Static loc:Strings.Current}}"/>
+									 PlaceholderText="{DynamicResource Queue.NotePlaceholder}"/>
 						</StackPanel>
 
 						<Button Classes="flat" HorizontalAlignment="Stretch"
@@ -487,7 +486,7 @@
 						</Button>
 
 						<TextBlock IsVisible="{Binding ShowChecklistWarning}"
-								   Text="{Binding [Queue.ChecklistRequired], Source={x:Static loc:Strings.Current}}"
+								   Text="{DynamicResource Queue.ChecklistRequired}"
 								   FontSize="11" Foreground="{DynamicResource WarningBase}" TextWrapping="Wrap"/>
 
 						<Button Classes="flat" HorizontalAlignment="Stretch" Click="OnRejectClick">

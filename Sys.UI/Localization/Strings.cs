@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
+using Avalonia;
+using Avalonia.Controls;
 
 namespace Sys.UI.Localization;
 
@@ -14,23 +15,37 @@ namespace Sys.UI.Localization;
 //
 // Çeviri yapılmamış anahtarlar için İngilizce alan Türkçesiyle aynı bırakılabilir;
 // bu bilinçli bir ara durumdur ve ekranda boşluk yerine anlaşılır metin görünür.
-public sealed class Strings : INotifyPropertyChanged
+public static class Strings
 {
-    // XAML'den erişim için tek örnek:
+    // XAML'den erişim KAYNAK üzerinden:
+    //   Text="{DynamicResource Nav.Dashboard}"
+    //
+    // Önce indeksleyiciye bağlama denendi:
     //   Text="{Binding [Nav.Dashboard], Source={x:Static loc:Strings.Current}}"
-    public static Strings Current { get; } = new();
+    // ve dil değişince "Item[]" değişti bildirimi gönderiliyordu. ÇALIŞMIYOR —
+    // Avalonia bu bildirimle indeksleyici bağlamalarını yeniden değerlendirmiyor.
+    // Belirtisi sinsiydi: sayfalar doğru görünüyordu, çünkü dil değişiminde kabuk
+    // onları zaten baştan kuruyor. Kabuğun KENDİSİ yeniden kurulmadığı için üst
+    // çubuktaki metinler giriş anındaki dilde donup kalıyordu.
+    //
+    // Kaynak sözlüğü, bu projede zaten çalıştığı kanıtlanmış mekanizma: renk paleti
+    // aynı şekilde tema değişiminde güncelleniyor.
+    private static ResourceDictionary? _active;
 
-    private Strings() { }
+    // Uygulama açılışında ve her dil değişiminde çağrılır. Sözlük değiştirildiğinde
+    // Avalonia {DynamicResource} bağlamalarını kendiliğinden tazeliyor.
+    public static void ApplyToResources()
+    {
+        if (Application.Current is not { } app) return;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
+        var next = new ResourceDictionary();
+        foreach (var (key, pair) in Map)
+            next[key] = LanguageService.IsEnglish ? pair.En : pair.Tr;
 
-    // Dil değiştiğinde TÜM bağlamalar tazelensin diye indeksleyicinin tamamı
-    // "değişti" olarak duyuruluyor. Anahtar başına ayrı bildirim göndermek
-    // yüzlerce olay demek olurdu ve dil nadiren değişen bir ayar.
-    internal static void NotifyLanguageChanged()
-        => Current.PropertyChanged?.Invoke(Current, new PropertyChangedEventArgs("Item[]"));
-
-    public string this[string key] => T(key);
+        if (_active is not null) app.Resources.MergedDictionaries.Remove(_active);
+        app.Resources.MergedDictionaries.Add(next);
+        _active = next;
+    }
 
     // C# tarafı için. Anahtar yoksa anahtarın kendisi köşeli parantezle dönüyor:
     // ekranda boşluk yerine "[Nav.Dashboard]" görünür, yani eksik çeviri sessizce
@@ -427,6 +442,9 @@ public sealed class Strings : INotifyPropertyChanged
         // --- Onay/red penceresi ---
         ["Confirm.Title"] = ("Onay", "Confirm"),
         ["Confirm.Cancel"] = ("Vazgeç", "Cancel"),
+        ["Confirm.DiscardInput"] = ("Bu ekranda doldurduklarınız kaybolacak. Devam edilsin mi?",
+                                    "What you have entered on this screen will be lost. Continue?"),
+        ["Confirm.DiscardInputButton"] = ("Evet, Devam Et", "Yes, Continue"),
         ["Confirm.Default"] = ("Evet, Devam Et", "Yes, Continue"),
         ["Queue.ApproveAndNext"] = ("Onayla ve Sıradakine Geç", "Approve and Go to Next"),
         ["Queue.Approve"] = ("Onayla", "Approve"),

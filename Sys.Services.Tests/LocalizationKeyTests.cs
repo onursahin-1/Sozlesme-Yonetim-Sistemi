@@ -30,7 +30,9 @@ public class LocalizationKeyTests
     // "kullanılmıyor" göründü — kullanılıyorlardı, desen kördü.
     private static readonly Regex QuotedKey =
         new(@"""([A-Z][A-Za-z]+\.[A-Za-z0-9çğıöşüÇĞİÖŞÜ]+)""", RegexOptions.Compiled);
-    private static readonly Regex XamlBinding = new(@"\{Binding \[([^\]]+)\]", RegexOptions.Compiled);
+    // XAML artık kaynak üzerinden okuyor: {DynamicResource Nav.Dashboard}
+    private static readonly Regex XamlResource =
+        new(@"\{DynamicResource ([A-Za-z0-9_.çğıöşüÇĞİÖŞÜ]+)\}", RegexOptions.Compiled);
 
     [Fact]
     public void EveryUsedKey_IsDefinedInDictionary()
@@ -91,8 +93,14 @@ public class LocalizationKeyTests
                 used.Add(value);
             }
 
-            foreach (Match m in XamlBinding.Matches(text))
-                used.Add(m.Groups[1].Value);
+            // Renk paleti de aynı sözdizimini kullanıyor; önek süzgeci ayırıyor.
+            foreach (Match m in XamlResource.Matches(text))
+            {
+                var value = m.Groups[1].Value;
+                if (!value.Contains('.')) continue;
+                if (!prefixes.Contains(value[..value.IndexOf('.')])) continue;
+                used.Add(value);
+            }
         }
 
         // Hata anahtarları koddan TÜRETİLİYOR ("Err." + AppError değeri), kaynakta

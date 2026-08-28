@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -67,7 +66,7 @@
 						  VerticalAlignment="Center"
 						  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
 					<TextBox Grid.Column="1" Text="{Binding SearchText}"
-							 PlaceholderText="{Binding [List.SearchPlaceholder], Source={x:Static loc:Strings.Current}}"
+							 PlaceholderText="{DynamicResource List.SearchPlaceholder}"
 							 Background="Transparent" BorderThickness="0"
 							 Padding="10,9" FontSize="12.5"/>
 				</Grid>
@@ -85,35 +84,35 @@
 						  SelectedItem="{Binding SelectedType}"
 						  MinWidth="150" FontSize="12.5" Padding="12,8"
 						  CornerRadius="8" BorderBrush="{DynamicResource BorderButton}"
-						  ToolTip.Tip="{Binding [List.TypeFilterHint], Source={x:Static loc:Strings.Current}}"/>
+						  ToolTip.Tip="{DynamicResource List.TypeFilterHint}"/>
 
 				<!--
 				  Ekrandaki filtreler aynen uygulanır ama görünen sayfa değil, eşleşen
 				  TÜM kayıtlar aktarılır — aktarmanın amacı analiz.
 				-->
 				<Button Classes="flat" Click="OnExportExcelClick" IsEnabled="{Binding !IsBusy}"
-						ToolTip.Tip="{Binding [Common.ExcelHint], Source={x:Static loc:Strings.Current}}">
+						ToolTip.Tip="{DynamicResource Common.ExcelHint}">
 					<Border Background="{DynamicResource SuccessSoftBgAlt}" BorderBrush="{DynamicResource SuccessSoftBorder}" BorderThickness="1"
 							CornerRadius="8" Padding="12,9">
 						<StackPanel Orientation="Horizontal" Spacing="7">
 							<Path Stroke="{DynamicResource SuccessBase}" StrokeThickness="1.8" Fill="Transparent"
 								  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
 								  Data="M12 3v12M12 15l-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
-							<TextBlock Text="{Binding [Common.Excel], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource SuccessBase}" FontSize="12.5"
+							<TextBlock Text="{DynamicResource Common.Excel}" Foreground="{DynamicResource SuccessBase}" FontSize="12.5"
 									   FontWeight="SemiBold" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Border>
 				</Button>
 
 				<Button Classes="flat" Command="{Binding RefreshCommand}"
-						ToolTip.Tip="{Binding [Common.RefreshHint], Source={x:Static loc:Strings.Current}}">
+						ToolTip.Tip="{DynamicResource Common.RefreshHint}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 							CornerRadius="8" Padding="12,9">
 						<StackPanel Orientation="Horizontal" Spacing="7">
 							<Path Stroke="{DynamicResource TextBodyAlt}" StrokeThickness="1.8" Fill="Transparent"
 								  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
 								  Data="M20 11a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>
-							<TextBlock Text="{Binding [Common.Refresh], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12.5" VerticalAlignment="Center"/>
+							<TextBlock Text="{DynamicResource Common.Refresh}" Foreground="{DynamicResource TextBody}" FontSize="12.5" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Border>
 				</Button>
@@ -125,35 +124,35 @@
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="tumu">
 				<Border CornerRadius="16" Padding="15,7"
 						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=tumu}">
-					<TextBlock Text="{Binding [Common.All], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold"
+					<TextBlock Text="{DynamicResource Common.All}" FontSize="12" FontWeight="SemiBold"
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tumu}"/>
 				</Border>
 			</Button>
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="yururlukte">
 				<Border CornerRadius="16" Padding="15,7"
 						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=yururlukte}">
-					<TextBlock Text="{Binding [Status.Live], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold"
+					<TextBlock Text="{DynamicResource Status.Live}" FontSize="12" FontWeight="SemiBold"
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=yururlukte}"/>
 				</Border>
 			</Button>
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor">
 				<Border CornerRadius="16" Padding="15,7"
 						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=onay_bekliyor}">
-					<TextBlock Text="{Binding [Status.PendingApproval], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold"
+					<TextBlock Text="{DynamicResource Status.PendingApproval}" FontSize="12" FontWeight="SemiBold"
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=onay_bekliyor}"/>
 				</Border>
 			</Button>
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="uyari">
 				<Border CornerRadius="16" Padding="15,7"
 						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=uyari}">
-					<TextBlock Text="{Binding [Status.Warning], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold"
+					<TextBlock Text="{DynamicResource Status.Warning}" FontSize="12" FontWeight="SemiBold"
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=uyari}"/>
 				</Border>
 			</Button>
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="ihlal">
 				<Border CornerRadius="16" Padding="15,7"
 						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=ihlal}">
-					<TextBlock Text="{Binding [Status.Violation], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold"
+					<TextBlock Text="{DynamicResource Status.Violation}" FontSize="12" FontWeight="SemiBold"
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=ihlal}"/>
 				</Border>
 			</Button>
@@ -162,30 +161,30 @@
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="reddedildi">
 				<Border CornerRadius="16" Padding="15,7"
 						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=reddedildi}">
-					<TextBlock Text="{Binding [Status.Rejected], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold"
+					<TextBlock Text="{DynamicResource Status.Rejected}" FontSize="12" FontWeight="SemiBold"
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=reddedildi}"/>
 				</Border>
 			</Button>
 
 			<Button Classes="flat" Command="{Binding ClearFiltersCommand}"
 					IsVisible="{Binding HasActiveFilters}" Margin="4,0,0,0">
-				<TextBlock Text="{Binding [Common.ClearFilters], Source={x:Static loc:Strings.Current}}" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
+				<TextBlock Text="{DynamicResource Common.ClearFilters}" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
 						   VerticalAlignment="Center"/>
 			</Button>
 		</StackPanel>
 
-		<TextBlock DockPanel.Dock="Top" Text="{Binding [Common.Loading], Source={x:Static loc:Strings.Current}}" Foreground="Gray" IsVisible="{Binding IsLoading}"/>
+		<TextBlock DockPanel.Dock="Top" Text="{DynamicResource Common.Loading}" Foreground="Gray" IsVisible="{Binding IsLoading}"/>
 		<TextBlock DockPanel.Dock="Top" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"
                    IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
 		<StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,40,0,0" IsVisible="{Binding IsEmpty}">
-			<TextBlock Text="{Binding [List.NoMatch], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextMuted}"
+			<TextBlock Text="{DynamicResource List.NoMatch}" Foreground="{DynamicResource TextMuted}"
 					   FontSize="13" HorizontalAlignment="Center"/>
 			<Button Classes="flat" HorizontalAlignment="Center" Command="{Binding ClearFiltersCommand}"
 					IsVisible="{Binding HasActiveFilters}">
 				<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 						CornerRadius="8" Padding="14,7">
-					<TextBlock Text="{Binding [Common.ClearFilters], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+					<TextBlock Text="{DynamicResource Common.ClearFilters}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 				</Border>
 			</Button>
 		</StackPanel>
@@ -196,7 +195,7 @@
 				<Button Classes="flat" IsEnabled="{Binding CanGoPrevious}" Command="{Binding PreviousPageCommand}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 							CornerRadius="8" Padding="14,7">
-						<TextBlock Text="{Binding [Common.Previous], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+						<TextBlock Text="{DynamicResource Common.Previous}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 					</Border>
 				</Button>
 				<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center"
@@ -204,7 +203,7 @@
 				<Button Classes="flat" IsEnabled="{Binding CanGoNext}" Command="{Binding NextPageCommand}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 							CornerRadius="8" Padding="14,7">
-						<TextBlock Text="{Binding [Common.Next], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+						<TextBlock Text="{DynamicResource Common.Next}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 					</Border>
 				</Button>
 			</StackPanel>
@@ -241,16 +240,16 @@
 								<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="26"
 											VerticalAlignment="Center">
 									<StackPanel Spacing="2">
-										<TextBlock Classes="metricLabel" Text="{Binding [List.ColType], Source={x:Static loc:Strings.Current}}"/>
+										<TextBlock Classes="metricLabel" Text="{DynamicResource List.ColType}"/>
 										<TextBlock Classes="metricValue" Text="{Binding Type}"/>
 									</StackPanel>
 									<StackPanel Spacing="2">
-										<TextBlock Classes="metricLabel" Text="{Binding [List.ColAmount], Source={x:Static loc:Strings.Current}}"/>
+										<TextBlock Classes="metricLabel" Text="{DynamicResource List.ColAmount}"/>
 										<TextBlock Classes="metricValue" Text="{Binding BedelText}"
 												   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 									</StackPanel>
 									<StackPanel Spacing="2">
-										<TextBlock Classes="metricLabel" Text="{Binding [List.ColRemaining], Source={x:Static loc:Strings.Current}}"/>
+										<TextBlock Classes="metricLabel" Text="{DynamicResource List.ColRemaining}"/>
 										<TextBlock Classes="metricValue" Text="{Binding GunKalanText}"/>
 									</StackPanel>
 								</StackPanel>
@@ -270,14 +269,14 @@
 												CommandParameter="{Binding}">
 											<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 													CornerRadius="6" Padding="12,5">
-												<TextBlock Text="{Binding [Common.Detail], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+												<TextBlock Text="{DynamicResource Common.Detail}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 											</Border>
 										</Button>
 										<Button Classes="flat" IsVisible="{Binding IsEditable}"
 												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).EditRequestCommand}"
 												CommandParameter="{Binding}">
 											<Border Background="{DynamicResource AccentSolid}" CornerRadius="6" Padding="12,5">
-												<TextBlock Text="{Binding [Common.Edit], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="11.5"/>
+												<TextBlock Text="{DynamicResource Common.Edit}" Foreground="{DynamicResource TextOnAccent}" FontSize="11.5"/>
 											</Border>
 										</Button>
 										<Button Classes="flat" IsVisible="{Binding CanRejectRequest}"
@@ -291,14 +290,14 @@
 												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestContractCreationCommand}"
 												CommandParameter="{Binding}">
 											<Border Background="{DynamicResource ProcessSolid}" CornerRadius="6" Padding="12,5">
-												<TextBlock Text="{Binding [List.CreateContract], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="11.5"/>
+												<TextBlock Text="{DynamicResource List.CreateContract}" Foreground="{DynamicResource TextOnAccent}" FontSize="11.5"/>
 											</Border>
 										</Button>
 										<Button Classes="flat" IsVisible="{Binding NeedsSybSonKontrol}"
 												Command="{Binding $parent[UserControl].((vm:ContractListViewModel)DataContext).RequestSonKontrolCommand}"
 												CommandParameter="{Binding}">
 											<Border Background="{DynamicResource WarningSolid}" CornerRadius="6" Padding="12,5">
-												<TextBlock Text="{Binding [List.GoToFinalCheck], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="11.5"/>
+												<TextBlock Text="{DynamicResource List.GoToFinalCheck}" Foreground="{DynamicResource TextOnAccent}" FontSize="11.5"/>
 											</Border>
 										</Button>
 									</StackPanel>

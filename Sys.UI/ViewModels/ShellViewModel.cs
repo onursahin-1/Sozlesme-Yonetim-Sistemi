@@ -47,14 +47,9 @@ public partial class ShellViewModel : ViewModelBase
     public User CurrentUser { get; }
     public event Action? LogoutRequested;
 
-    public string RoleLabel => CurrentUser.Role switch
-    {
-        UserRole.Personel => Strings.T("Role.Personel"),
-        UserRole.SYB => Strings.T("Role.Syb"),
-        UserRole.Mudur => Strings.T("Role.Mudur"),
-        UserRole.Admin => Strings.T("Role.Admin"),
-        _ => CurrentUser.Role.ToString()
-    };
+    // Eşleme UserRoleHelper'da; burada ikinci bir kopyası vardı ve dil desteği
+    // eklenirken biri çevrilip diğeri Türkçe kalmıştı.
+    public string RoleLabel => UserRoleHelper.ToLabel(CurrentUser.Role);
 
     // Üst çubuktaki avatar dairesi için baş harfler: "Emin Ramazanoğlu" → "ER".
     // Tek kelimelik adlarda ilk iki harf alınır ("Admin" → "AD").
@@ -191,8 +186,20 @@ public partial class ShellViewModel : ViewModelBase
 
     public string ThemeToggleTooltip => Strings.T(IsDarkTheme ? "Shell.ThemeToLight" : "Shell.ThemeToDark");
 
-    [RelayCommand]
-    private void ToggleTheme() => ThemeService.Toggle();
+    // Tema ve dil geçişleri komutla değil kod-arkasından tetikleniyor: gerektiğinde
+    // önce bir onay penceresi açılması lazım ve pencere açmak sahip pencereyi bilmeyi
+    // gerektiriyor (uygulamanın geri kalanında da bu desen kullanılıyor).
+    public void ToggleTheme() => ThemeService.Toggle();
+
+    public void ToggleLanguage() => LanguageService.Toggle();
+
+    // Açık ekranda kullanıcının doldurduğu, henüz gönderilmemiş veri var mı?
+    //
+    // Tema/dil değişimi açık sayfayı yeniden kuruyor — ViewModel'in ürettiği metin ve
+    // renklerin tazelenmesinin tek yolu bu. Bedeli yarım kalmış formun kaybolması;
+    // burası o kaybın SESSİZ olmasını engelliyor.
+    public bool CurrentPageHasUnsavedInput =>
+        CurrentPageContent is IHasUnsavedInput { HasUnsavedInput: true };
 
     // --- Dil ---
 
@@ -206,9 +213,6 @@ public partial class ShellViewModel : ViewModelBase
         Strings.T(LanguageService.IsEnglish ? "Shell.LanguageToTurkish" : "Shell.LanguageToEnglish");
 
     public string NotificationsTooltip => Strings.T("Shell.Notifications");
-
-    [RelayCommand]
-    private void ToggleLanguage() => LanguageService.Toggle();
 
     // Dil değişince menü etiketleri ve sayfa başlığı yeniden kuruluyor.
     //

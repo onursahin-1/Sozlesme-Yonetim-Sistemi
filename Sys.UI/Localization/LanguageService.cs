@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text.Json;
 
@@ -51,9 +51,9 @@ public static class LanguageService
         Current = language;
         Save();
 
-        // Sözlük önce haber alır, ekranlar sonra: aksi halde ekranlar eski dilin
-        // metinlerini okurdu.
-        Strings.NotifyLanguageChanged();
+        // Kaynak sözlüğü önce değişir, ekranlar sonra haber alır: aksi halde
+        // ekranlar eski dilin metinlerini okurdu.
+        Strings.ApplyToResources();
         LanguageChanged?.Invoke();
     }
 

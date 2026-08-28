@@ -32,6 +32,10 @@ public partial class App : Application
         // Türkçe çizilip hemen ardından İngilizceye dönerdi.
         Localization.LanguageService.Initialize();
 
+        // Metinler kaynak sözlüğü olarak uygulamaya ekleniyor; XAML {DynamicResource}
+        // ile okuyor ve dil değişiminde kendiliğinden tazeleniyor.
+        Localization.Strings.ApplyToResources();
+
         // Servis hata kodlarını metne çeviren köprü. Bundan sonra servis katmanının
         // fırlattığı AppException doğru dilde okunuyor.
         Localization.ErrorText.Install();

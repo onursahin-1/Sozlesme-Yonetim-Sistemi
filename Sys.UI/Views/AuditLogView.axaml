@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -51,7 +50,7 @@
 			<Grid ColumnDefinitions="*,*,*,*,Auto,Auto" ColumnSpacing="14">
 
 				<StackPanel Grid.Column="0">
-					<TextBlock Classes="filterLabel" Text="{Binding [Audit.User], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="filterLabel" Text="{DynamicResource Audit.User}"/>
 					<ComboBox HorizontalAlignment="Stretch"
 							  ItemsSource="{Binding UserOptions}" SelectedItem="{Binding SelectedUser}"/>
 				</StackPanel>
@@ -62,18 +61,18 @@
 				  yetmiyordu.
 				-->
 				<StackPanel Grid.Column="1">
-					<TextBlock Classes="filterLabel" Text="{Binding [Audit.ActionType], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="filterLabel" Text="{DynamicResource Audit.ActionType}"/>
 					<ComboBox HorizontalAlignment="Stretch"
 							  ItemsSource="{Binding ActionOptions}" SelectedItem="{Binding SelectedAction}"/>
 				</StackPanel>
 
 				<StackPanel Grid.Column="2">
-					<TextBlock Classes="filterLabel" Text="{Binding [Audit.From], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="filterLabel" Text="{DynamicResource Audit.From}"/>
 					<DatePicker SelectedDate="{Binding StartDate}"/>
 				</StackPanel>
 
 				<StackPanel Grid.Column="3">
-					<TextBlock Classes="filterLabel" Text="{Binding [Audit.To], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="filterLabel" Text="{DynamicResource Audit.To}"/>
 					<DatePicker SelectedDate="{Binding EndDate}"/>
 				</StackPanel>
 
@@ -81,7 +80,7 @@
 						IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 							CornerRadius="8" Padding="14,10">
-						<TextBlock Text="{Binding [Audit.Clear], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"/>
+						<TextBlock Text="{DynamicResource Audit.Clear}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"/>
 					</Border>
 				</Button>
 
@@ -91,14 +90,14 @@
 				-->
 				<Button Grid.Column="5" Classes="flat" VerticalAlignment="Bottom"
 						Click="OnExportExcelClick"
-						ToolTip.Tip="{Binding [Audit.ExcelHint], Source={x:Static loc:Strings.Current}}">
+						ToolTip.Tip="{DynamicResource Audit.ExcelHint}">
 					<Border Background="{DynamicResource SuccessSoftBgAlt}" BorderBrush="{DynamicResource SuccessSoftBorder}" BorderThickness="1"
 							CornerRadius="8" Padding="14,10">
 						<StackPanel Orientation="Horizontal" Spacing="7">
 							<Path Stroke="{DynamicResource SuccessBase}" StrokeThickness="1.8" Fill="Transparent"
 								  Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center"
 								  Data="M12 3v12M12 15l-4.5-4.5M12 15l4.5-4.5M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
-							<TextBlock Text="{Binding [Common.Excel], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource SuccessBase}" FontSize="12.5"
+							<TextBlock Text="{DynamicResource Common.Excel}" Foreground="{DynamicResource SuccessBase}" FontSize="12.5"
 									   FontWeight="SemiBold" VerticalAlignment="Center"/>
 						</StackPanel>
 					</Border>
@@ -112,7 +111,7 @@
 				<Button Classes="flat" IsEnabled="{Binding CanGoPrevious}" Command="{Binding PreviousPageCommand}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 							CornerRadius="8" Padding="14,7">
-						<TextBlock Text="{Binding [Common.Previous], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+						<TextBlock Text="{DynamicResource Common.Previous}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 					</Border>
 				</Button>
 				<TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center"
@@ -120,13 +119,13 @@
 				<Button Classes="flat" IsEnabled="{Binding CanGoNext}" Command="{Binding NextPageCommand}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 							CornerRadius="8" Padding="14,7">
-						<TextBlock Text="{Binding [Common.Next], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+						<TextBlock Text="{DynamicResource Common.Next}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 					</Border>
 				</Button>
 			</StackPanel>
 		</Border>
 
-		<TextBlock DockPanel.Dock="Top" Text="{Binding [Common.Loading], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextFaintAlt}" FontSize="12.5"
+		<TextBlock DockPanel.Dock="Top" Text="{DynamicResource Common.Loading}" Foreground="{DynamicResource TextFaintAlt}" FontSize="12.5"
 				   Margin="2,4,0,0" IsVisible="{Binding IsLoading}"/>
 
 		<Border DockPanel.Dock="Top" IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -137,13 +136,13 @@
 		</Border>
 
 		<StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,30,0,0" IsVisible="{Binding IsEmpty}">
-			<TextBlock Text="{Binding [Audit.NoMatch], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextMuted}"
+			<TextBlock Text="{DynamicResource Audit.NoMatch}" Foreground="{DynamicResource TextMuted}"
 					   FontSize="13" HorizontalAlignment="Center"/>
 			<Button Classes="flat" HorizontalAlignment="Center"
 					IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}">
 				<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 						CornerRadius="8" Padding="14,7">
-					<TextBlock Text="{Binding [Common.ClearFilters], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+					<TextBlock Text="{DynamicResource Common.ClearFilters}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 				</Border>
 			</Button>
 		</StackPanel>
@@ -157,10 +156,10 @@
 				<Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceSubtle}"
 						BorderBrush="{DynamicResource BorderFaint}" BorderThickness="0,0,0,1" Padding="0,12">
 					<Grid ColumnDefinitions="4,120,240,210,*" ColumnSpacing="14" Margin="18,0,20,0">
-						<TextBlock Grid.Column="1" Classes="tableHead" Text="{Binding [Audit.Date], Source={x:Static loc:Strings.Current}}"/>
-						<TextBlock Grid.Column="2" Classes="tableHead" Text="{Binding [Audit.User], Source={x:Static loc:Strings.Current}}"/>
-						<TextBlock Grid.Column="3" Classes="tableHead" Text="{Binding [Audit.Action], Source={x:Static loc:Strings.Current}}"/>
-						<TextBlock Grid.Column="4" Classes="tableHead" Text="{Binding [Audit.Detail], Source={x:Static loc:Strings.Current}}"/>
+						<TextBlock Grid.Column="1" Classes="tableHead" Text="{DynamicResource Audit.Date}"/>
+						<TextBlock Grid.Column="2" Classes="tableHead" Text="{DynamicResource Audit.User}"/>
+						<TextBlock Grid.Column="3" Classes="tableHead" Text="{DynamicResource Audit.Action}"/>
+						<TextBlock Grid.Column="4" Classes="tableHead" Text="{DynamicResource Audit.Detail}"/>
 					</Grid>
 				</Border>
 

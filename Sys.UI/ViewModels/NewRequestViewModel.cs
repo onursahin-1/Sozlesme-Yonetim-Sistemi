@@ -11,8 +11,19 @@ using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
-public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
+public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler, IHasUnsavedInput
 {
+    // Düzenleme ve yenileme modunda form zaten dolu geliyor; kullanıcı hiçbir şey
+    // yazmamış olsa bile ekrandan çıkmak veri kaybettirir.
+    public bool HasUnsavedInput =>
+        IsEditMode || IsRenewal
+        || !string.IsNullOrWhiteSpace(Title)
+        || !string.IsNullOrWhiteSpace(Description)
+        || !string.IsNullOrWhiteSpace(CompanyName)
+        || !string.IsNullOrWhiteSpace(TaxNo)
+        || !string.IsNullOrWhiteSpace(EstimatedAmountText)
+        || SelectedFilePath is not null;
+
     private readonly ContractService _contractService;
     private readonly User _currentUser;
     private readonly string _attachmentsBasePath;

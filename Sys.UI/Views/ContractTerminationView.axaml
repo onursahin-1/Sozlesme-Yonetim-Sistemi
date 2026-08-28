@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -75,9 +74,9 @@
 				<Border Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 						CornerRadius="10" Padding="16,13">
 					<StackPanel Spacing="3">
-						<TextBlock Text="{Binding [Term.EndsContract], Source={x:Static loc:Strings.Current}}" FontSize="13"
+						<TextBlock Text="{DynamicResource Term.EndsContract}" FontSize="13"
 								   FontWeight="SemiBold" Foreground="{DynamicResource DangerBase}"/>
-						<TextBlock Text="{Binding [Term.ApprovalNotice], Source={x:Static loc:Strings.Current}}"
+						<TextBlock Text="{DynamicResource Term.ApprovalNotice}"
 								   FontSize="11.5" Foreground="{DynamicResource DangerTextAlt}" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
@@ -108,22 +107,22 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="{Binding [Term.TypeSection], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+								<TextBlock Classes="display" Text="{DynamicResource Term.TypeSection}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="{Binding [Form.RequiredHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{DynamicResource Form.RequiredHint}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="{Binding [Term.ContractToTerminate], Source={x:Static loc:Strings.Current}}"/>
+								<Run Text="{DynamicResource Term.ContractToTerminate}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<ComboBox HorizontalAlignment="Stretch"
 									  ItemsSource="{Binding AvailableContracts}"
 									  SelectedItem="{Binding SelectedContract}"
-									  PlaceholderText="{Binding [Term.PickerPlaceholder], Source={x:Static loc:Strings.Current}}">
+									  PlaceholderText="{DynamicResource Term.PickerPlaceholder}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate x:DataType="domain:Contract">
 										<TextBlock TextTrimming="CharacterEllipsis">
@@ -136,14 +135,14 @@
 							</ComboBox>
 							<TextBlock Classes="fieldError" Text="{Binding ContractError}"
 									   IsVisible="{Binding ContractError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-							<TextBlock Classes="formHint" Text="{Binding [Term.NoEligible], Source={x:Static loc:Strings.Current}}"
+							<TextBlock Classes="formHint" Text="{DynamicResource Term.NoEligible}"
 									   IsVisible="{Binding !AvailableContracts.Count}"/>
 						</StackPanel>
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Term.Type], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Term.Type}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<ComboBox HorizontalAlignment="Stretch"
@@ -152,7 +151,7 @@
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Term.Date], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Term.Date}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<DatePicker SelectedDate="{Binding TerminationDate}"/>
@@ -170,25 +169,25 @@
 								Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 								CornerRadius="9" Padding="13,10">
 							<StackPanel Spacing="3">
-								<TextBlock Text="{Binding [Term.NoRecordedViolation], Source={x:Static loc:Strings.Current}}" FontSize="12"
+								<TextBlock Text="{DynamicResource Term.NoRecordedViolation}" FontSize="12"
 										   FontWeight="SemiBold" Foreground="{DynamicResource WarningTextAlt}"/>
-								<TextBlock Text="{Binding [Term.JustCauseHint], Source={x:Static loc:Strings.Current}}"
+								<TextBlock Text="{DynamicResource Term.JustCauseHint}"
 										   FontSize="11.5" Foreground="{DynamicResource WarningTextAlt}" TextWrapping="Wrap"/>
 							</StackPanel>
 						</Border>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="{Binding [Term.Reason], Source={x:Static loc:Strings.Current}}"/>
+								<Run Text="{DynamicResource Term.Reason}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="110" TextWrapping="Wrap"
 									 AcceptsTab="False"
-									 PlaceholderText="{Binding [Term.ReasonPlaceholder], Source={x:Static loc:Strings.Current}}"/>
+									 PlaceholderText="{DynamicResource Term.ReasonPlaceholder}"/>
 							<TextBlock Classes="fieldError" Text="{Binding ReasonError}"
 									   IsVisible="{Binding ReasonError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							<TextBlock Classes="formHint"
-									   Text="{Binding [Term.ReasonHint], Source={x:Static loc:Strings.Current}}"/>
+									   Text="{DynamicResource Term.ReasonHint}"/>
 						</StackPanel>
 					</StackPanel>
 				</Border>
@@ -205,9 +204,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="{Binding [Term.CompensationSection], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+								<TextBlock Classes="display" Text="{DynamicResource Term.CompensationSection}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="{Binding [Term.DirectionHint], Source={x:Static loc:Strings.Current}}"
+								<TextBlock Text="{DynamicResource Term.DirectionHint}"
 										   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
@@ -219,17 +218,17 @@
 						-->
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
-								<TextBlock Classes="formLabel" Text="{Binding [Term.Direction], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="formLabel" Text="{DynamicResource Term.Direction}"/>
 								<ComboBox HorizontalAlignment="Stretch"
 										  ItemsSource="{Binding CompensationDirections}"
 										  SelectedItem="{Binding SelectedCompensationDirection}"/>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel" Text="{Binding CompensationLabel}"/>
-								<TextBox Text="{Binding CompensationAmountText}" PlaceholderText="{Binding [Req.AmountPlaceholder], Source={x:Static loc:Strings.Current}}"
+								<TextBox Text="{Binding CompensationAmountText}" PlaceholderText="{DynamicResource Req.AmountPlaceholder}"
 										 IsEnabled="{Binding IsCompensationEnabled}"
 										 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
-								<TextBlock Classes="formHint" Text="{Binding [Term.AmountHint], Source={x:Static loc:Strings.Current}}"
+								<TextBlock Classes="formHint" Text="{DynamicResource Term.AmountHint}"
 										   IsVisible="{Binding !IsCompensationEnabled}"/>
 							</StackPanel>
 						</Grid>
@@ -251,9 +250,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="{Binding [Term.Document], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+								<TextBlock Classes="display" Text="{DynamicResource Term.Document}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="{Binding [Term.DocumentHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{DynamicResource Term.DocumentHint}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 
@@ -267,7 +266,7 @@
 								<Button Classes="flat" HorizontalAlignment="Center" Click="OnPickFileClick">
 									<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 											CornerRadius="8" Padding="18,9">
-										<TextBlock Text="{Binding [Term.ChoosePdf], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
+										<TextBlock Text="{DynamicResource Term.ChoosePdf}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
 												   FontWeight="SemiBold"/>
 									</Border>
 								</Button>
@@ -285,10 +284,10 @@
 										   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 										   TextTrimming="CharacterEllipsis"/>
 								<Button Grid.Column="2" Classes="flat" Click="OnPickFileClick" VerticalAlignment="Center">
-									<TextBlock Text="{Binding [Form.Change], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
+									<TextBlock Text="{DynamicResource Form.Change}" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
 								</Button>
 								<Button Grid.Column="3" Classes="flat" Command="{Binding ClearFileCommand}" VerticalAlignment="Center">
-									<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
+									<TextBlock Text="{DynamicResource Form.Remove}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
 								</Button>
 							</Grid>
 						</Border>
@@ -308,7 +307,7 @@
 				<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="18,16">
 					<StackPanel Spacing="14">
-						<TextBlock Classes="sectionLabel" Text="{Binding [Term.ContractToTerminate], Source={x:Static loc:Strings.Current}}"/>
+						<TextBlock Classes="sectionLabel" Text="{DynamicResource Term.ContractToTerminate}"/>
 
 						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
 									Spacing="14">
@@ -324,18 +323,18 @@
 							<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 							<StackPanel Spacing="3">
-								<TextBlock Classes="summaryLabel" Text="{Binding [List.ColAmount], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="summaryLabel" Text="{DynamicResource List.ColAmount}"/>
 								<TextBlock Classes="display" Text="{Binding CurrentAmountText}" FontSize="19"
 										   FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
 							</StackPanel>
 
 							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
 								<StackPanel Grid.Column="0" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="{Binding [Field.StartDate], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.StartDate}"/>
 									<TextBlock Text="{Binding CurrentStartText}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 								<StackPanel Grid.Column="1" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.EndDate}"/>
 									<TextBlock Text="{Binding CurrentEndText}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 							</Grid>
@@ -348,14 +347,14 @@
 							<Border Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 									CornerRadius="9" Padding="12,9">
 								<StackPanel Spacing="2">
-									<TextBlock Classes="summaryLabel" Text="{Binding [Term.RemainingTime], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource WarningMuted}"/>
+									<TextBlock Classes="summaryLabel" Text="{DynamicResource Term.RemainingTime}" Foreground="{DynamicResource WarningMuted}"/>
 									<TextBlock Text="{Binding CurrentRemainingText}" FontSize="13.5"
 											   FontWeight="SemiBold" Foreground="{DynamicResource WarningTextAlt}"/>
 								</StackPanel>
 							</Border>
 						</StackPanel>
 
-						<TextBlock Text="{Binding [Term.PickFromLeft], Source={x:Static loc:Strings.Current}}" FontSize="12.5" Foreground="{DynamicResource TextDisabledAlt}"
+						<TextBlock Text="{DynamicResource Term.PickFromLeft}" FontSize="12.5" Foreground="{DynamicResource TextDisabledAlt}"
 								   IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNull}}"/>
 					</StackPanel>
 				</Border>
@@ -364,7 +363,7 @@
 						IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
 						IsEnabled="{Binding !IsBusy}" Click="OnSubmitClick">
 					<Border Background="{DynamicResource DangerSolid}" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="{Binding [Term.Submit], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
+						<TextBlock Text="{DynamicResource Term.Submit}" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
 								   FontWeight="SemiBold" HorizontalAlignment="Center" TextWrapping="Wrap"
 								   TextAlignment="Center"/>
 					</Border>

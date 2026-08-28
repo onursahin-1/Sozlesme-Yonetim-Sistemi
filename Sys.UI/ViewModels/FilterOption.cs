@@ -21,17 +21,19 @@ namespace Sys.UI.ViewModels;
 // sebebini bulmak zor olurdu. Değer artık etiketten bağımsız.
 //
 // Value null ise "hepsi" demektir; sorguya hiçbir daraltma gitmez.
-public sealed class FilterOption
+// SINIF DEĞİL RECORD: değer eşitliği ŞART.
+//
+// ComboBox, SelectedItem'ı listedeki öğelerle karşılaştırarak hangisinin seçili
+// görüneceğine karar veriyor. Sınıf olduğunda karşılaştırma REFERANS üzerinden
+// yapılıyordu; "hepsi" seçeneğini iki ayrı yerde new'leyen kod (bir kez listeyi
+// kurarken, bir kez varsayılan seçimi atarken) birbirine eşit olmayan iki nesne
+// üretiyor ve kutu BOŞ görünüyordu.
+//
+// Bu, filtre değerlerini etiketten ayırırken düzelttiğimiz hatanın aynısı: iki
+// yerde üretilen "aynı" şeyin aslında aynı olmaması. Değer eşitliği, nerede
+// üretildiğinden bağımsız olarak eşleşmeyi garanti ediyor.
+public sealed record FilterOption(string? Value, string Label)
 {
-    public FilterOption(string? value, string label)
-    {
-        Value = value;
-        Label = label;
-    }
-
-    public string? Value { get; }
-    public string Label { get; }
-
     public bool IsAll => Value is null;
 
     // ComboBox şablonsuz öğelerde ToString() kullanıyor; ayrıca bir

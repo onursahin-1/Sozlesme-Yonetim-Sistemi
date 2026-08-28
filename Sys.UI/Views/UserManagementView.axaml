@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -50,7 +49,7 @@
 	<ScrollViewer>
 		<StackPanel Margin="0,0,20,24" Spacing="14">
 
-			<TextBlock Text="{Binding [Common.Loading], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextFaintAlt}" FontSize="12.5"
+			<TextBlock Text="{DynamicResource Common.Loading}" Foreground="{DynamicResource TextFaintAlt}" FontSize="12.5"
 					   IsVisible="{Binding IsLoading}"/>
 
 			<Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -77,7 +76,7 @@
 					<StackPanel Spacing="10">
 						<TextBlock Text="{Binding ResetRequestHeader}" FontSize="13"
 								   FontWeight="SemiBold" Foreground="{DynamicResource WarningTextAlt}"/>
-						<TextBlock Text="{Binding [Usr.ResetHint], Source={x:Static loc:Strings.Current}}"
+						<TextBlock Text="{DynamicResource Usr.ResetHint}"
 								   FontSize="11.5" Foreground="{DynamicResource WarningDeepAlt}" TextWrapping="Wrap"/>
 
 						<ItemsControl ItemsSource="{Binding ResetRequests}">
@@ -94,10 +93,10 @@
 											<Button Grid.Column="1" Classes="flat" VerticalAlignment="Center"
 													Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).DismissResetRequestCommand}"
 													CommandParameter="{Binding}"
-													ToolTip.Tip="{Binding [Usr.CloseRequestHint], Source={x:Static loc:Strings.Current}}">
+													ToolTip.Tip="{DynamicResource Usr.CloseRequestHint}">
 												<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 														CornerRadius="7" Padding="12,6">
-													<TextBlock Text="{Binding [Usr.Close], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
+													<TextBlock Text="{DynamicResource Usr.Close}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
 												</Border>
 											</Button>
 										</Grid>
@@ -114,7 +113,7 @@
 					<Grid ColumnDefinitions="*,180,150,Auto,Auto" ColumnSpacing="12">
 
 						<StackPanel Grid.Column="0">
-							<TextBlock Classes="filterLabel" Text="{Binding [Usr.Search], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="filterLabel" Text="{DynamicResource Usr.Search}"/>
 							<Border Background="{DynamicResource SurfaceInput}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1" CornerRadius="8">
 								<Grid ColumnDefinitions="Auto,*">
 									<Path Grid.Column="0" Stroke="{DynamicResource TextFaintAlt}" StrokeThickness="2" Fill="Transparent"
@@ -122,20 +121,20 @@
 										  VerticalAlignment="Center"
 										  Data="M11 11L15 15M12.5 7.5A5 5 0 1 1 2.5 7.5a5 5 0 0 1 10 0z"/>
 									<TextBox Grid.Column="1" Text="{Binding SearchText}"
-											 PlaceholderText="{Binding [Usr.SearchPlaceholder], Source={x:Static loc:Strings.Current}}"
+											 PlaceholderText="{DynamicResource Usr.SearchPlaceholder}"
 											 Background="Transparent" BorderThickness="0" Padding="9,8" FontSize="12.5"/>
 								</Grid>
 							</Border>
 						</StackPanel>
 
 						<StackPanel Grid.Column="1">
-							<TextBlock Classes="filterLabel" Text="{Binding [Usr.Role], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="filterLabel" Text="{DynamicResource Usr.Role}"/>
 							<ComboBox HorizontalAlignment="Stretch"
 									  ItemsSource="{Binding RoleFilterOptions}" SelectedItem="{Binding SelectedRoleFilter}"/>
 						</StackPanel>
 
 						<StackPanel Grid.Column="2">
-							<TextBlock Classes="filterLabel" Text="{Binding [Usr.Status], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="filterLabel" Text="{DynamicResource Usr.Status}"/>
 							<ComboBox HorizontalAlignment="Stretch"
 									  ItemsSource="{Binding StatusFilterOptions}" SelectedItem="{Binding SelectedStatusFilter}"/>
 						</StackPanel>
@@ -144,7 +143,7 @@
 								IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}">
 							<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 									CornerRadius="8" Padding="14,10">
-								<TextBlock Text="{Binding [Audit.Clear], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"/>
+								<TextBlock Text="{DynamicResource Audit.Clear}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"/>
 							</Border>
 						</Button>
 
@@ -155,7 +154,7 @@
 									<Path Stroke="{DynamicResource TextOnAccent}" StrokeThickness="2" StrokeLineCap="Round" Fill="Transparent"
 										  Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center"
 										  Data="M12 5v14M5 12h14"/>
-									<TextBlock Text="{Binding [Usr.NewUser], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="12.5"
+									<TextBlock Text="{DynamicResource Usr.NewUser}" Foreground="{DynamicResource TextOnAccent}" FontSize="12.5"
 											   FontWeight="SemiBold" VerticalAlignment="Center"/>
 								</StackPanel>
 							</Border>
@@ -170,9 +169,9 @@
 					<StackPanel Spacing="16">
 
 						<StackPanel Spacing="1">
-							<TextBlock Classes="display" Text="{Binding [Usr.NewUser], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Usr.NewUser}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-							<TextBlock Text="{Binding [Usr.RequiredHint], Source={x:Static loc:Strings.Current}}"
+							<TextBlock Text="{DynamicResource Usr.RequiredHint}"
 									   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 						</StackPanel>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
@@ -180,14 +179,14 @@
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Usr.Username], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Usr.Username}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<TextBox Text="{Binding NewUsername}"/>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Usr.FullName], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Usr.FullName}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<TextBox Text="{Binding NewFullName}"/>
@@ -196,12 +195,12 @@
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
-								<TextBlock Classes="formLabel" Text="{Binding [Usr.Department], Source={x:Static loc:Strings.Current}}"/>
-								<TextBox Text="{Binding NewDepartment}" PlaceholderText="{Binding [Usr.Optional], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="formLabel" Text="{DynamicResource Usr.Department}"/>
+								<TextBox Text="{Binding NewDepartment}" PlaceholderText="{DynamicResource Usr.Optional}"/>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="{Binding [Usr.Role], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Usr.Role}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<!--
@@ -222,17 +221,17 @@
 						<StackPanel MaxWidth="360" HorizontalAlignment="Left">
 							<Grid ColumnDefinitions="*,Auto" Margin="0,0,0,5">
 								<TextBlock Grid.Column="0" Classes="formLabel" Margin="0">
-									<Run Text="{Binding [Usr.TempPassword], Source={x:Static loc:Strings.Current}}"/>
+									<Run Text="{DynamicResource Usr.TempPassword}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<!-- Şifre yazarken Caps Lock uyarısı; diğer şifre ekranlarıyla aynı -->
 								<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5"
 											VerticalAlignment="Center" IsVisible="{Binding ShowNewUserCapsWarning}">
 									<Path Fill="{DynamicResource DangerBase}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
-									<TextBlock Text="{Binding [Pwd.CapsLock], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource DangerBase}" VerticalAlignment="Center"/>
+									<TextBlock Text="{DynamicResource Pwd.CapsLock}" FontSize="11" Foreground="{DynamicResource DangerBase}" VerticalAlignment="Center"/>
 								</StackPanel>
 							</Grid>
-							<TextBox Text="{Binding NewPassword}" PasswordChar="•" PlaceholderText="{Binding [Usr.PasswordPlaceholder], Source={x:Static loc:Strings.Current}}"
+							<TextBox Text="{Binding NewPassword}" PasswordChar="•" PlaceholderText="{DynamicResource Usr.PasswordPlaceholder}"
 									 KeyUp="OnNewUserPasswordKeyUp" GotFocus="OnNewUserPasswordFocus"
 									 LostFocus="OnNewUserPasswordLostFocus"/>
 						</StackPanel>
@@ -240,13 +239,13 @@
 						<StackPanel Orientation="Horizontal" Spacing="10">
 							<Button Classes="flat" IsEnabled="{Binding !IsBusy}" Command="{Binding CreateUserCommand}">
 								<Border Background="{DynamicResource AccentSolid}" CornerRadius="8" Padding="18,10">
-									<TextBlock Text="{Binding [Usr.Create], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"/>
+									<TextBlock Text="{DynamicResource Usr.Create}" Foreground="{DynamicResource TextOnAccent}" FontSize="13" FontWeight="SemiBold"/>
 								</Border>
 							</Button>
 							<Button Classes="flat" Command="{Binding ToggleNewUserFormCommand}">
 								<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 										CornerRadius="8" Padding="18,9">
-									<TextBlock Text="{Binding [Form.Cancel], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="13"/>
+									<TextBlock Text="{DynamicResource Form.Cancel}" Foreground="{DynamicResource TextLabel}" FontSize="13"/>
 								</Border>
 							</Button>
 						</StackPanel>
@@ -257,13 +256,13 @@
 				<TextBlock Text="{Binding CountText}" Classes="sectionLabel" Margin="2,4,0,0"/>
 
 				<StackPanel Spacing="10" Margin="0,20,0,0" IsVisible="{Binding IsEmpty}">
-					<TextBlock Text="{Binding [Usr.NoMatch], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextMuted}"
+					<TextBlock Text="{DynamicResource Usr.NoMatch}" Foreground="{DynamicResource TextMuted}"
 							   FontSize="13" HorizontalAlignment="Center"/>
 					<Button Classes="flat" HorizontalAlignment="Center"
 							IsVisible="{Binding HasActiveFilters}" Command="{Binding ClearFiltersCommand}">
 						<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderButton}" BorderThickness="1"
 								CornerRadius="8" Padding="14,7">
-							<TextBlock Text="{Binding [Common.ClearFilters], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
+							<TextBlock Text="{DynamicResource Common.ClearFilters}" Foreground="{DynamicResource TextBody}" FontSize="12"/>
 						</Border>
 					</Button>
 				</StackPanel>
@@ -292,7 +291,7 @@
 												<!-- Kendi hesabın: hangi satırın sana ait olduğu belli olsun -->
 												<Border IsVisible="{Binding IsSelf}" Background="{DynamicResource BorderFaintBlue}"
 														CornerRadius="8" Padding="7,1" VerticalAlignment="Center">
-													<TextBlock Text="{Binding [Usr.You], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource AccentBase}" FontSize="10" FontWeight="Bold"/>
+													<TextBlock Text="{DynamicResource Usr.You}" Foreground="{DynamicResource AccentBase}" FontSize="10" FontWeight="Bold"/>
 												</Border>
 											</StackPanel>
 											<TextBlock FontSize="11.5" Foreground="{DynamicResource TextMuted}">
@@ -317,7 +316,7 @@
 													CommandParameter="{Binding}">
 												<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 														CornerRadius="7" Padding="12,6">
-													<TextBlock Text="{Binding [Usr.ResetPassword], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+													<TextBlock Text="{DynamicResource Usr.ResetPassword}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 												</Border>
 											</Button>
 
@@ -344,7 +343,7 @@
 											CornerRadius="9" Padding="14,12">
 										<StackPanel Spacing="8">
 											<StackPanel Orientation="Horizontal" Spacing="12">
-												<TextBlock Text="{Binding [Usr.SetNewPassword], Source={x:Static loc:Strings.Current}}" FontSize="11.5" FontWeight="SemiBold"
+												<TextBlock Text="{DynamicResource Usr.SetNewPassword}" FontSize="11.5" FontWeight="SemiBold"
 														   Foreground="{DynamicResource TextLabel}" VerticalAlignment="Center"/>
 												<!--
 												  Uyarı satırın kendi durumundan besleniyor: kutu DataTemplate
@@ -353,26 +352,26 @@
 												<StackPanel Orientation="Horizontal" Spacing="5"
 															VerticalAlignment="Center" IsVisible="{Binding ShowCapsWarning}">
 													<Path Fill="{DynamicResource DangerBase}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
-													<TextBlock Text="{Binding [Pwd.CapsLock], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource DangerBase}" VerticalAlignment="Center"/>
+													<TextBlock Text="{DynamicResource Pwd.CapsLock}" FontSize="11" Foreground="{DynamicResource DangerBase}" VerticalAlignment="Center"/>
 												</StackPanel>
 											</StackPanel>
 											<StackPanel Orientation="Horizontal" Spacing="10">
 												<TextBox Width="260" Text="{Binding NewPasswordText}"
-														 PasswordChar="•" PlaceholderText="{Binding [Usr.PasswordPlaceholder], Source={x:Static loc:Strings.Current}}"
+														 PasswordChar="•" PlaceholderText="{DynamicResource Usr.PasswordPlaceholder}"
 														 KeyUp="OnResetPasswordKeyUp" GotFocus="OnResetPasswordFocus"
 														 LostFocus="OnResetPasswordLostFocus"/>
 												<Button Classes="flat" VerticalAlignment="Center"
 														Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ConfirmResetPasswordCommand}"
 														CommandParameter="{Binding}">
 													<Border Background="{DynamicResource AccentSolid}" CornerRadius="8" Padding="16,9">
-														<TextBlock Text="{Binding [Usr.Save], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="12.5"
+														<TextBlock Text="{DynamicResource Usr.Save}" Foreground="{DynamicResource TextOnAccent}" FontSize="12.5"
 																   FontWeight="SemiBold"/>
 													</Border>
 												</Button>
 												<Button Classes="flat" VerticalAlignment="Center"
 														Command="{Binding $parent[UserControl].((vm:UserManagementViewModel)DataContext).ToggleResetPasswordCommand}"
 														CommandParameter="{Binding}">
-													<TextBlock Text="{Binding [Form.Cancel], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextMuted}" FontSize="11.5"
+													<TextBlock Text="{DynamicResource Form.Cancel}" Foreground="{DynamicResource TextMuted}" FontSize="11.5"
 															   VerticalAlignment="Center"/>
 												</Button>
 											</StackPanel>

@@ -1,6 +1,5 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
@@ -42,7 +41,7 @@
 						IsVisible="{Binding ShowBackButton}" Command="{Binding BackCommand}">
 					<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 							CornerRadius="7" Padding="12,7">
-						<TextBlock Text="{Binding [Det.Back], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
+						<TextBlock Text="{DynamicResource Det.Back}" Foreground="{DynamicResource TextLabel}" FontSize="11.5"/>
 					</Border>
 				</Button>
 
@@ -52,7 +51,7 @@
 				  kırpılıyordu. Yazı boyutu da çubuğun ana öğesi olduğu için büyütüldü.
 				-->
 				<StackPanel Grid.Column="1" Spacing="6">
-					<TextBlock Classes="summaryLabel" Text="{Binding [Det.ViewedContract], Source={x:Static loc:Strings.Current}}"/>
+					<TextBlock Classes="summaryLabel" Text="{DynamicResource Det.ViewedContract}"/>
 
 					<!--
 					  Arama kutusu açılır listenin YANINDA, içinde değil: liste artık
@@ -63,12 +62,12 @@
 						<TextBox Grid.Column="0" Text="{Binding PickerSearchText}"
 								 FontSize="13" Padding="12,11" CornerRadius="8"
 								 BorderBrush="{DynamicResource BorderInput}" Background="{DynamicResource SurfaceInput}"
-								 PlaceholderText="{Binding [Det.SearchWatermark], Source={x:Static loc:Strings.Current}}"/>
+								 PlaceholderText="{DynamicResource Det.SearchWatermark}"/>
 
 						<ComboBox Grid.Column="1" HorizontalAlignment="Stretch" FontSize="14" Padding="14,11"
 								  ItemsSource="{Binding AvailableContracts}"
 								  SelectedItem="{Binding SelectedContract}"
-								  PlaceholderText="{Binding [Det.PickerPlaceholder], Source={x:Static loc:Strings.Current}}">
+								  PlaceholderText="{DynamicResource Det.PickerPlaceholder}">
 							<ComboBox.ItemTemplate>
 								<DataTemplate x:DataType="domain:Contract">
 									<TextBlock TextTrimming="CharacterEllipsis" FontSize="14">
@@ -96,37 +95,37 @@
 					  sözleşmenin akışını ilerleten bir eylem.
 					-->
 					<Button Classes="flat" IsVisible="{Binding CanRenew}" Command="{Binding RenewCommand}"
-							ToolTip.Tip="{Binding [Doc.RenewHint], Source={x:Static loc:Strings.Current}}">
+							ToolTip.Tip="{DynamicResource Doc.RenewHint}">
 						<Border Background="{DynamicResource SuccessSoftBgAlt2}" BorderBrush="{DynamicResource SuccessSoftBorderAlt}" BorderThickness="1"
 								CornerRadius="8" Padding="16,10">
 							<StackPanel Orientation="Horizontal" Spacing="8">
 								<Path Stroke="{DynamicResource SuccessText}" StrokeThickness="1.7" Fill="Transparent"
 									  Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"
 									  Data="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M12 12v5 M9.5 14.5h5"/>
-								<TextBlock Text="{Binding [Doc.Renew], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource SuccessText}" FontSize="13"
+								<TextBlock Text="{DynamicResource Doc.Renew}" Foreground="{DynamicResource SuccessText}" FontSize="13"
 										   FontWeight="SemiBold" VerticalAlignment="Center"/>
 							</StackPanel>
 						</Border>
 					</Button>
 
 					<Button Classes="flat" Command="{Binding PrintCommand}"
-							ToolTip.Tip="{Binding [Doc.PrintHint], Source={x:Static loc:Strings.Current}}">
+							ToolTip.Tip="{DynamicResource Doc.PrintHint}">
 						<Border Background="{DynamicResource AccentSolid}" CornerRadius="8" Padding="16,11">
 							<StackPanel Orientation="Horizontal" Spacing="8">
 								<Path Stroke="{DynamicResource TextOnAccent}" StrokeThickness="1.7" Fill="Transparent"
 									  Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center"
 									  Data="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/>
-								<TextBlock Text="{Binding [Doc.Print], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
+								<TextBlock Text="{DynamicResource Doc.Print}" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
 										   FontWeight="SemiBold" VerticalAlignment="Center"/>
 							</StackPanel>
 						</Border>
 					</Button>
 
 					<Button Classes="flat" Click="OnExportPdfClick"
-							ToolTip.Tip="{Binding [Doc.SavePdfHint], Source={x:Static loc:Strings.Current}}">
+							ToolTip.Tip="{DynamicResource Doc.SavePdfHint}">
 						<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 								CornerRadius="8" Padding="16,10">
-							<TextBlock Text="{Binding [Doc.SavePdf], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="13"
+							<TextBlock Text="{DynamicResource Doc.SavePdf}" Foreground="{DynamicResource TextBody}" FontSize="13"
 									   VerticalAlignment="Center"/>
 						</Border>
 					</Button>
@@ -152,7 +151,7 @@
 								   FontSize="12.5" TextWrapping="Wrap"/>
 					</Border>
 
-					<TextBlock Text="{Binding [Det.PickFromAbove], Source={x:Static loc:Strings.Current}}"
+					<TextBlock Text="{DynamicResource Det.PickFromAbove}"
 							   Foreground="{DynamicResource TextFaintAlt}" FontSize="13" Margin="2,20,0,0"
 							   IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNull}}"/>
 
@@ -206,37 +205,37 @@
 								  ColumnSpacing="20" RowSpacing="16">
 
 								<StackPanel Grid.Row="0" Grid.Column="0" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Field.Type], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.Type}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailType}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="0" Grid.Column="1" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Field.TaxNo], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.TaxNo}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailTaxNo}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="0" Grid.Column="2" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Doc.SapCode], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Doc.SapCode}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailSapCariKodu}"/>
 								</StackPanel>
 
 								<StackPanel Grid.Row="1" Grid.Column="0" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Field.StartDate], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.StartDate}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailStart}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.EndDate}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailEnd}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="1" Grid.Column="2" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Field.PaymentPeriod], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.PaymentPeriod}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailPeriod}"/>
 								</StackPanel>
 
 								<StackPanel Grid.Row="2" Grid.Column="0" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Field.Requester], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Field.Requester}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailRequester}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="2" Grid.Column="1" Spacing="2">
-									<TextBlock Classes="fieldLabel" Text="{Binding [Doc.Department], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="fieldLabel" Text="{DynamicResource Doc.Department}"/>
 									<TextBlock Classes="fieldValue" Text="{Binding DetailDepartment}"/>
 								</StackPanel>
 							</Grid>
@@ -248,14 +247,14 @@
 							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="24,20">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="display" Text="{Binding [Field.Items], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Field.Items}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 
 							<Grid ColumnDefinitions="2*,90,*,*" ColumnSpacing="12">
-								<TextBlock Grid.Column="0" Classes="tableHead" Text="{Binding [Field.Description], Source={x:Static loc:Strings.Current}}"/>
-								<TextBlock Grid.Column="1" Classes="tableHead" Text="{Binding [Field.Quantity], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
-								<TextBlock Grid.Column="2" Classes="tableHead" Text="{Binding [Field.UnitPrice], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
-								<TextBlock Grid.Column="3" Classes="tableHead" Text="{Binding [Field.LineTotal], Source={x:Static loc:Strings.Current}}" TextAlignment="Right"/>
+								<TextBlock Grid.Column="0" Classes="tableHead" Text="{DynamicResource Field.Description}"/>
+								<TextBlock Grid.Column="1" Classes="tableHead" Text="{DynamicResource Field.Quantity}" TextAlignment="Right"/>
+								<TextBlock Grid.Column="2" Classes="tableHead" Text="{DynamicResource Field.UnitPrice}" TextAlignment="Right"/>
+								<TextBlock Grid.Column="3" Classes="tableHead" Text="{DynamicResource Field.LineTotal}" TextAlignment="Right"/>
 							</Grid>
 							<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
@@ -290,7 +289,7 @@
 							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="24,20">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="display" Text="{Binding [Field.Files], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Field.Files}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 							<ItemsControl ItemsSource="{Binding Attachments}">
 								<ItemsControl.ItemTemplate>
@@ -310,14 +309,14 @@
 														CommandParameter="{Binding}">
 													<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 															CornerRadius="6" Padding="11,5">
-														<TextBlock Text="{Binding [Field.Open], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+														<TextBlock Text="{DynamicResource Field.Open}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 													</Border>
 												</Button>
 												<Button Grid.Column="3" Classes="flat" VerticalAlignment="Center"
 														Click="OnDownloadAttachmentClick">
 													<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 															CornerRadius="6" Padding="11,5">
-														<TextBlock Text="{Binding [Det.Download], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
+														<TextBlock Text="{DynamicResource Det.Download}" Foreground="{DynamicResource TextBody}" FontSize="11.5"/>
 													</Border>
 												</Button>
 												<Button Grid.Column="4" Classes="flat" VerticalAlignment="Center"
@@ -325,7 +324,7 @@
 														Click="OnDeleteAttachmentClick">
 													<Border Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 															CornerRadius="6" Padding="11,5">
-														<TextBlock Text="{Binding [Det.Delete], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
+														<TextBlock Text="{DynamicResource Det.Delete}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
 													</Border>
 												</Button>
 											</Grid>
@@ -346,7 +345,7 @@
 							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="24,20">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="display" Text="{Binding [Det.ViolationHistory], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Det.ViolationHistory}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 							<ItemsControl ItemsSource="{Binding Violations}">
 								<ItemsControl.ItemTemplate>
@@ -384,7 +383,7 @@
 														Click="OnResolveViolationClick">
 													<Border Background="{DynamicResource SuccessSoftBg}" BorderBrush="{DynamicResource SuccessSoftBorder}" BorderThickness="1"
 															CornerRadius="7" Padding="12,6">
-														<TextBlock Text="{Binding [Det.MarkResolved], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource SuccessBase}"
+														<TextBlock Text="{DynamicResource Det.MarkResolved}" Foreground="{DynamicResource SuccessBase}"
 																   FontSize="11.5" FontWeight="SemiBold"/>
 													</Border>
 												</Button>
@@ -401,7 +400,7 @@
 							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="24,20">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="display" Text="{Binding [Det.RevisionHistory], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Det.RevisionHistory}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 							<!--
 							  Sonuç rozeti: bu kayıtlar birer TALEP. Reddedilmiş bir bedel
@@ -455,7 +454,7 @@
 							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="24,20">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="display" Text="{Binding [Det.TerminationHistory], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
+							<TextBlock Classes="display" Text="{DynamicResource Det.TerminationHistory}" FontSize="15.5"
 									   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
 							<!-- Reddedilmiş bir fesih talebi de sözleşme feshedilmiş gibi duruyordu -->
 							<ItemsControl ItemsSource="{Binding Terminations}">
@@ -510,10 +509,10 @@
 					<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="18,16">
 						<StackPanel Spacing="14">
-							<TextBlock Classes="sectionLabel" Text="{Binding [Form.Summary], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="sectionLabel" Text="{DynamicResource Form.Summary}"/>
 
 							<StackPanel Spacing="3">
-								<TextBlock Classes="summaryLabel" Text="{Binding [List.ColAmount], Source={x:Static loc:Strings.Current}}"/>
+								<TextBlock Classes="summaryLabel" Text="{DynamicResource List.ColAmount}"/>
 								<TextBlock Classes="display" Text="{Binding DetailTotal}" FontSize="21"
 										   FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
 							</StackPanel>
@@ -522,12 +521,12 @@
 
 							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
 								<StackPanel Grid.Column="0" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="{Binding [Det.DaysLeft], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="summaryLabel" Text="{DynamicResource Det.DaysLeft}"/>
 									<TextBlock Text="{Binding DetailRemainingDays}" FontSize="13"
 											   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
 								</StackPanel>
 								<StackPanel Grid.Column="1" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
+									<TextBlock Classes="summaryLabel" Text="{DynamicResource Field.EndDate}"/>
 									<TextBlock Text="{Binding DetailEnd}" FontSize="13" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 							</Grid>
@@ -545,7 +544,7 @@
 							Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 							CornerRadius="12" Padding="18,16">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="sectionLabel" Text="{Binding [Doc.ProcessSteps], Source={x:Static loc:Strings.Current}}"/>
+							<TextBlock Classes="sectionLabel" Text="{DynamicResource Doc.ProcessSteps}"/>
 
 							<ItemsControl ItemsSource="{Binding Steps}">
 								<ItemsControl.ItemTemplate>
