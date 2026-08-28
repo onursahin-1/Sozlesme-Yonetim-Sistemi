@@ -6,6 +6,7 @@ using PdfSharp.Drawing;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
 using Sys.Domain;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 namespace Sys.UI.Printing;
@@ -74,9 +75,9 @@ public static class ContractPdfExporter
         EnsureFonts();
 
         using var document = new PdfDocument();
-        document.Info.Title = string.IsNullOrWhiteSpace(contract.Title) ? "Sözleşme" : contract.Title;
-        document.Info.Subject = "Sözleşme Künyesi";
-        document.Info.Creator = "SYS — Sözleşme Yönetim Sistemi";
+        document.Info.Title = string.IsNullOrWhiteSpace(contract.Title) ? Strings.T("Out.Contract") : contract.Title;
+        document.Info.Subject = Strings.T("Out.DocTitle");
+        document.Info.Creator = Strings.T("Out.AppName");
 
         var w = new PdfWriter(document);
 
@@ -168,11 +169,11 @@ public static class ContractPdfExporter
 
         public void DrawDocumentHeader(Contract contract)
         {
-            _gfx.DrawString("SÖZLEŞME KÜNYESİ", _fontTitle, BrushAccent,
+            _gfx.DrawString(Strings.T("Out.Title"), _fontTitle, BrushAccent,
                 new XRect(MarginLeft, _y, ContentWidth, 25), XStringFormats.TopLeft);
             _y += 24;
 
-            _gfx.DrawString($"Oluşturma: {DateTime.Now.ToString("dd.MM.yyyy HH:mm", Tr)}", _fontSmall, BrushMuted,
+            _gfx.DrawString(Strings.T("Out.Created", DateTime.Now.ToString("dd.MM.yyyy HH:mm", Tr)), _fontSmall, BrushMuted,
                 new XRect(MarginLeft, _y, ContentWidth, 12), XStringFormats.TopLeft);
             _y += 18;
 
@@ -200,20 +201,20 @@ public static class ContractPdfExporter
         {
             var rows = new List<(string Label, string Value)>
             {
-                ("Sözleşme No", string.IsNullOrWhiteSpace(contract.ContractNo) ? "-" : contract.ContractNo!),
-                ("Talep Referans No", contract.RequestRefNo),
-                ("Durum", ContractStatusHelper.ToLabel(contract.Status)),
-                ("Tür", string.IsNullOrWhiteSpace(contract.Type) ? "-" : contract.Type),
-                ("Firma", contract.CompanyName),
-                ("Vergi No", string.IsNullOrWhiteSpace(contract.TaxNo) ? "-" : contract.TaxNo),
-                ("Talep Eden", contract.CreatedByUser is null
+                (Strings.T("Out.ContractNo"), string.IsNullOrWhiteSpace(contract.ContractNo) ? "-" : contract.ContractNo!),
+                (Strings.T("Out.RequestRefNo"), contract.RequestRefNo),
+                (Strings.T("Out.Status"), ContractStatusHelper.ToLabel(contract.Status)),
+                (Strings.T("Out.Type"), string.IsNullOrWhiteSpace(contract.Type) ? "-" : contract.Type),
+                (Strings.T("Out.Company"), contract.CompanyName),
+                (Strings.T("Out.TaxNo"), string.IsNullOrWhiteSpace(contract.TaxNo) ? "-" : contract.TaxNo),
+                (Strings.T("Out.Requester"), contract.CreatedByUser is null
                     ? "-"
                     : contract.CreatedByUser.FullName +
                       (string.IsNullOrWhiteSpace(contract.CreatedByUser.Department) ? "" : $" ({contract.CreatedByUser.Department})")),
-                ("Başlangıç Tarihi", contract.StartDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
-                ("Bitiş Tarihi", contract.EndDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
-                ("Ödeme Periyodu", string.IsNullOrWhiteSpace(contract.PaymentPeriod) ? "-" : contract.PaymentPeriod!),
-                ("Toplam Bedel", CurrencyHelper.Format(contract.TotalAmount, contract.Currency)),
+                (Strings.T("Out.StartDate"), contract.StartDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
+                (Strings.T("Out.EndDate"), contract.EndDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
+                (Strings.T("Out.PaymentPeriod"), string.IsNullOrWhiteSpace(contract.PaymentPeriod) ? "-" : contract.PaymentPeriod!),
+                (Strings.T("Out.TotalAmount"), CurrencyHelper.Format(contract.TotalAmount, contract.Currency)),
             };
 
             // Etiket gri ve normal, değer koyu ve yarı kalın: göz önce değerleri tarıyor.
@@ -243,7 +244,7 @@ public static class ContractPdfExporter
         {
             if (string.IsNullOrWhiteSpace(contract.Description)) return;
 
-            DrawSectionHeading("Kapsam");
+            DrawSectionHeading(Strings.T("Out.Scope"));
             var height = DrawWrapped(contract.Description, _fontBody, BrushInk, MarginLeft, ContentWidth, LineHeight);
             _y += height + 12;
         }
@@ -252,7 +253,7 @@ public static class ContractPdfExporter
         {
             if (contract.Items.Count == 0) return;
 
-            DrawSectionHeading("Kalemler");
+            DrawSectionHeading(Strings.T("Out.Items"));
 
             // Sütunlar: Açıklama | Miktar | Birim Fiyat | Tutar
             double colQty = 60, colUnit = 90, colTotal = 90;
@@ -315,11 +316,11 @@ public static class ContractPdfExporter
             _gfx.DrawRectangle(BrushBand, MarginLeft, _y, ContentWidth, 19);
             _y += 4;
 
-            _gfx.DrawString("AÇIKLAMA", _fontSmall, BrushMuted,
+            _gfx.DrawString(Strings.T("Out.ColDescription"), _fontSmall, BrushMuted,
                 new XRect(MarginLeft + 4, _y, colDesc, LineHeight), XStringFormats.TopLeft);
-            DrawRight("MİKTAR", _fontSmall, MarginLeft + colDesc, colQty - 8, BrushMuted);
-            DrawRight("BİRİM FİYAT", _fontSmall, MarginLeft + colDesc + colQty, colUnit - 8, BrushMuted);
-            DrawRight("TUTAR", _fontSmall, MarginLeft + colDesc + colQty + colUnit, colTotal - 8, BrushMuted);
+            DrawRight(Strings.T("Out.ColQuantity"), _fontSmall, MarginLeft + colDesc, colQty - 8, BrushMuted);
+            DrawRight(Strings.T("Out.ColUnitPrice"), _fontSmall, MarginLeft + colDesc + colQty, colUnit - 8, BrushMuted);
+            DrawRight(Strings.T("Out.ColAmount"), _fontSmall, MarginLeft + colDesc + colQty + colUnit, colTotal - 8, BrushMuted);
 
             _y += 15;
             _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
@@ -341,7 +342,7 @@ public static class ContractPdfExporter
             var steps = ContractStepViewModel.Build(contract);
             if (steps.Count == 0) return;
 
-            DrawSectionHeading("Süreç Adımları");
+            DrawSectionHeading(Strings.T("Out.ProcessSteps"));
 
             // Satır başına dört adım: A4 içerik genişliğinde (505 punto) her sütuna
             // ~126 punto düşüyor ve "Müdür (YK) Onayı — Reddedildi" gibi en uzun
@@ -493,18 +494,18 @@ public static class ContractPdfExporter
         {
             if (contract.Violations.Count == 0) return;
 
-            DrawSectionHeading("İhlal Geçmişi");
+            DrawSectionHeading(Strings.T("Out.ViolationHistory"));
             foreach (var violation in contract.Violations.OrderBy(v => v.ViolationDate).ThenBy(v => v.Id))
             {
-                var detay = $"İhlal tarihi: {violation.ViolationDate.ToString("dd.MM.yyyy", Tr)}";
+                var detay = Strings.T("Out.ViolationDate", violation.ViolationDate.ToString("dd.MM.yyyy", Tr));
 
                 // Giderilen ihlaller açık olanlardan ayrılmalı; aksi halde geçmiş,
                 // hepsi hâlâ sürüyormuş gibi okunur.
                 if (violation.IsResolved)
-                    detay += $"\nGiderildi ({violation.ResolvedAt:dd.MM.yyyy HH:mm}): {violation.ResolutionNote}";
+                    detay += "\n" + Strings.T("Out.ViolationResolved", violation.ResolvedAt?.ToString("dd.MM.yyyy HH:mm"), violation.ResolutionNote);
 
                 DrawEntry(
-                    $"{violation.ViolationType} — {(violation.IsResolved ? "Giderildi" : "Açık")}",
+                    $"{violation.ViolationType} — {Strings.T(violation.IsResolved ? "Out.ViolationResolvedShort" : "Out.ViolationOpen")}",
                     string.IsNullOrWhiteSpace(violation.Description) ? detay : violation.Description + "\n" + detay,
                     violation.ReportedAt.ToString("dd.MM.yyyy HH:mm", Tr));
             }
@@ -515,12 +516,12 @@ public static class ContractPdfExporter
         {
             if (contract.Revisions.Count == 0) return;
 
-            DrawSectionHeading("Revizyon Geçmişi");
+            DrawSectionHeading(Strings.T("Out.RevisionHistory"));
             foreach (var revision in contract.Revisions.OrderBy(r => r.ChangedAt))
             {
-                var detay = $"Önceki bedel: {CurrencyHelper.Format(revision.PreviousTotalAmount, contract.Currency)}";
+                var detay = Strings.T("Out.PreviousAmount", CurrencyHelper.Format(revision.PreviousTotalAmount, contract.Currency));
                 if (revision.PreviousEndDate.HasValue)
-                    detay += $" · Önceki bitiş: {revision.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr)}";
+                    detay += Strings.T("Out.PreviousEnd", revision.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr));
 
                 // Sonuç başlığa yazılıyor: bu kayıtlar birer talep, reddedilmiş olabilir.
                 DrawEntry(
@@ -535,12 +536,12 @@ public static class ContractPdfExporter
         {
             if (contract.Terminations.Count == 0) return;
 
-            DrawSectionHeading("Fesih Geçmişi");
+            DrawSectionHeading(Strings.T("Out.TerminationHistory"));
             foreach (var termination in contract.Terminations.OrderBy(t => t.RequestedAt))
             {
-                var detay = $"Fesih tarihi: {termination.TerminationDate.ToString("dd.MM.yyyy", Tr)}";
+                var detay = Strings.T("Out.TerminationDate", termination.TerminationDate.ToString("dd.MM.yyyy", Tr));
                 if (termination.CompensationAmount.HasValue)
-                    detay += $" · Tazminat: {termination.CompensationAmount.Value.ToString("N2", Tr)} TL ({termination.CompensationDirection})";
+                    detay += Strings.T("Out.Compensation", termination.CompensationAmount.Value.ToString("N2", Tr) + " TL", termination.CompensationDirection);
 
                 DrawEntry(
                     $"{termination.TerminationType} — {OutcomeText(termination.IsApproved)}",
@@ -565,9 +566,9 @@ public static class ContractPdfExporter
                 // Alt bilgiyi gövdeden ayıran ince çizgi
                 gfx.DrawLine(PenHair, MarginLeft, footY - 4, MarginLeft + width, footY - 4);
 
-                gfx.DrawString($"Sayfa {i + 1} / {_pages.Count}", _fontSmall, BrushMuted,
+                gfx.DrawString(Strings.T("Out.PageOf", i + 1, _pages.Count), _fontSmall, BrushMuted,
                     new XRect(MarginLeft, footY, width, 12), XStringFormats.TopRight);
-                gfx.DrawString("SYS — Sözleşme Yönetim Sistemi", _fontSmall, BrushMuted,
+                gfx.DrawString(Strings.T("Out.AppName"), _fontSmall, BrushMuted,
                     new XRect(MarginLeft, footY, width, 12), XStringFormats.TopLeft);
             }
         }
@@ -623,9 +624,9 @@ public static class ContractPdfExporter
         // oluşmuş eski kayıtları temsil eder; "onaylandı" varsaymak yanlış olur.
         private static string OutcomeText(bool? isApproved) => isApproved switch
         {
-            true => "Onaylandı",
-            false => "Reddedildi",
-            _ => "Sonuç bekliyor"
+            true => Strings.T("Out.Approved"),
+            false => Strings.T("Out.Rejected"),
+            _ => Strings.T("Out.AwaitingResult")
         };
 
         private void DrawRight(string text, XFont font, double x, double width, XBrush? brush = null)

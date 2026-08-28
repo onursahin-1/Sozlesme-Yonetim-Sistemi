@@ -1,9 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using ClosedXML.Excel;
 using Sys.Domain;
+
+using Sys.UI.Localization;
 
 namespace Sys.UI.Exporting;
 
@@ -33,9 +35,12 @@ public static class ExcelExporter
 
         string[] headers =
         {
-            "Sözleşme No", "Talep Ref No", "Başlık", "Firma", "Vergi No", "SAP Cari Kodu",
-            "Tür", "Firma Türü", "Durum", "Başlangıç", "Bitiş", "Kalan Gün",
-            "Bedel", "Para Birimi", "Ödeme Periyodu", "Talep Eden", "Departman", "Oluşturma"
+            Strings.T("Xls.ContractNo"), Strings.T("Xls.RequestRef"), Strings.T("Xls.Title"),
+            Strings.T("Xls.Company"), Strings.T("Xls.TaxNo"), Strings.T("Xls.SapCode"),
+            Strings.T("Xls.Type"), Strings.T("Xls.CompanyType"), Strings.T("Xls.Status"),
+            Strings.T("Xls.Start"), Strings.T("Xls.End"), Strings.T("Xls.DaysLeft"),
+            Strings.T("Xls.Amount"), Strings.T("Xls.Currency"), Strings.T("Xls.PaymentPeriod"),
+            Strings.T("Xls.Requester"), Strings.T("Xls.Department"), Strings.T("Xls.CreatedAt")
         };
 
         WriteHeader(ws, headers);
@@ -86,16 +91,20 @@ public static class ExcelExporter
     public static void ExportAuditLogs(IEnumerable<AuditLog> logs, string filePath)
     {
         using var workbook = new XLWorkbook();
-        var ws = workbook.Worksheets.Add("İşlem Geçmişi");
+        var ws = workbook.Worksheets.Add(Strings.T("Nav.AuditLog"));
 
-        string[] headers = { "Tarih", "Kullanıcı", "İşlem", "Kayıt Türü", "Kayıt No", "Ayrıntı" };
+        string[] headers =
+        {
+            Strings.T("Xls.Date"), Strings.T("Xls.User"), Strings.T("Xls.Action"),
+            Strings.T("Xls.EntityType"), Strings.T("Xls.EntityId"), Strings.T("Xls.Detail")
+        };
         WriteHeader(ws, headers);
 
         var row = 2;
         foreach (var log in logs)
         {
             SetDateTime(ws.Cell(row, 1), log.ActionDate);
-            ws.Cell(row, 2).Value = log.ActingUser?.FullName ?? ("Kullanıcı #" + log.ActingUserId);
+            ws.Cell(row, 2).Value = log.ActingUser?.FullName ?? Strings.T("Audit.UnknownUser", log.ActingUserId);
             ws.Cell(row, 3).Value = AuditActionCatalog.Label(log.Action);
             ws.Cell(row, 4).Value = log.EntityName;
             ws.Cell(row, 5).Value = log.EntityId;

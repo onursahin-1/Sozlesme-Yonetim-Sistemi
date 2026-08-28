@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Sys.Domain;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 namespace Sys.UI.Printing;
@@ -30,12 +31,16 @@ public static class ContractPrintDocument
     {
         var sb = new StringBuilder();
 
+        // Belgenin dili ve başlığı, kullanıcının o an seçtiği dile göre yazılıyor.
+        // Ham HTML bloğu sabit metin olduğu için yer tutucular sonradan
+        // değiştiriliyor; lang niteliği ekran okuyucular ve tarayıcının tireleme
+        // kuralları için önemli.
         sb.Append("""
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="__LANG__">
 <head>
 <meta charset="utf-8">
-<title>Sözleşme Künyesi</title>
+<title>__DOCTITLE__</title>
 <style>
   @page { size: A4; margin: 16mm 15mm; }
 
@@ -204,8 +209,8 @@ public static class ContractPrintDocument
         var statusColor = StatusColor(contract.Status);
 
         sb.Append("<div class=\"head\">");
-        sb.Append("<h1>SÖZLEŞME KÜNYESİ</h1>");
-        sb.Append($"<div class=\"meta\">Oluşturma: {E(DateTime.Now.ToString("dd.MM.yyyy HH:mm", Tr))}</div>");
+        sb.Append($"<h1>{E(Strings.T("Out.Title"))}</h1>");
+        sb.Append($"<div class=\"meta\">{E(Strings.T("Out.Created", DateTime.Now.ToString("dd.MM.yyyy HH:mm", Tr)))}</div>");
         sb.Append($"<div class=\"title\">{E(contract.Title)}</div>");
         sb.Append($"<div class=\"sub\">{E(no)} &nbsp;·&nbsp; {E(contract.CompanyName)}</div>");
         sb.Append($"<div class=\"pill\" style=\"color:{statusColor}\">{E(ContractStatusHelper.ToLabel(contract.Status))}</div>");
@@ -214,20 +219,20 @@ public static class ContractPrintDocument
         // --- Künye ---
         var rows = new List<(string K, string V)>
         {
-            ("Sözleşme No", string.IsNullOrWhiteSpace(contract.ContractNo) ? "-" : contract.ContractNo!),
-            ("Talep Referans No", Dash(contract.RequestRefNo)),
-            ("Tür", Dash(contract.Type)),
-            ("Firma", Dash(contract.CompanyName)),
-            ("Vergi No", Dash(contract.TaxNo)),
-            ("SAP Cari Kodu", Dash(contract.SapCariKodu)),
-            ("Talep Eden", contract.CreatedByUser is null
+            (Strings.T("Out.ContractNo"), string.IsNullOrWhiteSpace(contract.ContractNo) ? "-" : contract.ContractNo!),
+            (Strings.T("Out.RequestRefNo"), Dash(contract.RequestRefNo)),
+            (Strings.T("Out.Type"), Dash(contract.Type)),
+            (Strings.T("Out.Company"), Dash(contract.CompanyName)),
+            (Strings.T("Out.TaxNo"), Dash(contract.TaxNo)),
+            (Strings.T("Out.SapCode"), Dash(contract.SapCariKodu)),
+            (Strings.T("Out.Requester"), contract.CreatedByUser is null
                 ? "-"
                 : contract.CreatedByUser.FullName +
                   (string.IsNullOrWhiteSpace(contract.CreatedByUser.Department) ? "" : $" ({contract.CreatedByUser.Department})")),
-            ("Başlangıç Tarihi", contract.StartDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
-            ("Bitiş Tarihi", contract.EndDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
-            ("Ödeme Periyodu", Dash(contract.PaymentPeriod)),
-            ("Toplam Bedel", CurrencyHelper.Format(contract.TotalAmount, contract.Currency)),
+            (Strings.T("Out.StartDate"), contract.StartDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
+            (Strings.T("Out.EndDate"), contract.EndDate?.ToString("dd.MM.yyyy", Tr) ?? "-"),
+            (Strings.T("Out.PaymentPeriod"), Dash(contract.PaymentPeriod)),
+            (Strings.T("Out.TotalAmount"), CurrencyHelper.Format(contract.TotalAmount, contract.Currency)),
         };
 
         sb.Append("<table class=\"info\">");
@@ -238,14 +243,14 @@ public static class ContractPrintDocument
         // --- Kapsam ---
         if (!string.IsNullOrWhiteSpace(contract.Description))
         {
-            sb.Append("<h2>Kapsam</h2>");
+            sb.Append($"<h2>{E(Strings.T("Out.Scope"))}</h2>");
             sb.Append($"<div class=\"scope\">{E(contract.Description!).Replace("\n", "<br>")}</div>");
         }
 
         // --- Kalemler ---
         if (contract.Items.Count > 0)
         {
-            sb.Append("<h2>Kalemler</h2>");
+            sb.Append($"<h2>{E(Strings.T("Out.Items"))}</h2>");
             sb.Append("<table class=\"items\"><thead><tr>");
             sb.Append("<th>Açıklama</th><th>Miktar</th><th>Birim Fiyat</th><th>Tutar</th>");
             sb.Append("</tr></thead><tbody>");
@@ -267,7 +272,7 @@ public static class ContractPrintDocument
             }
 
             sb.Append("</tbody><tfoot><tr>");
-            sb.Append("<td colspan=\"3\" style=\"text-align:right\">Toplam</td>");
+            sb.Append($"<td colspan=\"3\" style=\"text-align:right\">{E(Strings.T("Out.Total"))}</td>");
             sb.Append($"<td class=\"num\">{E(CurrencyHelper.Format(total, contract.Currency))}</td>");
             sb.Append("</tr></tfoot></table>");
         }
@@ -280,7 +285,7 @@ public static class ContractPrintDocument
         var steps = ContractStepViewModel.Build(contract);
         if (steps.Count > 0)
         {
-            sb.Append("<h2>Süreç Adımları</h2>");
+            sb.Append($"<h2>{E(Strings.T("Out.ProcessSteps"))}</h2>");
             sb.Append("<div class=\"steps\">");
             foreach (var step in steps)
             {
@@ -315,16 +320,16 @@ public static class ContractPrintDocument
         // --- İhlal geçmişi ---
         if (contract.Violations.Count > 0)
         {
-            sb.Append("<h2>İhlal Geçmişi</h2>");
+            sb.Append($"<h2>{E(Strings.T("Out.ViolationHistory"))}</h2>");
             foreach (var v in contract.Violations.OrderBy(v => v.ViolationDate).ThenBy(v => v.Id))
             {
                 sb.Append($"<div class=\"entry {(v.IsResolved ? "ok" : "no")}\">");
-                sb.Append($"<div class=\"t\">{E(v.ViolationType)} — {(v.IsResolved ? "Giderildi" : "Açık")}</div>");
+                sb.Append($"<div class=\"t\">{E(v.ViolationType)} — {E(Strings.T(v.IsResolved ? "Out.ViolationResolvedShort" : "Out.ViolationOpen"))}</div>");
                 if (!string.IsNullOrWhiteSpace(v.Description))
                     sb.Append($"<div class=\"b\">{E(v.Description)}</div>");
-                sb.Append($"<div class=\"b\">İhlal tarihi: {E(v.ViolationDate.ToString("dd.MM.yyyy", Tr))}</div>");
+                sb.Append($"<div class=\"b\">{E(Strings.T("Out.ViolationDate", v.ViolationDate.ToString("dd.MM.yyyy", Tr)))}</div>");
                 if (v.IsResolved)
-                    sb.Append($"<div class=\"b\">Giderildi ({E(v.ResolvedAt?.ToString("dd.MM.yyyy HH:mm", Tr) ?? "-")}): {E(v.ResolutionNote)}</div>");
+                    sb.Append($"<div class=\"b\">{E(Strings.T("Out.ViolationResolved", v.ResolvedAt?.ToString("dd.MM.yyyy HH:mm", Tr) ?? "-", v.ResolutionNote))}</div>");
                 sb.Append($"<div class=\"d\">{E(v.ReportedAt.ToString("dd.MM.yyyy HH:mm", Tr))}</div>");
                 sb.Append("</div>");
             }
@@ -333,12 +338,12 @@ public static class ContractPrintDocument
         // --- Revizyon geçmişi ---
         if (contract.Revisions.Count > 0)
         {
-            sb.Append("<h2>Revizyon Geçmişi</h2>");
+            sb.Append($"<h2>{E(Strings.T("Out.RevisionHistory"))}</h2>");
             foreach (var rev in contract.Revisions.OrderBy(r => r.ChangedAt))
             {
-                var detay = $"Önceki bedel: {CurrencyHelper.Format(rev.PreviousTotalAmount, contract.Currency)}";
+                var detay = Strings.T("Out.PreviousAmount", CurrencyHelper.Format(rev.PreviousTotalAmount, contract.Currency));
                 if (rev.PreviousEndDate.HasValue)
-                    detay += $" · Önceki bitiş: {rev.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr)}";
+                    detay += Strings.T("Out.PreviousEnd", rev.PreviousEndDate.Value.ToString("dd.MM.yyyy", Tr));
 
                 sb.Append($"<div class=\"entry {OutcomeClass(rev.IsApproved)}\">");
                 sb.Append($"<div class=\"t\">{E(rev.ChangeType)} — {E(OutcomeText(rev.IsApproved))}</div>");
@@ -353,12 +358,12 @@ public static class ContractPrintDocument
         // --- Fesih geçmişi ---
         if (contract.Terminations.Count > 0)
         {
-            sb.Append("<h2>Fesih Geçmişi</h2>");
+            sb.Append($"<h2>{E(Strings.T("Out.TerminationHistory"))}</h2>");
             foreach (var term in contract.Terminations.OrderBy(t => t.RequestedAt))
             {
-                var detay = $"Fesih tarihi: {term.TerminationDate.ToString("dd.MM.yyyy", Tr)}";
+                var detay = Strings.T("Out.TerminationDate", term.TerminationDate.ToString("dd.MM.yyyy", Tr));
                 if (term.CompensationAmount.HasValue)
-                    detay += $" · Tazminat: {term.CompensationAmount.Value.ToString("N2", Tr)} TL ({term.CompensationDirection})";
+                    detay += Strings.T("Out.Compensation", term.CompensationAmount.Value.ToString("N2", Tr) + " TL", term.CompensationDirection);
 
                 sb.Append($"<div class=\"entry {OutcomeClass(term.IsApproved)}\">");
                 sb.Append($"<div class=\"t\">{E(term.TerminationType)} — {E(OutcomeText(term.IsApproved))}</div>");
@@ -370,7 +375,7 @@ public static class ContractPrintDocument
             }
         }
 
-        sb.Append("<div class=\"foot\"><span>SYS — Sözleşme Yönetim Sistemi</span>");
+        sb.Append($"<div class=\"foot\"><span>{E(Strings.T("Out.AppName"))}</span>");
         sb.Append($"<span>{E(no)}</span></div>");
 
         // Sayfa açılır açılmaz tarayıcının yazdırma penceresini aç. Bu satır olmadan
@@ -383,7 +388,9 @@ public static class ContractPrintDocument
 </html>
 """);
 
-        return sb.ToString();
+        return sb.ToString()
+            .Replace("__LANG__", LanguageService.IsEnglish ? "en" : "tr")
+            .Replace("__DOCTITLE__", E(Strings.T("Out.DocTitle")));
     }
 
     private static string Dash(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value!;
@@ -392,9 +399,9 @@ public static class ContractPrintDocument
     // eski kayıtları temsil eder; "onaylandı" varsaymak yanlış olur.
     private static string OutcomeText(bool? isApproved) => isApproved switch
     {
-        true => "Onaylandı",
-        false => "Reddedildi",
-        _ => "Sonuç bekliyor"
+        true => Strings.T("Out.Approved"),
+        false => Strings.T("Out.Rejected"),
+        _ => Strings.T("Out.AwaitingResult")
     };
 
     // Soldaki renkli işaret çizgisi: onaylandı yeşil, reddedildi kırmızı, belirsiz nötr.
