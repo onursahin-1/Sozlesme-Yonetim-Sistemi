@@ -6,6 +6,7 @@ using PdfSharp.Drawing;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
 using Sys.Domain;
+using Sys.UI.ViewModels;
 
 namespace Sys.UI.Printing;
 
@@ -83,7 +84,7 @@ public static class ContractPdfExporter
         w.DrawInfoSection(contract);
         w.DrawDescription(contract);
         w.DrawItems(contract);
-        w.DrawApprovalLogs(contract);
+        w.DrawProcessSteps(contract);
         w.DrawViolations(contract);
         w.DrawRevisions(contract);
         w.DrawTerminations(contract);
@@ -111,6 +112,11 @@ public static class ContractPdfExporter
         private readonly XFont _fontBody = new(FontFamily, 9.5, XFontStyleEx.Regular);
         private readonly XFont _fontSmall = new(FontFamily, 8, XFontStyleEx.Regular);
 
+        // Süreç adımları için ayrı puntolar: etiketler dar sütunlara sığmalı.
+        private readonly XFont _fontStep = new(FontFamily, 7.5, XFontStyleEx.Bold);
+        private readonly XFont _fontTiny = new(FontFamily, 6.5, XFontStyleEx.Regular);
+        private const double StepLineHeight = 9.5;
+
         // Satır yüksekliği tek yerden: gövde punto 9,5 için 13 rahat bir aralık verir.
         private const double LineHeight = 13;
 
@@ -122,6 +128,13 @@ public static class ContractPdfExporter
         private static readonly XPen PenLine = new(XColor.FromArgb(216, 223, 233), 0.7);
         private static readonly XPen PenHair = new(XColor.FromArgb(238, 242, 247), 0.5);
         private static readonly XPen PenAccent = new(XColor.FromArgb(45, 110, 168), 1.6);
+
+        // Süreç adımları
+        private static readonly XSolidBrush BrushSuccess = new(XColor.FromArgb(22, 163, 74));
+        private static readonly XSolidBrush BrushDanger = new(XColor.FromArgb(185, 45, 45));
+        private static readonly XPen PenSuccess = new(XColor.FromArgb(22, 163, 74), 1.1);
+        private static readonly XPen PenDanger = new(XColor.FromArgb(185, 45, 45), 1.1);
+        private static readonly XPen PenMark = new(XColor.FromArgb(255, 255, 255), 1.1);
 
         private readonly List<PdfPage> _pages = new();
 
@@ -312,25 +325,168 @@ public static class ContractPdfExporter
             _gfx.DrawLine(PenLine, MarginLeft, _y, MarginLeft + ContentWidth, _y);
         }
 
-        public void DrawApprovalLogs(Contract contract)
+        // SÜREÇ ADIMLARI — yatay zaman çizelgesi.
+        //
+        // Bu bölüm eskiden "Aşama Geçmişi" adıyla alt alta metin bloklarıydı ve tek
+        // başına bir A4 sayfasını doldurabiliyordu; altı adımlık sıradan bir sözleşme
+        // üç sayfaya çıkıyordu. Oysa bilgi kısa: bir etiket, bir tarih, bir sonuç.
+        // Dikey yığın sayfayı yüksekliğine harcıyordu, genişliğini boş bırakarak.
+        //
+        // Adımlar ekrandakiyle AYNI kaynaktan geliyor (ContractStepViewModel.Build):
+        // "Talep oluşturuldu" ile başlıyor, onay kayıtlarıyla devam ediyor, sözleşmenin
+        // bugünkü durumuyla bitiyor. İki yerde ayrı kurulsaydı zamanla ayrışırlardı —
+        // bu projede birkaç kez yaşandı.
+        public void DrawProcessSteps(Contract contract)
         {
-            if (contract.ApprovalLogs.Count == 0) return;
+            var steps = ContractStepViewModel.Build(contract);
+            if (steps.Count == 0) return;
 
-            DrawSectionHeading("Aşama Geçmişi");
-            foreach (var log in contract.ApprovalLogs.OrderBy(l => l.ActionDate).ThenBy(l => l.Id))
+            DrawSectionHeading("Süreç Adımları");
+
+            // Satır başına dört adım: A4 içerik genişliğinde (505 punto) her sütuna
+            // ~126 punto düşüyor ve "Müdür (YK) Onayı — Reddedildi" gibi en uzun
+            // etiket iki satıra sığıyor. Daha fazla sütun etiketleri kırpardı.
+            const int columns = 4;
+            const double circle = 11;
+            const double gutter = 8;
+
+            var colWidth = ContentWidth / columns;
+            var textWidth = colWidth - gutter * 2;
+
+            for (var start = 0; start < steps.Count; start += columns)
             {
-                var karar = log.Decision == ApprovalDecision.Onay ? "Onaylandı" : "Reddedildi";
+                var row = steps.Skip(start).Take(columns).ToList();
 
-                // StepNumber 0, onay zinciri öncesi talep incelemesini temsil ediyor;
-                // "0. Adım" diye yazmak anlamsız olurdu.
-                var baslik = log.StepNumber > 0
-                    ? $"{log.StepNumber}. Adım — {log.StepName} — {karar}"
-                    : $"{log.StepName} — {karar}";
+                // Satırın yüksekliği en uzun etiketine göre belirlenir; sütunlar
+                // aynı hizada başlar, aksi halde daireler kayardı.
+                double textHeight = 0;
+                foreach (var step in row)
+                    textHeight = Math.Max(textHeight, MeasureStepText(step, textWidth));
 
-                DrawEntry(baslik, log.Note, log.ActionDate.ToString("dd.MM.yyyy HH:mm", Tr));
+                var rowHeight = circle + 6 + textHeight + 10;
+                EnsureSpace(rowHeight);
+
+                var circleCenterY = _y + circle / 2;
+
+                // Bağlayıcı çizgiler dairelerin ARKASINA çiziliyor; sonra daireler
+                // üstlerine geliyor ve çizgi dairenin içinden geçmiş gibi durmuyor.
+                for (var i = 0; i < row.Count - 1; i++)
+                {
+                    var fromX = MarginLeft + colWidth * i + colWidth / 2 + circle / 2 + 2;
+                    var toX = MarginLeft + colWidth * (i + 1) + colWidth / 2 - circle / 2 - 2;
+                    _gfx.DrawLine(ConnectorPen(row[i].State), fromX, circleCenterY, toX, circleCenterY);
+                }
+
+                for (var i = 0; i < row.Count; i++)
+                {
+                    var centerX = MarginLeft + colWidth * i + colWidth / 2;
+                    DrawStepMarker(row[i].State, centerX, circleCenterY, circle);
+                }
+
+                var textTop = _y + circle + 6;
+                for (var i = 0; i < row.Count; i++)
+                {
+                    var x = MarginLeft + colWidth * i + gutter;
+                    DrawStepText(row[i], x, textTop, textWidth);
+                }
+
+                _y += rowHeight;
             }
+
             Gap(6);
         }
+
+        private double MeasureStepText(ContractStepViewModel step, double width)
+        {
+            var height = WrapLines(step.Label, _fontStep, width).Count * StepLineHeight;
+            if (step.HasDate) height += 10;
+            if (step.HasNote) height += WrapLines(step.Note!, _fontSmall, width).Count * 9;
+            return height;
+        }
+
+        private void DrawStepText(ContractStepViewModel step, double x, double top, double width)
+        {
+            var brush = step.State == ContractStepState.Rejected ? BrushDanger : BrushInk;
+            var y = top;
+
+            foreach (var line in WrapLines(step.Label, _fontStep, width))
+            {
+                _gfx.DrawString(line, _fontStep, brush,
+                    new XRect(x, y, width, StepLineHeight), XStringFormats.TopCenter);
+                y += StepLineHeight;
+            }
+
+            if (step.HasDate)
+            {
+                _gfx.DrawString(step.DateText, _fontTiny, BrushMuted,
+                    new XRect(x, y, width, 10), XStringFormats.TopCenter);
+                y += 10;
+            }
+
+            // Red gerekçesi adımın altında duruyor: kararın kendisiyle birlikte
+            // okunmazsa ayrı bir bölüme bakmak gerekiyordu.
+            if (step.HasNote)
+            {
+                foreach (var line in WrapLines(step.Note!, _fontSmall, width))
+                {
+                    _gfx.DrawString(line, _fontSmall, BrushMuted,
+                        new XRect(x, y, width, 9), XStringFormats.TopCenter);
+                    y += 9;
+                }
+            }
+        }
+
+        // İşaretler yazı tipi karakteriyle değil ÇİZGİYLE çiziliyor. "✓" ve "✕" her
+        // yazı tipinde bulunmuyor; bulunmadığında sessizce boş kutu basılırdı.
+        private void DrawStepMarker(ContractStepState state, double cx, double cy, double size)
+        {
+            var r = size / 2;
+            var box = new XRect(cx - r, cy - r, size, size);
+
+            switch (state)
+            {
+                case ContractStepState.Completed:
+                    _gfx.DrawEllipse(BrushSuccess, box);
+                    DrawCheck(cx, cy, size);
+                    break;
+
+                case ContractStepState.Rejected:
+                    _gfx.DrawEllipse(BrushDanger, box);
+                    DrawCross(cx, cy, size);
+                    break;
+
+                case ContractStepState.Current:
+                    _gfx.DrawEllipse(BrushAccent, box);
+                    break;
+
+                default:
+                    _gfx.DrawEllipse(PenLine, box);
+                    break;
+            }
+        }
+
+        private void DrawCheck(double cx, double cy, double size)
+        {
+            var s = size * 0.28;
+            _gfx.DrawLine(PenMark, cx - s, cy, cx - s * 0.2, cy + s * 0.8);
+            _gfx.DrawLine(PenMark, cx - s * 0.2, cy + s * 0.8, cx + s, cy - s * 0.7);
+        }
+
+        private void DrawCross(double cx, double cy, double size)
+        {
+            var s = size * 0.24;
+            _gfx.DrawLine(PenMark, cx - s, cy - s, cx + s, cy + s);
+            _gfx.DrawLine(PenMark, cx + s, cy - s, cx - s, cy + s);
+        }
+
+        // Bağlayıcı, ÖNCEKİ adımın sonucunu taşır: yeşil zincirin nerede kırıldığı
+        // tek bakışta görünsün.
+        private static XPen ConnectorPen(ContractStepState state) => state switch
+        {
+            ContractStepState.Completed => PenSuccess,
+            ContractStepState.Rejected => PenDanger,
+            _ => PenLine
+        };
 
         // İhlal kayıtları hiçbir çıktıda yer almıyordu.
         public void DrawViolations(Contract contract)

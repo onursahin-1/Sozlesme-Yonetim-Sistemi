@@ -128,11 +128,11 @@
 							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=tumu}"/>
 				</Border>
 			</Button>
-			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="aktif">
+			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="yururlukte">
 				<Border CornerRadius="16" Padding="15,7"
-						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=aktif}">
-					<TextBlock Text="Aktif" FontSize="12" FontWeight="SemiBold"
-							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=aktif}"/>
+						Background="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Background}, ConverterParameter=yururlukte}">
+					<TextBlock Text="Yürürlükte" FontSize="12" FontWeight="SemiBold"
+							   Foreground="{Binding SelectedFilter, Converter={x:Static conv:FilterStateBrushConverter.Foreground}, ConverterParameter=yururlukte}"/>
 				</Border>
 			</Button>
 			<Button Classes="flat" Command="{Binding SetFilterCommand}" CommandParameter="onay_bekliyor">

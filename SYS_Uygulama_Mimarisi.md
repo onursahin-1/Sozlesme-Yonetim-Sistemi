@@ -127,6 +127,14 @@ birincinin kaydını ezerdi.
 Bu üç ekranın açılır listeleri de aynı kümeden (`LiveStatuses`) beslenir; ayrı
 yazıldıklarında kümeler birbirinden sapmıştı.
 
+Sözleşme listesindeki **"Yürürlükte"** filtresi ve gösterge panelinin ilk kutusu
+da aynı kümeye bağlandı. Liste eskiden yalnızca `Aktif` durumundakileri
+getiriyordu: bitişi yaklaşan bir sözleşme (`Uyarı`) listeden düşüyordu, oysa
+yükümlülükleri sürüyor ve üzerinde ihlal bildirilebiliyor. Aynı soruya sistemde
+iki cevap vardı — biri düğmenin adından, diğeri iş kuralından geliyordu.
+"Bitiş Uyarısı" ve "Açık İhlal" kutuları bu kümenin alt kırılımı olarak duruyor;
+dördü toplanacak bir bölüm değil, bir başlık ve iki uyarı.
+
 `FinalizeContractAsync` yalnızca `Talep` durumundaki kaydı kabul eder — kapatılmış
 bir talep ya da yürürlükteki bir sözleşme yeniden onay zincirinin başına
 gönderilemez.

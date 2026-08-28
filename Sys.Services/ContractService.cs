@@ -312,7 +312,14 @@ public class ContractService
     // bu ekran devam eden işleri gösterir. Eskiden bu ayıklama ViewModel'de bellekte yapılıyordu.
     private static (ContractStatus[]? Include, ContractStatus[]? Exclude) MapFilter(string filterKey) => filterKey switch
     {
-        "aktif" => (new[] { ContractStatus.Aktif }, null),
+        // "Yürürlükte" TEK bir durum değil: onay zincirini bitirmiş ve henüz
+        // kapanmamış üç durumun tamamı. Eskiden bu düğme yalnızca Status = Aktif
+        // olanları getiriyordu; bitişi yaklaşan bir sözleşme (Uyarı) listeden
+        // düşüyordu — oysa yükümlülükleri sürüyor, faturası kesiliyor, ihlal
+        // bildirilebiliyor. Panelin değer/dağılım kutuları ve düzenleme/fesih/ihlal
+        // ekranları zaten bu kümeye bakıyordu; liste tek istisnaydı.
+        // Uyarı ve İhlal düğmeleri bu kümenin alt kümeleri olarak duruyor.
+        "yururlukte" => (LiveStatuses, null),
         "onay_bekliyor" => (new[] { ContractStatus.OnayBekliyor }, null),
         "uyari" => (new[] { ContractStatus.Uyari }, null),
         "ihlal" => (new[] { ContractStatus.Ihlal }, null),

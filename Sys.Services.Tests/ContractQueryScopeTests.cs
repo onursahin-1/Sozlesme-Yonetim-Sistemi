@@ -81,6 +81,39 @@ public class ContractQueryScopeTests
         Assert.Equal(7, repo.LastPickerUserId);
     }
 
+    // ---- Liste durum filtresi ----
+
+    // "Yürürlükte" TEK bir durum değil. Bu düğme eskiden yalnızca Status = Aktif
+    // olanları getiriyordu; bitişi yaklaşan bir sözleşme (Uyarı) listeden düşüyordu,
+    // oysa yükümlülükleri sürüyor. Panelin değer/dağılım kutuları ve
+    // düzenleme/fesih/ihlal ekranları zaten üç durumun tamamına bakıyordu.
+    [Fact]
+    public async Task GetContractsPagedAsync_YururlukteFilter_IncludesAllLiveStatuses()
+    {
+        var service = CreateService(out var repo);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.GetContractsPagedAsync(syb, "yururlukte", null, 1, 10, null);
+
+        Assert.Equal(
+            new[] { ContractStatus.Aktif, ContractStatus.Uyari, ContractStatus.Ihlal },
+            repo.LastPagedIncludeStatuses);
+    }
+
+    // Alt kümeler ayrı ayrı da seçilebilmeli.
+    [Theory]
+    [InlineData("uyari", ContractStatus.Uyari)]
+    [InlineData("ihlal", ContractStatus.Ihlal)]
+    public async Task GetContractsPagedAsync_SubsetFilter_NarrowsToSingleStatus(string key, ContractStatus expected)
+    {
+        var service = CreateService(out var repo);
+        var syb = new User { Id = 3, Role = UserRole.SYB };
+
+        await service.GetContractsPagedAsync(syb, key, null, 1, 10, null);
+
+        Assert.Equal(new[] { expected }, repo.LastPagedIncludeStatuses);
+    }
+
     // ---- Onay kuyruğu rozeti ----
 
     // Rozet yalnızca bir sayı gösteriyor; eskiden bekleyen sözleşmelerin tamamı

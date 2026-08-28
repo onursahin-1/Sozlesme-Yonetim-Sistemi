@@ -157,6 +157,7 @@ public class FakeContractRepository : IContractRepository
 
     // Liste sorgusunun hangi daraltmayla gittigi testlerde dogrulaniyor.
     public string? LastPagedType { get; private set; }
+    public ContractStatus[]? LastPagedIncludeStatuses { get; private set; }
 
     public Task<(List<Contract> Items, int TotalCount)> GetContractsPagedAsync(
         int? createdByUserId,
@@ -168,6 +169,7 @@ public class FakeContractRepository : IContractRepository
         int pageSize)
     {
         LastPagedType = type;
+        LastPagedIncludeStatuses = includeStatuses;
         return Task.FromResult((new List<Contract>(), 0));
     }
 

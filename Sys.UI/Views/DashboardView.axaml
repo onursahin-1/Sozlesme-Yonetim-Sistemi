@@ -59,8 +59,8 @@
 				-->
 				<UniformGrid Columns="4">
 					<Button Classes="statCard" Margin="0,0,12,0"
-							Command="{Binding FilterCardCommand}" CommandParameter="aktif"
-							IsEnabled="{Binding AktifCardClickable}">
+							Command="{Binding FilterCardCommand}" CommandParameter="yururlukte"
+							IsEnabled="{Binding YururlukteCardClickable}">
 						<Border Background="{DynamicResource SuccessSoftBgFaint}" BorderBrush="{DynamicResource BorderSoftBlue}" BorderThickness="1"
 								CornerRadius="10" Padding="16,15">
 							<Grid ColumnDefinitions="Auto,*">
@@ -68,12 +68,12 @@
 								<Border Grid.Column="0" Width="3" CornerRadius="2"
 										Background="{DynamicResource SuccessSolid}" Margin="0,2,14,2"/>
 								<StackPanel Grid.Column="1" Spacing="3">
-									<TextBlock Classes="display" Text="{Binding Aktif}"
+									<TextBlock Classes="display" Text="{Binding Yururlukte}"
 											   FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBase}"
 											   LetterSpacing="-0.5"/>
-									<TextBlock Text="Aktif" FontSize="12.5" FontWeight="SemiBold"
+									<TextBlock Text="Yürürlükte" FontSize="12.5" FontWeight="SemiBold"
 											   Foreground="{DynamicResource TextBody}"/>
-									<TextBlock Text="yürürlükteki sözleşme" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
+									<TextBlock Text="aktif, bitişi yaklaşan ve ihlalli" FontSize="10.5" Foreground="{DynamicResource TextFaint}"/>
 								</StackPanel>
 							</Grid>
 						</Border>
@@ -270,7 +270,13 @@
 					<Border Grid.Column="0" Classes="card" VerticalAlignment="Top"
 							IsVisible="{Binding HasTypeBreakdown}">
 						<StackPanel Spacing="12">
-							<TextBlock Classes="cardTitle" Text="TÜR DAĞILIMI"/>
+							<!--
+							  Başlık "yürürlükteki" diyor çünkü sorgu yalnızca Aktif/Uyarı/İhlal
+							  durumundakileri sayıyor. Yalnızca "TÜR DAĞILIMI" yazdığında, onay
+							  zincirinde bekleyen bir sözleşmesini burada bulamayan kullanıcı
+							  kartın çalışmadığını sanıyordu.
+							-->
+							<TextBlock Classes="cardTitle" Text="YÜRÜRLÜKTEKİ SÖZLEŞMELER — TÜR DAĞILIMI"/>
 							<ItemsControl ItemsSource="{Binding TypeBreakdown}">
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="vm:TypeBreakdownRowViewModel">

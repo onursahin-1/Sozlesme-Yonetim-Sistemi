@@ -110,17 +110,30 @@ public partial class DashboardViewModel : ViewModelBase
     private readonly User _currentUser;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Yururlukte))]
     public partial int Aktif { get; set; }
 
     [ObservableProperty]
     public partial int OnayBekliyor { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Yururlukte))]
     public partial int Uyari { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IhlalSubtitle))]
+    [NotifyPropertyChangedFor(nameof(Yururlukte))]
     public partial int Ihlal { get; set; }
+
+    // Kartın sayısı ile kartın GÖTÜRDÜĞÜ liste aynı kümeyi göstermeli. Kart
+    // "yürürlükteki sözleşme" diyordu ama yalnızca Status = Aktif olanları
+    // sayıyordu; tıklanınca açılan liste de öyleydi. Üç durum birbirini dışladığı
+    // için toplamları tam olarak yürürlükteki sözleşme sayısını verir.
+    //
+    // Uyarı ve İhlal kutuları bu sayının alt kırılımı: dördü toplanacak bir bölüm
+    // değil, bir başlık ve iki uyarı. (İhlal kutusu zaten sözleşme değil açık ihlal
+    // sayıyor.)
+    public int Yururlukte => Aktif + Uyari + Ihlal;
 
     // Kart artık sözleşme değil AÇIK İHLAL sayısını gösteriyor: bir sözleşmede
     // birden fazla açık ihlal olabilir ve kart "1" derken üç iş bekliyor olabilir.
@@ -239,7 +252,7 @@ public partial class DashboardViewModel : ViewModelBase
     // Müdür rolünde "Sözleşmeler" gibi genel bir liste ekranı olmadığından, Aktif/Uyarı/İhlal
     // kartları Müdür için tıklanabilir değildir — yalnızca "Onay Bekliyor" kartı, zaten var olan
     // "Onay Bekleyenler" ekranına yönlendirebildiği için tıklanabilir kalır.
-    public bool AktifCardClickable => _currentUser.Role != UserRole.Mudur;
+    public bool YururlukteCardClickable => _currentUser.Role != UserRole.Mudur;
     public bool UyariCardClickable => _currentUser.Role != UserRole.Mudur;
     public bool IhlalCardClickable => _currentUser.Role != UserRole.Mudur;
     public bool OnayBekliyorCardClickable => true;

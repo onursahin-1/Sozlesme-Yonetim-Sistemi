@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
 using Sys.Domain;
+using Sys.UI.ViewModels;
 
 namespace Sys.UI.Printing;
 
@@ -141,6 +142,56 @@ public static class ContractPrintDocument
   .entry .b  { color: #46536a; margin-top: 1pt; }
   .entry .d  { font-size: 8pt; color: var(--muted); margin-top: 2pt; }
 
+  /*
+    SÜREÇ ADIMLARI — yatay zaman çizelgesi.
+
+    Bu bölüm alt alta metin bloklarıyken tek başına bir sayfayı doldurabiliyordu;
+    altı adımlık sıradan bir sözleşme üç sayfaya çıkıyordu. Oysa adım başına düşen
+    bilgi kısa: bir etiket, bir tarih, bir sonuç. Dikey yığın sayfanın yüksekliğini
+    harcayıp genişliğini boş bırakıyordu.
+
+    Grid, satır başına dört sütun veriyor ve adım sayısı arttıkça alta sarıyor.
+  */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10pt 0;
+    margin-bottom: 10pt;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .step { position: relative; padding: 0 5pt; text-align: center; }
+
+  /* Bağlayıcı, ÖNCEKİ adımın sonucunu taşır: zincirin nerede kırıldığı görünsün. */
+  .step::after {
+    content: "";
+    position: absolute;
+    top: 5pt; left: 50%; width: 100%; height: 1pt;
+    background: var(--line);
+  }
+  .step.ok::after   { background: #16a34a; }
+  .step.no::after   { background: #b92d2d; }
+  /* Satırın son sütunundan sonra bağlayıcı yok; sonraki adım alt satırda. */
+  .step:nth-child(4n)::after, .step:last-child::after { display: none; }
+
+  .step .dot {
+    position: relative; z-index: 1;
+    width: 11pt; height: 11pt; line-height: 11pt;
+    margin: 0 auto 4pt;
+    border-radius: 50%;
+    font-size: 7pt; font-weight: 700; color: #fff;
+    background: #fff; border: 1pt solid var(--line); color: var(--muted);
+  }
+  .step.ok  .dot { background: #16a34a; border-color: #16a34a; color: #fff; }
+  .step.no  .dot { background: #b92d2d; border-color: #b92d2d; color: #fff; }
+  .step.now .dot { background: var(--accent); border-color: var(--accent); color: var(--accent); }
+
+  .step .lbl  { font-size: 7.5pt; font-weight: 600; line-height: 1.25; }
+  .step.no .lbl { color: #b92d2d; }
+  .step.now .lbl { color: var(--ink); }
+  .step .dt   { font-size: 6.5pt; color: var(--muted); margin-top: 1pt; }
+  .step .note { font-size: 6.5pt; color: var(--muted); margin-top: 1pt; font-style: italic; }
+
   .scope { text-align: justify; }
   .foot  { margin-top: 22pt; padding-top: 7pt; border-top: .5pt solid var(--line);
            font-size: 8pt; color: var(--muted); display: flex; justify-content: space-between; }
@@ -221,20 +272,44 @@ public static class ContractPrintDocument
             sb.Append("</tr></tfoot></table>");
         }
 
-        // --- Aşama geçmişi ---
-        if (contract.ApprovalLogs.Count > 0)
+        // --- Süreç adımları ---
+        //
+        // Adımlar ekrandakiyle AYNI kaynaktan geliyor (ContractStepViewModel.Build):
+        // "Talep oluşturuldu" ile başlıyor, onay kayıtlarıyla devam ediyor, sözleşmenin
+        // bugünkü durumuyla bitiyor. İki yerde ayrı kurulsaydı zamanla ayrışırlardı.
+        var steps = ContractStepViewModel.Build(contract);
+        if (steps.Count > 0)
         {
-            sb.Append("<h2>Aşama Geçmişi</h2>");
-            foreach (var log in contract.ApprovalLogs.OrderBy(l => l.ActionDate).ThenBy(l => l.Id))
+            sb.Append("<h2>Süreç Adımları</h2>");
+            sb.Append("<div class=\"steps\">");
+            foreach (var step in steps)
             {
-                var onay = log.Decision == ApprovalDecision.Onay;
-                sb.Append($"<div class=\"entry {(onay ? "ok" : "no")}\">");
-                sb.Append($"<div class=\"t\">{E(log.StepName)} — {(onay ? "Onaylandı" : "Reddedildi")}</div>");
-                if (!string.IsNullOrWhiteSpace(log.Note))
-                    sb.Append($"<div class=\"b\">{E(log.Note!)}</div>");
-                sb.Append($"<div class=\"d\">{E(log.ActionDate.ToString("dd.MM.yyyy HH:mm", Tr))}</div>");
+                var cls = step.State switch
+                {
+                    ContractStepState.Completed => "ok",
+                    ContractStepState.Rejected => "no",
+                    ContractStepState.Current => "now",
+                    _ => "wait"
+                };
+                var mark = step.State switch
+                {
+                    ContractStepState.Completed => "&#10003;",
+                    ContractStepState.Rejected => "&#10007;",
+                    _ => "&nbsp;"
+                };
+
+                sb.Append($"<div class=\"step {cls}\">");
+                sb.Append($"<div class=\"dot\">{mark}</div>");
+                sb.Append($"<div class=\"lbl\">{E(step.Label)}</div>");
+                if (step.HasDate)
+                    sb.Append($"<div class=\"dt\">{E(step.DateText)}</div>");
+                // Red gerekçesi adımın altında duruyor: kararın kendisiyle birlikte
+                // okunmazsa ayrı bir bölüme bakmak gerekiyordu.
+                if (step.HasNote)
+                    sb.Append($"<div class=\"note\">{E(step.Note!)}</div>");
                 sb.Append("</div>");
             }
+            sb.Append("</div>");
         }
 
         // --- İhlal geçmişi ---
