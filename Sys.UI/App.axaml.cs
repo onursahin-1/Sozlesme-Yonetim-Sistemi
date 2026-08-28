@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,6 +27,14 @@ public partial class App : Application
         // Kayıtlı tema tercihi, ilk pencere açılmadan uygulanıyor. Sonraya kalsaydı
         // uygulama önce açık temayla çizilip hemen ardından koyuya dönerdi.
         ThemeService.Initialize();
+
+        // Dil de ilk pencereden ÖNCE yükleniyor: sonraya kalsaydı menü bir an
+        // Türkçe çizilip hemen ardından İngilizceye dönerdi.
+        Localization.LanguageService.Initialize();
+
+        // Servis hata kodlarını metne çeviren köprü. Bundan sonra servis katmanının
+        // fırlattığı AppException doğru dilde okunuyor.
+        Localization.ErrorText.Install();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

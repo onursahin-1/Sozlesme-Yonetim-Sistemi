@@ -1,6 +1,7 @@
 ﻿using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 namespace Sys.UI.Views;
@@ -30,7 +31,7 @@ public partial class ApprovalQueueView : UserControl
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Onay işlemi sırasında bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("Err.ApproveFailed", ex.Message);
         }
     }
 
@@ -50,7 +51,7 @@ public partial class ApprovalQueueView : UserControl
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Red işlemi sırasında bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("Err.RejectFailed", ex.Message);
         }
     }
 }

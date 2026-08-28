@@ -201,6 +201,53 @@ döndü" yazıyordu. Ayrı soru, ayrı alan: `LastRejectedStage` (0 / 1 / 2), re
 yazılırken **aşama değişmeden önce** doldurulur ve zincirde ileri gidildiğinde
 red izinin geri kalanıyla birlikte temizlenir.
 
+### Dil desteği (TR / EN)
+
+Arayüz iki dilli. Tercih `%AppData%\SYS\language.json` içinde — tema gibi, o
+bilgisayardaki görüntü ayarı; veritabanına yazılsaydı aynı hesapla farklı
+makinelerden girildiğinde biri diğerini ezerdi.
+
+**Tek sözlük, çift değer.** `Strings.Map` her anahtarın Türkçe ve İngilizce
+karşılığını YAN YANA tutar:
+
+```csharp
+["Nav.Dashboard"] = ("Gösterge Paneli", "Dashboard"),
+```
+
+Ayrı iki sözlük daha düzenli görünürdü ama bu projede aynı bilgiyi iki yerde
+tutmak defalarca hata üretti. Böyle yazıldığında bir anahtarın bir dilde eksik
+kalması **mümkün değil**. Sözlükte olmayan anahtar ekranda `[Nav.Dashboard]`
+olarak görünür — boşluk bırakmak yerine göze batar.
+
+XAML'den `{Binding [Anahtar], Source={x:Static loc:Strings.Current}}`, C#'tan
+`Strings.T("Anahtar")`. Dil değişince indeksleyicinin tamamı "değişti" olarak
+duyurulur ve kabuk açık sayfayı yeniden kurar.
+
+**Servis katmanı metin üretmez.** İş kuralı `AppError` kodu döndürür, metni
+arayüz seçer (`ErrorText`). Eskiden arayüz servis mesajının İÇİNDE kelime
+arıyordu — `ErrorMessage.Contains("Mevcut şifreniz")` — ve çeviri o koşulu
+sessizce bozardı. Aynı sınır panelin "Sizi bekleyen işler" başlıklarında da
+geçerli: servis anahtar döndürür.
+
+**Ne çevrilir, ne çevrilmez.**
+
+| Çevrilir | Çevrilmez |
+|---|---|
+| Etiket, düğme, ipucu, doğrulama mesajı | Denetim kaydının `Detail` metni |
+| Durum rozetleri, süreç adımı açıklamaları | `ApprovalLog.StepName` |
+| Hata kodlarının karşılığı | Açılır liste değerleri (fesih türü, ödeme periyodu, firma türü, tazminat yönü, ihlal türü) |
+
+Ayrım şu: **sistemin ürettiği** her şey iki dilde, **kaydedilmiş** olan her şey
+yazıldığı dilde. Bir denetim kaydını dile göre farklı göstermek, olay anında ne
+yazıldığından başka bir şey göstermek olurdu. Açılır liste değerleri de seçilince
+veritabanına yazılıyor; çevrilseydi aynı sözleşme iki dilde iki farklı değer
+taşırdı.
+
+**Tarih ve tutar biçimi dile bağlı değil.** Her iki dilde de `tr-TR`
+(31.12.2026 · 15.678,00 TL). Şirket içi bir sistem; sözleşme tutarı ve tarihi
+Türk mevzuatına göre yazılıyor ve aynı sözleşmenin PDF'i iki dilde farklı
+okunmamalı.
+
 ### Kendi işleminin bildirimi gönderilmez
 
 `NotifyAsync` alıcı listesinden işlemi yapan kişiyi çıkarır. Bildirimler "senin

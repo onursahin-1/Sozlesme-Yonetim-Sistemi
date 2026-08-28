@@ -6,6 +6,9 @@ namespace Sys.Services;
 // Panel tek bir çağrıyla dolduruluyor; her kutu için ayrı ayrı servis çağrısı
 // yapmak hem yavaş hem de ekranın parça parça dolmasına yol açardı.
 
+// NOT: Title ve Subtitle birer ÇEVİRİ ANAHTARI, hazır metin değil. Servis katmanı
+// hangi dilde çalışıldığını bilmiyor; metni arayüz çözüyor (Strings.T).
+//
 // "Sizi bekleyen işler" listesindeki bir satır. Panelin asıl işlevi bu:
 // kullanıcının kendi aksiyonunu bekleyen işleri tek yerde göstermek.
 public class PendingWorkItem

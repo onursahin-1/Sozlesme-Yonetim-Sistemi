@@ -14,34 +14,26 @@ public static class PasswordPolicy
 {
     public const int MinLength = 8;
 
-    // Kullanıcıya gösterilecek kural listesi. Şifre Değiştir ekranındaki kart bu
-    // listeden besleniyor; kural değişirse ekran metnini ayrıca güncellemek
-    // gerekmiyor (eskiden kart sabit metindi ve gerçek kuraldan kopabilirdi).
-    public static readonly string[] Rules =
-    {
-        $"En az {MinLength} karakter",
-        "En az bir harf",
-        "En az bir rakam",
-        "Mevcut şifreden farklı"
-    };
-
-    // Geçerliyse null, değilse kullanıcıya gösterilecek hata mesajı döner.
+    // Geçerliyse null, değilse ihlal edilen kuralın KODU döner.
+    //
+    // Eskiden metin dönüyordu ve o metin hem servis hem arayüz tarafından doğrudan
+    // ekrana basılıyordu. Metin dile bağlı, kural değil.
     //
     // Özel karakter zorunluluğu bilinçli olarak yok: insanları "Sifre123!" gibi
     // tahmin edilebilir kalıplara itiyor, gerçek faydası tartışmalı.
-    public static string? Validate(string? password)
+    public static AppError? Validate(string? password)
     {
         if (string.IsNullOrWhiteSpace(password))
-            return "Şifre boş olamaz.";
+            return AppError.PasswordEmpty;
 
         if (password.Length < MinLength)
-            return $"Şifre en az {MinLength} karakter olmalıdır.";
+            return AppError.PasswordTooShort;
 
         if (!password.Any(char.IsLetter))
-            return "Şifre en az bir harf içermelidir.";
+            return AppError.PasswordNeedsLetter;
 
         if (!password.Any(char.IsDigit))
-            return "Şifre en az bir rakam içermelidir.";
+            return AppError.PasswordNeedsDigit;
 
         return null;
     }

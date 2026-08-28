@@ -1,6 +1,7 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Sys.Domain;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -43,7 +44,7 @@ public partial class NotificationRowViewModel : ObservableObject
         get
         {
             var fark = DateTime.Now - CreatedAt;
-            if (fark.TotalMinutes < 1) return "az önce";
+            if (fark.TotalMinutes < 1) return Strings.T("Notif.JustNow");
             if (fark.TotalMinutes < 60) return $"{(int)fark.TotalMinutes} dk önce";
             if (fark.TotalHours < 24) return $"{(int)fark.TotalHours} saat önce";
             if (fark.TotalDays < 7) return $"{(int)fark.TotalDays} gün önce";

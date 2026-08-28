@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -38,7 +39,7 @@
 
                     <StackPanel Spacing="18" HorizontalAlignment="Center">
                         <Border Background="{DynamicResource WarningBright}" Height="2" Width="48" HorizontalAlignment="Center"/>
-                        <TextBlock Classes="display" Text="SÖZLEŞME&#x0a;YÖNETİM SİSTEMİ"
+                        <TextBlock Classes="display" Text="{Binding [Login.BrandTitle], Source={x:Static loc:Strings.Current}}"
                                    Foreground="{DynamicResource ShellTextBright}" FontSize="29" FontWeight="SemiBold"
                                    LineHeight="40" LetterSpacing="1.5"
                                    TextAlignment="Center" HorizontalAlignment="Center"/>
@@ -58,19 +59,19 @@
                         Width="340" Spacing="16">
 
                 <StackPanel Spacing="6" Margin="0,0,0,8">
-                    <TextBlock Classes="display" Text="Hoş geldiniz" FontSize="28" FontWeight="SemiBold"
+                    <TextBlock Classes="display" Text="{Binding [Login.Welcome], Source={x:Static loc:Strings.Current}}" FontSize="28" FontWeight="SemiBold"
                                Foreground="{DynamicResource LoginFormText}" LetterSpacing="-0.4"/>
-                    <TextBlock Text="Devam etmek için hesabınıza giriş yapın."
+                    <TextBlock Text="{Binding [Login.Subtitle], Source={x:Static loc:Strings.Current}}"
                                FontSize="13" Foreground="{DynamicResource LoginFormMuted}"/>
                 </StackPanel>
 
                 <StackPanel Spacing="7">
-                    <TextBlock Text="Kullanıcı Adı" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
+                    <TextBlock Text="{Binding [Login.Username], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
                     <TextBox x:Name="UsernameBox" Text="{Binding Username}" KeyDown="OnCredentialKeyDown"
                              Background="{DynamicResource LoginInputBg}" Foreground="{DynamicResource LoginFormText}"
                              BorderBrush="{DynamicResource LoginFormBorder}" BorderThickness="1" CornerRadius="6"
                              Padding="12,10" FontSize="13"
-                             PlaceholderText="kullanici.adi"/>
+                             PlaceholderText="{Binding [Login.UsernamePlaceholder], Source={x:Static loc:Strings.Current}}"/>
                 </StackPanel>
 
                 <StackPanel Spacing="7">
@@ -81,11 +82,11 @@
                       sadece kutu odaktayken ve kilit açıkken beliriyor.
                     -->
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0" Text="Şifre" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
+                        <TextBlock Grid.Column="0" Text="{Binding [Login.Password], Source={x:Static loc:Strings.Current}}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource LoginFormLabel}"/>
                         <StackPanel Grid.Column="1" x:Name="CapsLockWarning" IsVisible="False"
                                     Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                             <Path Fill="{DynamicResource DangerBase}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" Data="M12 3L19 10.5H15.5V15H8.5V10.5H5ZM8.5 17.5H15.5V21H8.5Z"/>
-                            <TextBlock Text="Caps Lock açık" FontSize="11" Foreground="{DynamicResource DangerBase}"
+                            <TextBlock Text="{Binding [Login.CapsLock], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource DangerBase}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
@@ -108,16 +109,16 @@
                 <!-- Birincil eylem: grafit dolgu. Renk yerine koyuluk kontrastıyla öne çıkıyor. -->
                 <Button Classes="flat" HorizontalAlignment="Stretch" Margin="0,6,0,0"
                         Command="{Binding LoginCommand}"
-                        ToolTip.Tip="Enter tuşuyla da giriş yapabilirsiniz">
+                        ToolTip.Tip="{Binding [Login.SubmitHint], Source={x:Static loc:Strings.Current}}">
                     <Border Background="{DynamicResource AccentSolid}" CornerRadius="6" Padding="14,12">
-                        <TextBlock Text="Giriş Yap" Foreground="{DynamicResource TextOnAccent}" FontSize="13.5" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding [Login.Submit], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13.5" FontWeight="SemiBold"
                                    LetterSpacing="0.2" HorizontalAlignment="Center"/>
                     </Border>
                 </Button>
 
                 <Button Classes="flat" HorizontalAlignment="Center" Margin="0,2,0,0"
                         Command="{Binding ToggleForgotPasswordCommand}">
-                    <TextBlock Text="Şifremi unuttum" FontSize="12" Foreground="{DynamicResource LoginFormMuted}"/>
+                    <TextBlock Text="{Binding [Login.ForgotPassword], Source={x:Static loc:Strings.Current}}" FontSize="12" Foreground="{DynamicResource LoginFormMuted}"/>
                 </Button>
 
                 <!-- Şifre sıfırlama talebi: e-posta altyapısı olmadığı için otomatik
@@ -126,19 +127,19 @@
                         Background="{DynamicResource LoginInputBg}" BorderBrush="{DynamicResource LoginFormBorderAlt}" BorderThickness="1"
                         CornerRadius="8" Padding="16" Margin="0,2,0,0">
                     <StackPanel Spacing="10">
-                        <TextBlock Text="Kullanıcı adınızı girin. Sistem yöneticinize bir sıfırlama talebi iletilecek."
+                        <TextBlock Text="{Binding [Login.ForgotHint], Source={x:Static loc:Strings.Current}}"
                                    FontSize="11.5" Foreground="{DynamicResource LoginFormMuted}" TextWrapping="Wrap" LineHeight="17"/>
 
                         <TextBox Text="{Binding ForgotUsername}" Background="{DynamicResource LoginInputBg}" Foreground="{DynamicResource LoginFormText}"
                                  BorderBrush="{DynamicResource LoginFormBorder}" BorderThickness="1" CornerRadius="6"
                                  Padding="12,9" FontSize="13"
-                                 PlaceholderText="Kullanıcı adı" KeyDown="OnForgotKeyDown"/>
+                                 PlaceholderText="{Binding [Login.ForgotPlaceholder], Source={x:Static loc:Strings.Current}}" KeyDown="OnForgotKeyDown"/>
 
                         <Button Classes="flat" HorizontalAlignment="Left"
                                 IsEnabled="{Binding !IsSubmittingReset}"
                                 Command="{Binding SubmitPasswordResetRequestCommand}">
                             <Border Background="{DynamicResource WarningBright}" CornerRadius="6" Padding="16,8">
-                                <TextBlock Text="Talep Gönder" Foreground="{DynamicResource TextOnAccent}" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding [Login.SendRequest], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="12" FontWeight="SemiBold"/>
                             </Border>
                         </Button>
 

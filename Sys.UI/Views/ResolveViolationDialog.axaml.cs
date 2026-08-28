@@ -1,6 +1,7 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Sys.UI.Localization;
 
 namespace Sys.UI.Views;
 
@@ -11,16 +12,26 @@ public partial class ResolveViolationDialog : Window
     public ResolveViolationDialog()
     {
         InitializeComponent();
+
+        // Pencerenin ÇERÇEVESİ de çevrilmeli: başlık, soru, ipucu ve iki düğme
+        // XAML'de sabit metindi. İçerideki cümleler çevrilirken bunlar Türkçe
+        // kalıyordu — aynı hatayı ConfirmDialog ve RejectRequestDialog'da da
+        // yapmıştım; kod-arkasından atanan metinler görülüyor, XAML'dekiler değil.
+        Title = Strings.T("Vio.ResolveTitle");
+        QuestionText.Text = Strings.T("Vio.ResolveQuestion");
+        NoteBox.PlaceholderText = Strings.T("Vio.ResolvePlaceholder");
+        CancelButton.Content = Strings.T("Confirm.Cancel");
+        ConfirmText.Text = Strings.T("Vio.ResolveConfirm");
     }
 
     public ResolveViolationDialog(string violationType, bool isLastOpen, string newStatusText) : this()
     {
-        HeaderText.Text = $"\"{violationType}\" ihlali giderildi olarak işaretlenecek.";
+        HeaderText.Text = Strings.T("Vio.ResolveAsk", violationType);
 
         // Kullanıcı sözleşmenin durumunun değişip değişmeyeceğini önceden bilmeli.
         HintText.Text = isLastOpen
-            ? $"Bu sözleşmenin son açık ihlali. İşaretlediğinizde sözleşme \"{newStatusText}\" durumuna dönecek."
-            : "Sözleşmede başka açık ihlaller var; durumu \"İhlal Mevcut\" olarak kalmaya devam edecek.";
+            ? Strings.T("Vio.ResolveLastOpen", newStatusText)
+            : Strings.T("Vio.ResolveMoreOpen");
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(null);
@@ -33,7 +44,7 @@ public partial class ResolveViolationDialog : Window
         // istisna mesajıyla karşılaştırmadan aynı kuralı uygulamak için.
         if (string.IsNullOrWhiteSpace(note))
         {
-            ErrorText.Text = "İhlalin nasıl giderildiği yazılmalıdır.";
+            ErrorText.Text = Strings.T("Vio.ResolutionRequired");
             ErrorText.IsVisible = true;
             NoteBox.Focus();
             return;

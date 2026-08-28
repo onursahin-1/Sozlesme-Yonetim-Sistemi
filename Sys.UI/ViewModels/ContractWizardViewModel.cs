@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -172,7 +173,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 
     private int CheckedCount => Checklist.Count(i => i.IsChecked);
     public bool AllChecked => !ShowChecklist || Checklist.All(i => i.IsChecked);
-    public string ChecklistProgressText => $"{CheckedCount} / {Checklist.Count} madde";
+    public string ChecklistProgressText => Strings.T("Wiz.ChecklistProgress", CheckedCount, Checklist.Count);
     public bool ShowChecklistWarning => ShowChecklist && !AllChecked;
 
     // Gönder butonu iki sebeple pasif olabilir: liste bitmemiştir ya da gönderim
@@ -295,9 +296,9 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 
     private void BuildSteps() => Steps = new ObservableCollection<WizardStepViewModel>
     {
-        new(1, "Temel Bilgiler", "Talebi seçin, tarihleri ve ödeme koşullarını girin.", CurrentStep),
-        new(2, "Bedel Kalemleri", "Sözleşmenin tutarı kalem kalem burada oluşur.", CurrentStep),
-        new(3, "Belgeler ve Gönder", "Dosyaları ekleyip sözleşmeyi onaya gönderin.", CurrentStep),
+        new(1, Strings.T("Wiz.Step1Title"), Strings.T("Wiz.Step1Sub"), CurrentStep),
+        new(2, Strings.T("Wiz.Step2Title"), Strings.T("Wiz.Step2Sub"), CurrentStep),
+        new(3, Strings.T("Wiz.Step3Title"), Strings.T("Wiz.Step3Sub"), CurrentStep),
     };
 
     private async Task LoadAsync()
@@ -310,7 +311,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Talepler yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Wiz.LoadRequestsFailed", ex.Message);
         }
         finally
         {
@@ -454,9 +455,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
             IsRecreate = full.Items.Count > 0;
             if (IsRecreate)
             {
-                RecreateNotice =
-                    "Bu talep için daha önce sözleşme oluşturulmuş. Önceki kalemler ve tarihler " +
-                    "forma yüklendi; kaydettiğinizde kalemler bu listeyle DEĞİŞTİRİLİR.";
+                RecreateNotice = Strings.T("Wiz.RecreateNotice");
             }
             else if (full.RenewedFromContractId is { } sourceId)
             {
@@ -473,7 +472,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         catch (Exception ex)
         {
             if (token != _requestLoadToken) return;
-            ErrorMessage = "Talebin önceki verileri yüklenemedi: " + ex.Message;
+            ErrorMessage = Strings.T("Wiz.LoadPreviousFailed", ex.Message);
             EnsureAtLeastOneItemRow();
         }
     }
@@ -493,9 +492,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 
         var sourceNo = string.IsNullOrWhiteSpace(source.ContractNo) ? source.RequestRefNo : source.ContractNo!;
         IsRecreate = true;
-        RecreateNotice =
-            $"Bu bir yenileme talebi. Kalemler {sourceNo} numaralı önceki sözleşmeden yüklendi — " +
-            "birim fiyatları ve miktarları yeni döneme göre kontrol edin. Tarihler kasıtlı olarak boş bırakıldı.";
+        RecreateNotice = Strings.T("Wiz.RenewalNotice", sourceNo);
     }
 
     private void EnsureAtLeastOneItemRow()
@@ -516,25 +513,25 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
             ClearStepOneErrors();
 
             if (SelectedRequest is null)
-                RequestError = "Bir talep seçilmelidir.";
+                RequestError = Strings.T("Wiz.RequestRequired");
 
             if (StartDate is null)
-                StartDateError = "Başlangıç tarihi zorunludur.";
+                StartDateError = Strings.T("Wiz.StartRequired");
 
             if (EndDate is null)
-                EndDateError = "Bitiş tarihi zorunludur.";
+                EndDateError = Strings.T("Wiz.EndRequired");
             else if (StartDate is not null && EndDate.Value.Date <= StartDate.Value.Date)
-                EndDateError = "Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.";
+                EndDateError = Strings.T("Wiz.EndBeforeStart");
 
             if (string.IsNullOrEmpty(SelectedPaymentPeriod))
-                PaymentPeriodError = "Ödeme periyodu seçilmelidir.";
+                PaymentPeriodError = Strings.T("Wiz.PaymentRequired");
 
             if (string.IsNullOrWhiteSpace(SapCariKodu))
-                SapCariKoduError = "SAP cari kodu zorunludur.";
+                SapCariKoduError = Strings.T("Wiz.SapRequired");
 
             if (HasStepOneErrors)
             {
-                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+                ErrorMessage = Strings.T("Wiz.FixFields");
                 return;
             }
         }
@@ -543,25 +540,25 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         {
             if (Items.Count == 0)
             {
-                ErrorMessage = "Lütfen en az bir kalem ekleyin.";
+                ErrorMessage = Strings.T("Wiz.AtLeastOneItem");
                 return;
             }
 
             if (Items.Any(i => string.IsNullOrWhiteSpace(i.Description)))
             {
-                ErrorMessage = "Lütfen tüm kalemlerin açıklamasını doldurun.";
+                ErrorMessage = Strings.T("Wiz.ItemDescriptionRequired");
                 return;
             }
 
             if (Items.Any(i => i.Quantity <= 0))
             {
-                ErrorMessage = "Kalem miktarı 0'dan büyük olmalı.";
+                ErrorMessage = Strings.T("Wiz.QuantityPositive");
                 return;
             }
 
             if (Items.Any(i => i.UnitPrice < 0))
             {
-                ErrorMessage = "Birim fiyat negatif olamaz.";
+                ErrorMessage = Strings.T("Wiz.UnitPriceNegative");
                 return;
             }
         }
@@ -583,7 +580,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 
         if (SelectedRequest is null)
         {
-            ErrorMessage = "Talep seçilmedi.";
+            ErrorMessage = Strings.T("Wiz.NoRequestSelected");
             return;
         }
 
@@ -591,7 +588,7 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
         // sorulmayacak, kaydettikten sonra sözleşme doğrudan yönetime gidiyor.
         if (ShowChecklist && !AllChecked)
         {
-            ErrorMessage = "Göndermeden önce kontrol listesindeki tüm maddeleri işaretleyin.";
+            ErrorMessage = Strings.T("Wiz.ChecklistIncomplete");
             return;
         }
 
@@ -619,11 +616,11 @@ public partial class ContractWizardViewModel : ViewModelBase, IEscapeHandler
 
             await _contractService.FinalizeContractAsync(SelectedRequest, items, attachments, _currentUser);
 
-            SuccessMessage = "Sözleşme başarıyla oluşturuldu. Sol menüden 'Sözleşmeler'e bakarak kontrol edebilirsin.";
+            SuccessMessage = Strings.T("Wiz.Created");
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Hata: " + ex.Message;
+            ErrorMessage = Strings.T("Err.Prefix", ex.Message);
         }
         finally
         {

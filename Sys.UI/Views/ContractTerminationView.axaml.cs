@@ -5,6 +5,8 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Sys.UI.ViewModels;
 
+using Sys.UI.Localization;
+
 namespace Sys.UI.Views;
 
 public partial class ContractTerminationView : UserControl
@@ -25,11 +27,11 @@ public partial class ContractTerminationView : UserControl
 
             var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Fesih Belgesi Seç",
+                Title = Strings.T("File.ChooseTermination"),
                 AllowMultiple = false,
                 FileTypeFilter = new List<FilePickerFileType>
                 {
-                    new("PDF Dosyaları") { Patterns = new[] { "*.pdf" } }
+                    new(Strings.T("File.PdfFiles")) { Patterns = new[] { "*.pdf" } }
                 }
             });
 
@@ -44,7 +46,7 @@ public partial class ContractTerminationView : UserControl
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Dosya seçilirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.PickFailed", ex.Message);
         }
     }
     private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);
@@ -64,17 +66,15 @@ public partial class ContractTerminationView : UserControl
             // Onay metni hangi sözleşmenin feshedileceğini adıyla yazıyor: listede
             // yanlış satır seçilmişse son fırsat burası.
             var confirmed = await ConfirmDialog.ShowAsync(owner,
-                $"\"{vm.CurrentTitle}\" sözleşmesi için fesih talebi gönderilecek.\n\n" +
-                "Talep, SYB son kontrolü ve Yönetim (YK) onayından geçtikten sonra sözleşme feshedilir " +
-                "ve arşive alınır. Devam etmek istiyor musunuz?",
-                "Evet, Fesih Talebini Gönder");
+                Strings.T("Confirm.TerminationAsk", vm.CurrentTitle),
+                Strings.T("Confirm.TerminationButton"));
 
             if (confirmed)
                 vm.SubmitCommand.Execute(null);
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Fesih talebi gönderilirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("Term.SubmitFailed", ex.Message);
         }
     }
 }

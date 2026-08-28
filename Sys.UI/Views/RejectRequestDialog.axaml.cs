@@ -1,6 +1,7 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Sys.UI.Localization;
 
 namespace Sys.UI.Views;
 
@@ -21,6 +22,7 @@ public partial class RejectRequestDialog : Window
     public RejectRequestDialog()
     {
         InitializeComponent();
+        CancelButton.Content = Strings.T("Confirm.Cancel");
         AllowResubmitCheck.IsCheckedChanged += (_, _) => UpdateModeTexts();
         UpdateModeTexts();
     }
@@ -32,20 +34,14 @@ public partial class RejectRequestDialog : Window
         // Pencere başlığı da değişmeli: içerideki her yazı "geri çekme" derken
         // başlık çubuğunun "Talebi Reddet" demesi, kullanıcıya yanlış pencereyi
         // açtığını düşündürüyordu.
-        Title = isOwnRequest ? "Talebi Geri Çek" : "Talebi Reddet";
+        Title = Strings.T(isOwnRequest ? "Card.WithdrawRequest" : "Card.RejectRequest");
 
-        HeaderText.Text = isOwnRequest
-            ? $"\"{contractTitle}\" talebiniz geri çekilecek."
-            : $"\"{contractTitle}\" talebi reddedilecek.";
+        HeaderText.Text = Strings.T(isOwnRequest ? "Rjd.HeaderWithdraw" : "Rjd.HeaderReject", contractTitle);
 
-        NoteLabel.Text = isOwnRequest ? "Gerekçe" : "Red gerekçesi";
-        NoteBox.Watermark = isOwnRequest
-            ? "Talebi neden geri çektiğinizi yazın. İşlem geçmişine kaydedilir."
-            : "Talebin neden reddedildiğini yazın. Bu metin talep sahibine bildirim olarak iletilir.";
+        NoteLabel.Text = Strings.T(isOwnRequest ? "Rjd.Reason" : "Rjd.RejectReason");
+        NoteBox.PlaceholderText = Strings.T(isOwnRequest ? "Rjd.WithdrawHint" : "Rjd.RejectHint");
 
-        AllowResubmitCheck.Content = isOwnRequest
-            ? "Düzeltip yeniden göndereceğim"
-            : "Düzeltilip yeniden gönderilebilir";
+        AllowResubmitCheck.Content = Strings.T(isOwnRequest ? "Rjd.ResubmitOwn" : "Rjd.ResubmitOther");
 
         UpdateModeTexts();
     }
@@ -58,17 +54,13 @@ public partial class RejectRequestDialog : Window
 
         if (_isOwnRequest)
         {
-            ConfirmText.Text = allowResubmit ? "Geri Çek" : "Kapat";
-            HintText.Text = allowResubmit
-                ? "Talep düzenlenebilir durumda kalır; düzeltip yeniden gönderebilirsiniz."
-                : "Talep nihai olarak kapanır ve yeniden gönderilemez.";
+            ConfirmText.Text = Strings.T(allowResubmit ? "Rjd.Withdraw" : "Rjd.Close");
+            HintText.Text = Strings.T(allowResubmit ? "Rjd.HintStaysEditable" : "Rjd.HintFinal");
             return;
         }
 
-        ConfirmText.Text = allowResubmit ? "İade Et" : "Reddet ve Kapat";
-        HintText.Text = allowResubmit
-            ? "Talep sahibine geri döner; düzeltip yeniden gönderebilir."
-            : "Talep nihai olarak kapanır ve yeniden gönderilemez.";
+        ConfirmText.Text = Strings.T(allowResubmit ? "Rjd.Return" : "Rjd.RejectAndClose");
+        HintText.Text = Strings.T(allowResubmit ? "Rjd.HintReturns" : "Rjd.HintFinal");
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e) => Close(null);
@@ -81,7 +73,7 @@ public partial class RejectRequestDialog : Window
         // istisna mesajıyla karşılaştırmadan aynı kuralı uygulamak için.
         if (string.IsNullOrWhiteSpace(note))
         {
-            ErrorText.Text = "Red gerekçesi zorunludur.";
+            ErrorText.Text = Strings.T("Rjd.ReasonRequired");
             ErrorText.IsVisible = true;
             NoteBox.Focus();
             return;

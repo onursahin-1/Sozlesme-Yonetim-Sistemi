@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -85,14 +86,14 @@
 						CornerRadius="10" Padding="16,12">
 					<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 						<StackPanel Grid.Column="0" Spacing="2">
-							<TextBlock Text="Talebi Düzenle" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource DangerBase}"/>
-							<TextBlock Text="Değişiklikleri kaydettiğinizde talep yeniden onaya gönderilir."
+							<TextBlock Text="{Binding [Nav.EditRequest], Source={x:Static loc:Strings.Current}}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource DangerBase}"/>
+							<TextBlock Text="{Binding [Req.EditNotice], Source={x:Static loc:Strings.Current}}"
 									   FontSize="11.5" Foreground="{DynamicResource DangerTextAlt}" TextWrapping="Wrap"/>
 						</StackPanel>
 						<Button Grid.Column="1" Classes="flat" VerticalAlignment="Center" Command="{Binding CancelCommand}">
 							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 									CornerRadius="7" Padding="12,6">
-								<TextBlock Text="← Vazgeç" Foreground="{DynamicResource DangerBase}" FontSize="12"/>
+								<TextBlock Text="{Binding [Form.CancelBack], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="12"/>
 							</Border>
 						</Button>
 					</Grid>
@@ -109,21 +110,21 @@
 						CornerRadius="10" Padding="16,12">
 					<Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
 						<StackPanel Grid.Column="0" Spacing="3">
-							<TextBlock Text="Sözleşme Yenileme" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource SuccessText}"/>
+							<TextBlock Text="{Binding [Req.RenewalTitle], Source={x:Static loc:Strings.Current}}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource SuccessText}"/>
 							<StackPanel Orientation="Horizontal" Spacing="5">
-								<TextBlock Text="Kaynak sözleşme:" FontSize="11.5" Foreground="{DynamicResource SuccessTextAlt}"/>
+								<TextBlock Text="{Binding [Req.SourceContract], Source={x:Static loc:Strings.Current}}" FontSize="11.5" Foreground="{DynamicResource SuccessTextAlt}"/>
 								<TextBlock Text="{Binding RenewalSourceLabel}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource SuccessText}"/>
 								<TextBlock Text="·" FontSize="11.5" Foreground="{DynamicResource SuccessMuted}"/>
-								<TextBlock Text="bitiş" FontSize="11.5" Foreground="{DynamicResource SuccessTextAlt}"/>
+								<TextBlock Text="{Binding [Req.EndLabel], Source={x:Static loc:Strings.Current}}" FontSize="11.5" Foreground="{DynamicResource SuccessTextAlt}"/>
 								<TextBlock Text="{Binding RenewalSourceEndText}" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource SuccessText}"/>
 							</StackPanel>
-							<TextBlock Text="Alanlar kaynak sözleşmeden dolduruldu. Kontrol edip değişenleri güncelleyin; kaynak sözleşme olduğu gibi kalır."
+							<TextBlock Text="{Binding [Req.RenewalNotice], Source={x:Static loc:Strings.Current}}"
 									   FontSize="11.5" Foreground="{DynamicResource SuccessTextAlt}" TextWrapping="Wrap"/>
 						</StackPanel>
 						<Button Grid.Column="1" Classes="flat" VerticalAlignment="Center" Command="{Binding CancelCommand}">
 							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource SuccessSoftBorderAlt}" BorderThickness="1"
 									CornerRadius="7" Padding="12,6">
-								<TextBlock Text="← Vazgeç" Foreground="{DynamicResource SuccessText}" FontSize="12"/>
+								<TextBlock Text="{Binding [Form.CancelBack], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource SuccessText}" FontSize="12"/>
 							</Border>
 						</Button>
 					</Grid>
@@ -141,9 +142,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Talep Bilgileri" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Req.RequestInfo], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{Binding [Form.RequiredHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 
@@ -151,12 +152,12 @@
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
-								<TextBlock Classes="formLabel" Text="SAS / YK REFERANS NO"/>
-								<TextBox Text="{Binding RequestRefNo}" PlaceholderText="Örn. 2026-0142"/>
+								<TextBlock Classes="formLabel" Text="{Binding [Req.Reference], Source={x:Static loc:Strings.Current}}"/>
+								<TextBox Text="{Binding RequestRefNo}" PlaceholderText="{Binding [Req.ReferencePlaceholder], Source={x:Static loc:Strings.Current}}"/>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="SÖZLEŞME TÜRÜ"/>
+									<Run Text="{Binding [Req.ContractType], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<ComboBox ItemsSource="{Binding TypeOptions}" SelectedItem="{Binding Type}"
@@ -168,19 +169,19 @@
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="KONU / BAŞLIK"/>
+								<Run Text="{Binding [Req.Subject], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
-							<TextBox Text="{Binding Title}" PlaceholderText="Talebin kısa ve ayırt edici başlığı"/>
+							<TextBox Text="{Binding Title}" PlaceholderText="{Binding [Req.SubjectPlaceholder], Source={x:Static loc:Strings.Current}}"/>
 							<TextBlock Classes="fieldError" Text="{Binding TitleError}"
 									   IsVisible="{Binding TitleError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 						</StackPanel>
 
 						<StackPanel>
-							<TextBlock Classes="formLabel" Text="TAHMİNİ BEDEL"/>
+							<TextBlock Classes="formLabel" Text="{Binding [Req.EstimatedAmount], Source={x:Static loc:Strings.Current}}"/>
 							<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
 								<TextBox Grid.Column="0" Text="{Binding EstimatedAmountText}"
-										 PlaceholderText="0,00"
+										 PlaceholderText="{Binding [Req.AmountPlaceholder], Source={x:Static loc:Strings.Current}}"
 										 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 								<ComboBox Grid.Column="1" Width="128"
 										  ItemsSource="{Binding CurrencyOptions}" SelectedItem="{Binding SelectedCurrency}"/>
@@ -188,17 +189,17 @@
 							<TextBlock Classes="fieldError" Text="{Binding AmountError}"
 									   IsVisible="{Binding AmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							<TextBlock Classes="formHint"
-									   Text="Yaklaşık bir tutar yeterli. Kesin bedel, sözleşme yaratılırken kalem kalem girilir."/>
+									   Text="{Binding [Req.EstimatedHint], Source={x:Static loc:Strings.Current}}"/>
 						</StackPanel>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="İŞİN TANIMI"/>
+								<Run Text="{Binding [Req.WorkDescription], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<TextBox Text="{Binding Description}" AcceptsReturn="True" Height="120"
 									 TextWrapping="Wrap" AcceptsTab="False"
-									 PlaceholderText="Talebin kapsamını, gerekçesini ve beklenen çıktıyı yazın."/>
+									 PlaceholderText="{Binding [Req.WorkPlaceholder], Source={x:Static loc:Strings.Current}}"/>
 							<TextBlock Classes="fieldError" Text="{Binding DescriptionError}"
 									   IsVisible="{Binding DescriptionError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 						</StackPanel>
@@ -217,9 +218,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Firma Bilgileri" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Req.CompanyInfo], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="Sözleşmenin karşı tarafı." FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{Binding [Req.CompanyHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 
@@ -228,7 +229,7 @@
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
-									<Run Text="FİRMA ADI"/>
+									<Run Text="{Binding [Req.CompanyName], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<TextBox Text="{Binding CompanyName}"/>
@@ -237,10 +238,10 @@
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="VERGİ NO"/>
+									<Run Text="{Binding [Field.TaxNo], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
-								<TextBox Text="{Binding TaxNo}" MaxLength="10" PlaceholderText="10 haneli"/>
+								<TextBox Text="{Binding TaxNo}" MaxLength="10" PlaceholderText="{Binding [Req.TaxNoPlaceholder], Source={x:Static loc:Strings.Current}}"/>
 								<TextBlock Classes="fieldError" Text="{Binding TaxNoError}"
 										   IsVisible="{Binding TaxNoError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							</StackPanel>
@@ -248,11 +249,11 @@
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
-								<TextBlock Classes="formLabel" Text="SAP CARİ KODU"/>
-								<TextBox Text="{Binding SapCariKodu}" PlaceholderText="C-XXXXX (yoksa boş bırakın)"/>
+								<TextBlock Classes="formLabel" Text="{Binding [Field.SapCode], Source={x:Static loc:Strings.Current}}"/>
+								<TextBox Text="{Binding SapCariKodu}" PlaceholderText="{Binding [Req.SapPlaceholder], Source={x:Static loc:Strings.Current}}"/>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
-								<TextBlock Classes="formLabel" Text="FİRMA TÜRÜ"/>
+								<TextBlock Classes="formLabel" Text="{Binding [Field.CompanyType], Source={x:Static loc:Strings.Current}}"/>
 								<ComboBox ItemsSource="{Binding CompanyTypeOptions}" SelectedItem="{Binding SelectedCompanyType}"
 										  HorizontalAlignment="Stretch"/>
 							</StackPanel>
@@ -272,9 +273,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Dosya" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Form.File], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="İsteğe bağlı — taslak, teklif veya şartname." FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{Binding [Req.AttachmentHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 
@@ -286,12 +287,12 @@
 								<Path Stroke="{DynamicResource TextDisabledSoft}" StrokeThickness="1.6" Fill="Transparent"
 									  Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center"
 									  Data="M12 16V4M12 4L7.5 8.5M12 4l4.5 4.5M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/>
-								<TextBlock Text="PDF, Word, Excel veya görsel"
+								<TextBlock Text="{Binding [Req.FileTypes], Source={x:Static loc:Strings.Current}}"
 										   FontSize="11.5" Foreground="{DynamicResource TextFaintAlt}" HorizontalAlignment="Center"/>
 								<Button Classes="flat" HorizontalAlignment="Center" Click="OnPickFileClick">
 									<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 											CornerRadius="8" Padding="18,9">
-										<TextBlock Text="Dosya Seç" Foreground="{DynamicResource TextBody}" FontSize="12.5"
+										<TextBlock Text="{Binding [Form.ChooseFile], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
 												   FontWeight="SemiBold"/>
 									</Border>
 								</Button>
@@ -310,10 +311,10 @@
 										   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 										   TextTrimming="CharacterEllipsis"/>
 								<Button Grid.Column="2" Classes="flat" Click="OnPickFileClick" VerticalAlignment="Center">
-									<TextBlock Text="Değiştir" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
+									<TextBlock Text="{Binding [Form.Change], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
 								</Button>
 								<Button Grid.Column="3" Classes="flat" Command="{Binding ClearFileCommand}" VerticalAlignment="Center">
-									<TextBlock Text="Kaldır" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
+									<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
 								</Button>
 							</Grid>
 						</Border>
@@ -348,10 +349,10 @@
 			<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 					CornerRadius="12" Padding="18,16">
 				<StackPanel Spacing="14">
-					<TextBlock Classes="sectionLabel" Text="ÖZET"/>
+					<TextBlock Classes="sectionLabel" Text="{Binding [Form.Summary], Source={x:Static loc:Strings.Current}}"/>
 
 					<StackPanel Spacing="3">
-						<TextBlock Classes="summaryLabel" Text="KONU"/>
+						<TextBlock Classes="summaryLabel" Text="{Binding [Req.SubjectShort], Source={x:Static loc:Strings.Current}}"/>
 						<TextBlock Classes="summaryValue" Text="{Binding Title}"
 								   IsVisible="{Binding Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 						<TextBlock Classes="summaryEmpty" Text="—"
@@ -359,7 +360,7 @@
 					</StackPanel>
 
 					<StackPanel Spacing="3">
-						<TextBlock Classes="summaryLabel" Text="FİRMA"/>
+						<TextBlock Classes="summaryLabel" Text="{Binding [Doc.Company], Source={x:Static loc:Strings.Current}}"/>
 						<TextBlock Classes="summaryValue" Text="{Binding CompanyName}"
 								   IsVisible="{Binding CompanyName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 						<TextBlock Classes="summaryEmpty" Text="—"
@@ -368,14 +369,14 @@
 
 					<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
 						<StackPanel Grid.Column="0" Spacing="3">
-							<TextBlock Classes="summaryLabel" Text="TÜR"/>
+							<TextBlock Classes="summaryLabel" Text="{Binding [Field.Type], Source={x:Static loc:Strings.Current}}"/>
 							<TextBlock Classes="summaryValue" Text="{Binding Type}"
 									   IsVisible="{Binding Type, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							<TextBlock Classes="summaryEmpty" Text="—"
 									   IsVisible="{Binding Type, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
 						</StackPanel>
 						<StackPanel Grid.Column="1" Spacing="3">
-							<TextBlock Classes="summaryLabel" Text="TAHMİNİ BEDEL"/>
+							<TextBlock Classes="summaryLabel" Text="{Binding [Req.EstimatedAmount], Source={x:Static loc:Strings.Current}}"/>
 							<TextBlock Classes="summaryValue" FontWeight="SemiBold"
 									   IsVisible="{Binding EstimatedAmountText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
 								<Run Text="{Binding EstimatedAmountText}"/>
@@ -396,7 +397,7 @@
 			<Border Background="{DynamicResource SurfaceSubtle}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 					CornerRadius="12" Padding="18,16">
 				<StackPanel Spacing="12">
-					<TextBlock Classes="sectionLabel" Text="GÖNDERDİKTEN SONRA"/>
+					<TextBlock Classes="sectionLabel" Text="{Binding [Req.AfterSubmit], Source={x:Static loc:Strings.Current}}"/>
 
 					<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
 						<Border Grid.Column="0" Width="18" Height="18" CornerRadius="9" Background="{DynamicResource AccentSolid}"
@@ -404,7 +405,7 @@
 							<TextBlock Text="1" Foreground="{DynamicResource TextOnAccent}" FontSize="10" FontWeight="Bold"
 									   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 						</Border>
-						<TextBlock Grid.Column="1" Text="SYB talebi inceler ve sözleşmeyi hazırlar."
+						<TextBlock Grid.Column="1" Text="{Binding [Req.Step1], Source={x:Static loc:Strings.Current}}"
 								   FontSize="11.5" Foreground="{DynamicResource TextLabel}" TextWrapping="Wrap"/>
 					</Grid>
 
@@ -414,7 +415,7 @@
 							<TextBlock Text="2" Foreground="{DynamicResource TextOnAccent}" FontSize="10" FontWeight="Bold"
 									   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 						</Border>
-						<TextBlock Grid.Column="1" Text="SYB son kontrolü yapar."
+						<TextBlock Grid.Column="1" Text="{Binding [Req.Step2], Source={x:Static loc:Strings.Current}}"
 								   FontSize="11.5" Foreground="{DynamicResource TextLabel}" TextWrapping="Wrap"/>
 					</Grid>
 
@@ -424,13 +425,13 @@
 							<TextBlock Text="3" Foreground="{DynamicResource TextOnAccent}" FontSize="10" FontWeight="Bold"
 									   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 						</Border>
-						<TextBlock Grid.Column="1" Text="Yönetim (YK) onayıyla sözleşme yürürlüğe girer."
+						<TextBlock Grid.Column="1" Text="{Binding [Req.Step3], Source={x:Static loc:Strings.Current}}"
 								   FontSize="11.5" Foreground="{DynamicResource TextLabel}" TextWrapping="Wrap"/>
 					</Grid>
 
 					<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
-					<TextBlock Text="Her adımda bildirim alırsınız. Talep reddedilirse gerekçesi Sözleşmeler ekranında görünür."
+					<TextBlock Text="{Binding [Req.NotifyHint], Source={x:Static loc:Strings.Current}}"
 							   FontSize="11" Foreground="{DynamicResource TextFaintAlt}" TextWrapping="Wrap"/>
 				</StackPanel>
 			</Border>
@@ -449,7 +450,7 @@
 						IsVisible="{Binding IsEditMode}" Command="{Binding CancelCommand}">
 					<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 							CornerRadius="9" Padding="18,11">
-						<TextBlock Text="Vazgeç" Foreground="{DynamicResource TextLabel}" FontSize="12.5"
+						<TextBlock Text="{Binding [Form.Cancel], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextLabel}" FontSize="12.5"
 								   HorizontalAlignment="Center"/>
 					</Border>
 				</Button>

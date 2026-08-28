@@ -8,10 +8,10 @@
     <StackPanel Margin="24" Spacing="16">
         <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="14"/>
         <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-            <Button x:Name="CancelButton" Content="Vazgeç" Click="OnCancelClick"/>
+            <Button x:Name="CancelButton" Click="OnCancelClick"/>
             <Button x:Name="ConfirmButton" Classes="flat" Click="OnConfirmClick">
                 <Border Background="{DynamicResource WarningSolid}" CornerRadius="4" Padding="14,6">
-                    <TextBlock x:Name="ConfirmButtonText" Text="Evet, Devam Et" Foreground="{DynamicResource TextOnAccent}"/>
+                    <TextBlock x:Name="ConfirmButtonText" Foreground="{DynamicResource TextOnAccent}"/>
                 </Border>
             </Button>
         </StackPanel>

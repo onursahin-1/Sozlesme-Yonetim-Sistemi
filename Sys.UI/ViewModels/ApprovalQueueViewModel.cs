@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 namespace Sys.UI.ViewModels;
 
 public partial class ChecklistItemViewModel : ObservableObject
@@ -98,9 +99,9 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     // Her madde, ekranda GÖRÜLEBİLEN bir bilgiye karşılık gelmelidir.
     private static string BuildChecklistTitle(Contract contract)
     {
-        if (contract.PendingTermination) return "FESİH SON KONTROLÜ";
-        if (contract.PendingEdit) return "DEĞİŞİKLİK SON KONTROLÜ";
-        return "SÖZLEŞME SON KONTROLÜ";
+        if (contract.PendingTermination) return Strings.T("Queue.ChecklistTitleTermination");
+        if (contract.PendingEdit) return Strings.T("Queue.ChecklistTitleEdit");
+        return Strings.T("Queue.ChecklistTitleContract");
     }
 
     private static string[] BuildChecklistLabels(Contract contract)
@@ -111,11 +112,11 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         {
             return new[]
             {
-                "Fesih türü ve gerekçesi sözleşme hükümleriyle uyumlu",
-                "Fesih tarihi doğru; kalan süre ve yükümlülükler değerlendirildi",
-                "Tazminat tutarı ve yönü (ödenecek / alınacak) doğru",
-                "Fesih bildirimi veya yazışma belgesi eklendi",
-                "Firmayla açık bakiye ve devam eden ihlal durumu kontrol edildi",
+                Strings.T("Check.Term1"),
+                Strings.T("Check.Term2"),
+                Strings.T("Check.Term3"),
+                Strings.T("Check.Term4"),
+                Strings.T("Check.Term5"),
             };
         }
 
@@ -125,11 +126,11 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         {
             return new[]
             {
-                "Değişiklik türü ve gerekçesi açık ve yeterli",
-                "Yeni değerler, önceki değerlerle karşılaştırıldı",
-                "Bedel değişikliği bütçe açısından uygun",
-                "Yeni tarih / ödeme koşulları sözleşmeyle tutarlı",
-                "Değişikliği destekleyen belge (zeyilname, yazışma) eklendi",
+                Strings.T("Check.Edit1"),
+                Strings.T("Check.Edit2"),
+                Strings.T("Check.Edit3"),
+                Strings.T("Check.Edit4"),
+                Strings.T("Check.Edit5"),
             };
         }
 
@@ -149,61 +150,49 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     {
         get
         {
-            if (Detail is null) return "Bu kararı onaylamak istediğinizden emin misiniz?";
+            if (Detail is null) return Strings.T("Queue.ApproveAskGeneric");
 
             if (Detail.PendingTermination)
-                return "Bu fesih talebini onaylamak istediğinizden emin misiniz? " +
-                       (IsSybFinalCheck
-                           ? "Talep yönetim onayına gönderilecek."
-                           : "Sözleşme feshedilecek ve arşive alınacak.");
+                return Strings.T("Queue.ApproveAskTermination",
+                    Strings.T(IsSybFinalCheck ? "Queue.SendsToManagement" : "Queue.WillTerminate"));
 
             if (Detail.PendingEdit)
-                return "Bu değişiklik talebini onaylamak istediğinizden emin misiniz? " +
-                       (IsSybFinalCheck
-                           ? "Talep yönetim onayına gönderilecek."
-                           : "Yeni değerler sözleşmede kalıcı olacak.");
+                return Strings.T("Queue.ApproveAskEdit",
+                    Strings.T(IsSybFinalCheck ? "Queue.SendsToManagement" : "Queue.EditBecomesPermanent"));
 
-            return "Bu sözleşmeyi onaylamak istediğinizden emin misiniz? " +
-                   (IsSybFinalCheck
-                       ? "Sözleşme yönetim onayına gönderilecek."
-                       : "Sözleşme yürürlüğe girecek.");
+            return Strings.T("Queue.ApproveAskContract",
+                Strings.T(IsSybFinalCheck ? "Queue.ContractToManagement" : "Queue.ContractComesIntoForce"));
         }
     }
 
     public string ApproveConfirmButtonText => Detail switch
     {
-        { PendingTermination: true } => "Evet, Feshi Onayla",
-        { PendingEdit: true } => "Evet, Değişikliği Onayla",
-        _ => "Evet, Onayla"
+        { PendingTermination: true } => Strings.T("Queue.ConfirmApproveTermination"),
+        { PendingEdit: true } => Strings.T("Queue.ConfirmApproveEdit"),
+        _ => Strings.T("Queue.ConfirmApprove")
     };
 
     public string RejectConfirmMessage
     {
         get
         {
-            if (Detail is null) return "Bu kararı reddetmek istediğinizden emin misiniz?";
+            if (Detail is null) return Strings.T("Queue.RejectAskGeneric");
 
-            if (Detail.PendingTermination)
-                return "Bu fesih talebini reddetmek istediğinizden emin misiniz? " +
-                       "Sözleşme feshedilmeyecek, yürürlükte kalmaya devam edecek.";
+            if (Detail.PendingTermination) return Strings.T("Queue.RejectAskTermination");
 
-            if (Detail.PendingEdit)
-                return "Bu değişiklik talebini reddetmek istediğinizden emin misiniz? " +
-                       "Sözleşme değişiklik öncesi değerlerine döndürülecek.";
+            if (Detail.PendingEdit) return Strings.T("Queue.RejectAskEdit");
 
             // Stage 1 reddi talebi başa döndürür, Stage 2 reddi SYB'ye geri gönderir.
-            return "Bu sözleşmeyi reddetmek istediğinizden emin misiniz? " +
-                   (IsSybFinalCheck
-                       ? "Talep, düzeltilmek üzere sahibine geri gönderilecek."
-                       : "Sözleşme SYB son kontrolüne geri gönderilecek.");
+            return Strings.T("Queue.RejectAskContract",
+                Strings.T(IsSybFinalCheck ? "Queue.ReturnsToOwner" : "Queue.ReturnsToFinalCheck"));
         }
     }
 
     public string RejectConfirmButtonText => Detail switch
     {
-        { PendingTermination: true } => "Evet, Feshi Reddet",
-        { PendingEdit: true } => "Evet, Değişikliği Reddet",
-        _ => "Evet, Reddet"
+        { PendingTermination: true } => Strings.T("Queue.ConfirmRejectTermination"),
+        { PendingEdit: true } => Strings.T("Queue.ConfirmRejectEdit"),
+        _ => Strings.T("Queue.ConfirmReject")
     };
 
     private void NotifyChecklistChanged()
@@ -270,7 +259,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     // Kontrol listesinin başlığı da bağlama göre değişir; SYB neyi onayladığını
     // listeye bakmadan da görsün.
     [ObservableProperty]
-    public partial string ChecklistTitle { get; set; } = "SON KONTROL LİSTESİ";
+    public partial string ChecklistTitle { get; set; } = Strings.T("Queue.ChecklistTitleContract");
 
     [ObservableProperty]
     public partial bool HasPreviousRejection { get; set; }
@@ -326,7 +315,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     {
         _contractService = contractService;
         _currentUser = currentUser;
-        PageTitle = currentUser.Role == UserRole.Mudur ? "Onay Bekleyenler" : "Son Kontrol (SYB)";
+        PageTitle = Strings.T(currentUser.Role == UserRole.Mudur ? "Nav.PendingApprovals" : "Nav.FinalCheck");
         ShowBackButton = initialContract is not null;
         _ = InitializeAsync(initialContract);
     }
@@ -367,7 +356,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Liste yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Queue.LoadListFailed", ex.Message);
         }
         finally
         {
@@ -397,7 +386,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         RevisionInfo = string.Empty;
         HasPreviousRejection = false;
         PreviousRejectionInfo = string.Empty;
-        ChecklistTitle = "SON KONTROL LİSTESİ";
+        ChecklistTitle = Strings.T("Queue.ChecklistTitleContract");
         OnPropertyChanged(nameof(IsSybFinalCheck));
         NotifyChecklistChanged();
 
@@ -414,7 +403,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
 
             if (full is null)
             {
-                ErrorMessage = "Sözleşme yüklenemedi.";
+                ErrorMessage = Strings.T("Queue.ContractLoadFailed");
                 return;
             }
             Detail = full;
@@ -434,13 +423,13 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 {
                     HasPreviousRejection = true;
                     var gerekce = string.IsNullOrWhiteSpace(lastRejection.Note)
-                        ? string.IsNullOrWhiteSpace(full.LastRejectionNote) ? "belirtilmemiş" : full.LastRejectionNote!
+                        ? string.IsNullOrWhiteSpace(full.LastRejectionNote) ? Strings.T("Card.NoReason") : full.LastRejectionNote!
                         : lastRejection.Note!;
 
-                    PreviousRejectionInfo =
-                        $"Reddeden adım: {lastRejection.StepName}\n" +
-                        $"Tarih: {lastRejection.ActionDate:dd.MM.yyyy HH:mm}\n" +
-                        $"Gerekçe: {gerekce}";
+                    PreviousRejectionInfo = Strings.T("Queue.PrevRejectionInfo",
+                        lastRejection.StepName,
+                        lastRejection.ActionDate.ToString("dd.MM.yyyy HH:mm"),
+                        gerekce);
                 }
             }
 
@@ -501,8 +490,12 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 {
                     var compensation = term.CompensationAmount.HasValue
                         ? term.CompensationAmount.Value.ToString("N2", CultureInfo.GetCultureInfo("tr-TR")) + " TL — " + term.CompensationDirection
-                        : "Yok";
-                    TerminationInfo = $"Fesih Türü: {term.TerminationType}\nFesih Tarihi: {term.TerminationDate:dd.MM.yyyy}\nGerekçe: {term.Reason}\nTazminat: {compensation}";
+                        : Strings.T("Queue.NoCompensation");
+                    TerminationInfo = Strings.T("Queue.TerminationInfo",
+                        term.TerminationType,
+                        term.TerminationDate.ToString("dd.MM.yyyy"),
+                        term.Reason,
+                        compensation);
                 }
             }
             // ŞARTA DİKKAT: eskiden "Revisions.Count > 0" idi, yani geçmişte BİR KEZ
@@ -520,15 +513,17 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
                 if (rev is not null)
                 {
                     HasRevisionHistory = true;
-                    RevisionInfo = $"Değişiklik Türü: {rev.ChangeType}\nGerekçe: {rev.Reason}\n" +
-                                  $"Önceki Bedel: {CurrencyHelper.Format(rev.PreviousTotalAmount, full.Currency)}";
+                    RevisionInfo = Strings.T("Queue.RevisionInfo",
+                        rev.ChangeType,
+                        rev.Reason,
+                        CurrencyHelper.Format(rev.PreviousTotalAmount, full.Currency));
                 }
             }
         }
         catch (Exception ex)
         {
             if (requestId == _loadRequestId)
-                ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
+                ErrorMessage = Strings.T("Queue.DetailLoadFailed", ex.Message);
         }
     }
     [RelayCommand]
@@ -540,12 +535,12 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         if (IsBusy) return; // çift tıklamada aynı kararın iki kez gönderilmesini engeller
         if (Detail is null)
         {
-            ErrorMessage = "Önce listeden bir sözleşme seçin.";
+            ErrorMessage = Strings.T("Queue.SelectFirst");
             return;
         }
         if (decision == ApprovalDecision.Red && string.IsNullOrWhiteSpace(Note))
         {
-            ErrorMessage = "Reddetme işlemi için bir gerekçe girmelisiniz.";
+            ErrorMessage = Strings.T("Queue.NoteRequired");
             return;
         }
         IsBusy = true;
@@ -589,8 +584,8 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
     // yok; metnin o durumda da öyle demesi kullanıcıyı yanıltırdı.
     public bool WillAdvanceAfterDecision => !ShowBackButton && PendingContracts.Count > 1;
 
-    public string ApproveButtonText => WillAdvanceAfterDecision ? "Onayla ve Sıradakine Geç" : "Onayla";
-    public string RejectButtonText => WillAdvanceAfterDecision ? "Reddet ve Sıradakine Geç" : "Reddet";
+    public string ApproveButtonText => Strings.T(WillAdvanceAfterDecision ? "Queue.ApproveAndNext" : "Queue.Approve");
+    public string RejectButtonText => Strings.T(WillAdvanceAfterDecision ? "Queue.RejectAndNext" : "Queue.Reject");
 
     private void NotifyAdvanceLabels()
     {
@@ -609,7 +604,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
 
     private void AdvanceToNext(ApprovalDecision decision, string decidedTitle, int decidedIndex)
     {
-        var verb = decision == ApprovalDecision.Onay ? "onaylandı" : "reddedildi";
+        var verb = Strings.T(decision == ApprovalDecision.Onay ? "Queue.Approved" : "Queue.Rejected");
 
         // Başka bir ekrandan ("Son Kontrol'e Git") tek bir sözleşme için gelindiyse
         // sıradakine geçilmiyor: kullanıcı kuyruğu işlemeye değil o kaydı halletmeye
@@ -620,13 +615,13 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         // listenin başındaki alakasız kayıt açılırdı.
         if (ShowBackButton || decidedIndex < 0)
         {
-            SuccessMessage = $"\"{decidedTitle}\" {verb}.";
+            SuccessMessage = Strings.T("Queue.DecisionSaved", decidedTitle, verb);
             return;
         }
 
         if (PendingContracts.Count == 0)
         {
-            SuccessMessage = $"\"{decidedTitle}\" {verb}. Kuyrukta bekleyen başka sözleşme kalmadı.";
+            SuccessMessage = Strings.T("Queue.DecisionSavedEmpty", decidedTitle, verb);
             return;
         }
 
@@ -639,7 +634,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         // temizliyor; bu yüzden mesaj SONRA yazılmalı.
         SelectedContract = next;
 
-        SuccessMessage = $"\"{decidedTitle}\" {verb}. Sıradaki sözleşme açıldı: {next.Title}";
+        SuccessMessage = Strings.T("Queue.DecisionSavedNext", decidedTitle, verb, next.Title);
     }
 
     [RelayCommand]
@@ -652,7 +647,7 @@ public partial class ApprovalQueueViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Dosya açılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Queue.FileOpenFailed", ex.Message);
         }
     }
 }

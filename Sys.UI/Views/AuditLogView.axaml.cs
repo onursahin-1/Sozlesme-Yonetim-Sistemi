@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 namespace Sys.UI.Views;
@@ -26,12 +27,12 @@ public partial class AuditLogView : UserControl
 
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Excel Olarak Kaydet",
+                Title = Strings.T("File.SaveExcel"),
                 SuggestedFileName = vm.SuggestedExportFileName,
                 DefaultExtension = "xlsx",
                 FileTypeChoices = new[]
                 {
-                    new FilePickerFileType("Excel Çalışma Kitabı") { Patterns = new[] { "*.xlsx" } }
+                    new FilePickerFileType(Strings.T("File.ExcelWorkbook")) { Patterns = new[] { "*.xlsx" } }
                 },
             });
 
@@ -42,7 +43,7 @@ public partial class AuditLogView : UserControl
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Excel'e aktarılırken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.ExportFailed", ex.Message);
         }
     }
 }

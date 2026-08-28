@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -75,7 +76,7 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
     [NotifyPropertyChangedFor(nameof(SubmitButtonText))]
     public partial bool IsBusy { get; set; }
 
-    public string SubmitButtonText => IsBusy ? "Kaydediliyor..." : "Şifreyi Değiştir";
+    public string SubmitButtonText => Strings.T(IsBusy ? "Pwd.Saving" : "Pwd.Submit");
 
     partial void OnCurrentPasswordChanged(string value) => CurrentPasswordError = string.Empty;
 
@@ -110,7 +111,7 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
 
     // Ekrandaki canlı kural listesi. Kurallar PasswordPolicy'den geliyor; sabit metin
     // yazılsaydı kural değiştiğinde ekran sessizce yanlış bilgi vermeye başlardı.
-    public string MinLengthRule => $"En az {PasswordPolicy.MinLength} karakter";
+    public string MinLengthRule => Strings.T("Pwd.RuleMinLength", PasswordPolicy.MinLength);
 
     public bool RuleLengthOk => PasswordPolicy.HasMinLength(NewPassword);
     public bool RuleLetterOk => PasswordPolicy.HasLetter(NewPassword);
@@ -131,21 +132,21 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
             RepeatError = string.Empty;
 
             if (string.IsNullOrWhiteSpace(CurrentPassword))
-                CurrentPasswordError = "Mevcut şifrenizi girin.";
+                CurrentPasswordError = Strings.T("Pwd.CurrentRequired");
 
             // Kural metni PasswordPolicy'den; servisle aynı kaynağı kullanıyor ki
             // ekranda geçen bir şifre serviste reddedilmesin.
             if (PasswordPolicy.Validate(NewPassword) is { } policyError)
-                NewPasswordError = policyError;
+                NewPasswordError = ErrorText.Of(policyError);
 
             if (string.IsNullOrWhiteSpace(NewPasswordRepeat))
-                RepeatError = "Yeni şifreyi tekrar girin.";
+                RepeatError = Strings.T("Pwd.RepeatRequired");
             else if (NewPassword != NewPasswordRepeat)
-                RepeatError = "Şifreler eşleşmiyor.";
+                RepeatError = Strings.T("Pwd.NoMatch");
 
             if (CurrentPasswordError.Length > 0 || NewPasswordError.Length > 0 || RepeatError.Length > 0)
             {
-                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+                ErrorMessage = Strings.T("Pwd.FixFields");
                 return;
             }
 
@@ -155,12 +156,18 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
 
                 if (!result.Success)
                 {
-                    // "Mevcut şifreniz hatalı" mesajı ilgili alanın altında gösterilir;
-                    // diğer hatalar (kural ihlalleri) genel mesaj alanına düşer.
-                    if (result.ErrorMessage is not null && result.ErrorMessage.Contains("Mevcut şifreniz"))
-                        CurrentPasswordError = result.ErrorMessage;
+                    // Hatalı mevcut şifre, ilgili alanın ALTINDA gösterilir; diğer
+                    // hatalar (kural ihlalleri) genel mesaj alanına düşer.
+                    //
+                    // Bu ayrım eskiden mesaj metninin içinde kelime aranarak yapılıyordu
+                    // ("Mevcut şifreniz" geçiyor mu). Metin çevrildiği an koşul sessizce
+                    // tutmaz olurdu: hata patlamaz, sadece yanlış yerde görünürdü.
+                    var text = result.Error is { } code ? ErrorText.Of(code) : Strings.T("Pwd.ChangeFailed");
+
+                    if (result.Error == AppError.CurrentPasswordIncorrect)
+                        CurrentPasswordError = text;
                     else
-                        ErrorMessage = result.ErrorMessage ?? "Şifre değiştirilemedi.";
+                        ErrorMessage = text;
                     return;
                 }
 
@@ -176,11 +183,11 @@ public partial class ChangePasswordViewModel : ViewModelBase, IEscapeHandler
                     return;
                 }
 
-                SuccessMessage = "Şifreniz güncellendi. Bir sonraki girişinizde yeni şifrenizi kullanın.";
+                SuccessMessage = Strings.T("Pwd.Updated");
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Şifre değiştirilirken bir hata oluştu: " + ex.Message;
+                ErrorMessage = Strings.T("Pwd.UnexpectedError", ex.Message);
             }
         }
         finally

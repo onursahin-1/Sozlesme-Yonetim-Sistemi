@@ -1,6 +1,7 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 namespace Sys.UI.Views;
@@ -25,12 +26,12 @@ public partial class ArchiveView : UserControl
 
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Excel Olarak Kaydet",
+                Title = Strings.T("File.SaveExcel"),
                 SuggestedFileName = vm.SuggestedExportFileName,
                 DefaultExtension = "xlsx",
                 FileTypeChoices = new[]
                 {
-                    new FilePickerFileType("Excel Çalışma Kitabı") { Patterns = new[] { "*.xlsx" } }
+                    new FilePickerFileType(Strings.T("File.ExcelWorkbook")) { Patterns = new[] { "*.xlsx" } }
                 },
             });
 
@@ -41,7 +42,7 @@ public partial class ArchiveView : UserControl
         }
         catch (System.Exception ex)
         {
-            vm.ErrorMessage = "Excel'e aktarılırken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.ExportFailed", ex.Message);
         }
     }
 
@@ -60,12 +61,12 @@ public partial class ArchiveView : UserControl
 
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "PDF Olarak Kaydet",
+                Title = Strings.T("File.SavePdf"),
                 SuggestedFileName = vm.SuggestedPdfFileName,
                 DefaultExtension = "pdf",
                 FileTypeChoices = new[]
                 {
-                    new FilePickerFileType("PDF Belgesi") { Patterns = new[] { "*.pdf" } }
+                    new FilePickerFileType(Strings.T("File.PdfDocument")) { Patterns = new[] { "*.pdf" } }
                 },
             });
 
@@ -77,7 +78,7 @@ public partial class ArchiveView : UserControl
         }
         catch (System.Exception ex)
         {
-            vm.ErrorMessage = "PDF oluşturulurken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.PdfFailed", ex.Message);
         }
     }
 }

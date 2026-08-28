@@ -54,13 +54,13 @@ public class AuthService
     {
         var user = await _users.GetByUsernameAsync(username);
         if (user is null)
-            return AuthResult.Fail("Kullanıcı adı veya şifre hatalı.");
+            return AuthResult.Fail(AppError.InvalidCredentials);
 
         if (user.IsDisabled)
-            return AuthResult.Fail("Bu hesap devre dışı bırakılmış. Yöneticinizle iletişime geçin.");
+            return AuthResult.Fail(AppError.AccountDisabled);
 
         if (user.LockedUntil is not null && user.LockedUntil > DateTime.UtcNow)
-            return AuthResult.Fail($"Hesap kilitli. {user.LockedUntil.Value.ToLocalTime():HH:mm} sonrasında tekrar deneyin.");
+            return AuthResult.Fail(AppError.AccountLocked, user.LockedUntil.Value.ToLocalTime().ToString("HH:mm"));
 
         var valid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
         if (!valid)
@@ -78,10 +78,10 @@ public class AuthService
                 await LogAsync(user.Id, "HesapKilitlendi",
                     $"{user.FullName} ({user.Username}) — {MaxFailedAttempts} hatalı giriş denemesi sonrası {LockDuration.TotalMinutes:0} dakika kilitlendi.");
 
-                return AuthResult.Fail("Çok fazla hatalı deneme. Hesap 15 dakika kilitlendi.");
+                return AuthResult.Fail(AppError.TooManyAttempts);
             }
             await _users.UpdateAsync(user);
-            return AuthResult.Fail("Kullanıcı adı veya şifre hatalı.");
+            return AuthResult.Fail(AppError.InvalidCredentials);
         }
 
         user.FailedLoginCount = 0;
@@ -170,19 +170,19 @@ public class AuthService
             return AuthResult.Fail(policyError);
 
         if (currentPassword == newPassword)
-            return AuthResult.Fail("Yeni şifre, mevcut şifreyle aynı olamaz.");
+            return AuthResult.Fail(AppError.NewPasswordSameAsCurrent);
 
         // Oturumdaki kopya yerine veritabanındaki güncel kaydı okuyoruz: kullanıcı başka
         // bir yerden şifresini değiştirmiş veya hesabı devre dışı bırakılmış olabilir.
         var user = await _users.GetByIdAsync(currentUser.Id);
         if (user is null)
-            return AuthResult.Fail("Kullanıcı bulunamadı.");
+            return AuthResult.Fail(AppError.UserNotFound);
 
         if (user.IsDisabled)
-            return AuthResult.Fail("Bu hesap devre dışı bırakılmış.");
+            return AuthResult.Fail(AppError.AccountDisabled);
 
         if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
-            return AuthResult.Fail("Mevcut şifreniz hatalı.");
+            return AuthResult.Fail(AppError.CurrentPasswordIncorrect);
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         user.FailedLoginCount = 0;
@@ -212,9 +212,19 @@ public class AuthService
 public class AuthResult
 {
     public bool Success { get; init; }
-    public string? ErrorMessage { get; init; }
     public User? User { get; init; }
 
+    // Başarısızlık sebebi METİN değil KOD.
+    //
+    // Eskiden ErrorMessage vardı ve arayüz onun İÇİNDE kelime arayarak hatayı
+    // hangi alanın altına yazacağına karar veriyordu:
+    //     if (result.ErrorMessage.Contains("Mevcut şifreniz")) ...
+    // Metin çevrildiği an bu koşul sessizce tutmaz olurdu.
+    public AppError? Error { get; init; }
+    public object?[] ErrorArgs { get; init; } = [];
+
     public static AuthResult Ok(User user) => new() { Success = true, User = user };
-    public static AuthResult Fail(string message) => new() { Success = false, ErrorMessage = message };
+
+    public static AuthResult Fail(AppError error, params object?[] args)
+        => new() { Success = false, Error = error, ErrorArgs = args };
 }

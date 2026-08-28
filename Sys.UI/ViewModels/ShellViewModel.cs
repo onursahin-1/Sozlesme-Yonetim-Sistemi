@@ -7,13 +7,19 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
 public partial class NavItem : ObservableObject
 {
     public string Key { get; }
-    public string Label { get; }
+
+    // Etiket METİN değil ANAHTAR olarak saklanıyor; metin her okunduğunda o anki
+    // dilden çözülüyor. Metni saklamak, dil değiştiğinde menünün eski dilde
+    // kalması demekti.
+    public string LabelKey { get; }
+    public string Label => Strings.T(LabelKey);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowBadge))]
@@ -21,11 +27,13 @@ public partial class NavItem : ObservableObject
 
     public bool ShowBadge => Count > 0;
 
-    public NavItem(string key, string label)
+    public NavItem(string key, string labelKey)
     {
         Key = key;
-        Label = label;
+        LabelKey = labelKey;
     }
+
+    public void RefreshLabel() => OnPropertyChanged(nameof(Label));
 }
 
 public partial class ShellViewModel : ViewModelBase
@@ -41,10 +49,10 @@ public partial class ShellViewModel : ViewModelBase
 
     public string RoleLabel => CurrentUser.Role switch
     {
-        UserRole.Personel => "Personel",
-        UserRole.SYB => "SYB Uzmanı",
-        UserRole.Mudur => "Yönetim / Mali İşler",
-        UserRole.Admin => "Sistem Yöneticisi",
+        UserRole.Personel => Strings.T("Role.Personel"),
+        UserRole.SYB => Strings.T("Role.Syb"),
+        UserRole.Mudur => Strings.T("Role.Mudur"),
+        UserRole.Admin => Strings.T("Role.Admin"),
         _ => CurrentUser.Role.ToString()
     };
 
@@ -104,7 +112,7 @@ public partial class ShellViewModel : ViewModelBase
     // Panel başlığı okunmamış sayısını da taşıyor: zildeki rozet panel açıldığında
     // görüş alanının dışında kalabiliyor.
     public string NotificationPanelTitle => UnreadNotificationCount > 0
-        ? $"Bildirimler · {UnreadCountText} okunmamış"
+        ? Strings.T("Shell.NotificationsWithCount", UnreadCountText)
         : "Bildirimler";
     // 99'dan fazlasında rozet genişleyip başlığı bozmasın diye kısaltılır.
     public string UnreadCountText => UnreadNotificationCount > 99 ? "99+" : UnreadNotificationCount.ToString();
@@ -153,7 +161,7 @@ public partial class ShellViewModel : ViewModelBase
         SelectedNavItem = null;
         _suppressNavUpdate = false;
 
-        CurrentPageTitle = "Şifre Değiştir";
+        CurrentPageTitle = Strings.T("Nav.ChangePassword");
         CurrentPageContent = vm;
     }
 
@@ -174,16 +182,52 @@ public partial class ShellViewModel : ViewModelBase
         StartNotificationPolling();
 
         ThemeService.ThemeChanged += OnThemeChanged;
+        LanguageService.LanguageChanged += OnLanguageChanged;
     }
 
     // --- Tema ---
 
     public bool IsDarkTheme => ThemeService.IsDark;
 
-    public string ThemeToggleTooltip => IsDarkTheme ? "Açık moda geç" : "Koyu moda geç";
+    public string ThemeToggleTooltip => Strings.T(IsDarkTheme ? "Shell.ThemeToLight" : "Shell.ThemeToDark");
 
     [RelayCommand]
     private void ToggleTheme() => ThemeService.Toggle();
+
+    // --- Dil ---
+
+    // Düğme, GEÇİLECEK dilin kodunu gösteriyor: Türkçedeyken "EN", İngilizcedeyken "TR".
+    // Mevcut dili göstermek daha bilgilendirici görünür ama düğmenin ne yapacağını
+    // söylemez; ikonlu tema anahtarında da aynı kural işliyor (ay görünüyorsa
+    // "koyuya geç" demek).
+    public string LanguageToggleText => LanguageService.IsEnglish ? "TR" : "EN";
+
+    public string LanguageToggleTooltip =>
+        Strings.T(LanguageService.IsEnglish ? "Shell.LanguageToTurkish" : "Shell.LanguageToEnglish");
+
+    public string NotificationsTooltip => Strings.T("Shell.Notifications");
+
+    [RelayCommand]
+    private void ToggleLanguage() => LanguageService.Toggle();
+
+    // Dil değişince menü etiketleri ve sayfa başlığı yeniden kuruluyor.
+    //
+    // XAML'deki metinler sözlüğe bağlı olduğu için kendiliğinden tazeleniyor, ama
+    // ViewModel'in ÜRETTİĞİ metinler (menü öğeleri, sayfa başlığı, rol etiketi) bir
+    // kez hesaplanıp saklanıyor. Tema değişiminde de aynı sınırla karşılaşmıştık.
+    private void OnLanguageChanged()
+    {
+        OnPropertyChanged(nameof(LanguageToggleText));
+        OnPropertyChanged(nameof(LanguageToggleTooltip));
+        OnPropertyChanged(nameof(NotificationsTooltip));
+        OnPropertyChanged(nameof(ThemeToggleTooltip));
+        OnPropertyChanged(nameof(RoleLabel));
+
+        foreach (var item in NavItems) item.RefreshLabel();
+
+        _pageCache.Clear();
+        UpdateCurrentPage(SelectedNavItem);
+    }
 
     // Tema değişince açık olan ekran yeniden oluşturuluyor.
     //
@@ -389,13 +433,13 @@ public partial class ShellViewModel : ViewModelBase
             if (dashboard is not null)
             {
                 SetSelectedNavItemSilently("dashboard");
-                CurrentPageTitle = "Gösterge Paneli";
+                CurrentPageTitle = Strings.T("Nav.Dashboard");
                 CurrentPageContent = CreateDashboardViewModel();
             }
         };
 
         SetSelectedNavItemSilently("sozlesmeGoruntule");
-        CurrentPageTitle = "Sözleşmeleri Görüntüle";
+        CurrentPageTitle = Strings.T("Nav.ViewContracts");
         CurrentPageContent = detailVm;
     }
 
@@ -426,8 +470,8 @@ public partial class ShellViewModel : ViewModelBase
     // (Personel: "Taleplerim", SYB: "Sözleşmeler"). Listeye geri dönen tüm akışlar
     // (düzenleme iptali, detaydan geri, sihirbazdan geri, son kontrolden geri) bunu kullanır.
     private (string Key, string Title) ListNavInfo => CurrentUser.Role == UserRole.Personel
-        ? ("talepList", "Taleplerim")
-        : ("sozlesmeList", "Sözleşmeler");
+        ? ("talepList", Strings.T("Nav.MyRequests"))
+        : ("sozlesmeList", Strings.T("Nav.Contracts"));
 
     // Menüler arası geçişte bazı ekranların durumu (filtre, arama metni, seçim, sayfa)
     // kaybolmasın diye burada saklanır. "Sözleşmeler"/"Taleplerim" listesi kendi önbellek
@@ -591,17 +635,17 @@ public partial class ShellViewModel : ViewModelBase
         {
             case UserRole.Personel:
                 SetSelectedNavItemSilently("talepList");
-                CurrentPageTitle = "Taleplerim";
+                CurrentPageTitle = Strings.T("Nav.MyRequests");
                 CurrentPageContent = GetOrCreateContractListViewModel(filterKey);
                 break;
             case UserRole.SYB:
                 SetSelectedNavItemSilently("sozlesmeList");
-                CurrentPageTitle = "Sözleşmeler";
+                CurrentPageTitle = Strings.T("Nav.Contracts");
                 CurrentPageContent = GetOrCreateContractListViewModel(filterKey);
                 break;
             case UserRole.Mudur when filterKey == "onay_bekliyor":
                 SetSelectedNavItemSilently("onayBekleyen");
-                CurrentPageTitle = "Onay Bekleyenler";
+                CurrentPageTitle = Strings.T("Nav.PendingApprovals");
                 CurrentPageContent = CreateApprovalQueueViewModel();
                 break;
         }
@@ -618,12 +662,12 @@ public partial class ShellViewModel : ViewModelBase
         detailVm.BackRequested += () =>
         {
             SetSelectedNavItemSilently("dashboard");
-            CurrentPageTitle = "Gösterge Paneli";
+            CurrentPageTitle = Strings.T("Nav.Dashboard");
             CurrentPageContent = CreateDashboardViewModel();
         };
 
         SetSelectedNavItemSilently("sozlesmeGoruntule");
-        CurrentPageTitle = "Sözleşmeleri Görüntüle";
+        CurrentPageTitle = Strings.T("Nav.ViewContracts");
         CurrentPageContent = detailVm;
     }
 
@@ -659,7 +703,7 @@ public partial class ShellViewModel : ViewModelBase
         // Düzenleme, "Yeni Sözleşme Talebi" ekranıyla aynı ViewModel'i kullanır,
         // bu yüzden sol menüde de o öğe vurgulanır.
         SetSelectedNavItemSilently("yeniTalep");
-        CurrentPageTitle = "Talebi Düzenle";
+        CurrentPageTitle = Strings.T("Nav.EditRequest");
         CurrentPageContent = editVm;
     }
 
@@ -684,7 +728,7 @@ public partial class ShellViewModel : ViewModelBase
         };
 
         SetSelectedNavItemSilently("yeniTalep");
-        CurrentPageTitle = "Sözleşmeyi Yenile";
+        CurrentPageTitle = Strings.T("Nav.RenewContract");
         CurrentPageContent = renewVm;
     }
 
@@ -701,7 +745,7 @@ public partial class ShellViewModel : ViewModelBase
         detailVm.RenewRequested += OnRenewRequested;
 
         SetSelectedNavItemSilently("sozlesmeGoruntule");
-        CurrentPageTitle = "Sözleşmeleri Görüntüle";
+        CurrentPageTitle = Strings.T("Nav.ViewContracts");
         CurrentPageContent = detailVm;
     }
 
@@ -717,7 +761,7 @@ public partial class ShellViewModel : ViewModelBase
         };
 
         SetSelectedNavItemSilently("sozlesmeYarat");
-        CurrentPageTitle = "Sözleşme Yarat";
+        CurrentPageTitle = Strings.T("Nav.CreateContract");
         CurrentPageContent = wizardVm;
     }
 
@@ -733,7 +777,7 @@ public partial class ShellViewModel : ViewModelBase
         };
 
         SetSelectedNavItemSilently("sozlesmeKontrol");
-        CurrentPageTitle = "Son Kontrol (SYB)";
+        CurrentPageTitle = Strings.T("Nav.FinalCheck");
         CurrentPageContent = approvalVm;
     }
 
@@ -743,38 +787,38 @@ public partial class ShellViewModel : ViewModelBase
     {
         UserRole.Personel =>
         [
-            new("dashboard", "Gösterge Paneli"),
-            new("talepList", "Taleplerim"),
-            new("yeniTalep", "Yeni Sözleşme Talebi"),
-            new("sozlesmeGoruntule", "Sözleşmeleri Görüntüle"),
-            new("ihlal", "İhlal Bildir"),
-            new("arsiv", "Arşiv"),
+            new("dashboard", "Nav.Dashboard"),
+            new("talepList", "Nav.MyRequests"),
+            new("yeniTalep", "Nav.NewRequest"),
+            new("sozlesmeGoruntule", "Nav.ViewContracts"),
+            new("ihlal", "Nav.ReportViolation"),
+            new("arsiv", "Nav.Archive"),
         ],
         UserRole.SYB =>
         [
-            new("dashboard", "Gösterge Paneli"),
-            new("sozlesmeList", "Sözleşmeler"),
-            new("yeniTalep", "Yeni Sözleşme Talebi"),
-            new("sozlesmeYarat", "Sözleşme Yarat"),
-            new("sozlesmeGoruntule", "Sözleşmeleri Görüntüle"),
-            new("sozlesmeKontrol", "Son Kontrol (SYB)"),
-            new("sozlesmeDegistir", "Sözleşme Değiştir"),
-            new("fesih", "Sözleşme Fesih"),
-            new("ihlal", "İhlal Bildir"),
-            new("arsiv", "Arşiv"),
+            new("dashboard", "Nav.Dashboard"),
+            new("sozlesmeList", "Nav.Contracts"),
+            new("yeniTalep", "Nav.NewRequest"),
+            new("sozlesmeYarat", "Nav.CreateContract"),
+            new("sozlesmeGoruntule", "Nav.ViewContracts"),
+            new("sozlesmeKontrol", "Nav.FinalCheck"),
+            new("sozlesmeDegistir", "Nav.EditContract"),
+            new("fesih", "Nav.Termination"),
+            new("ihlal", "Nav.ReportViolation"),
+            new("arsiv", "Nav.Archive"),
         ],
         UserRole.Mudur =>
         [
-            new("dashboard", "Gösterge Paneli"),
-            new("onayBekleyen", "Onay Bekleyenler"),
-            new("sozlesmeGoruntule", "Sözleşmeleri Görüntüle"),
-            new("arsiv", "Arşiv"),
-            new("auditLog", "İşlem Geçmişi"),
+            new("dashboard", "Nav.Dashboard"),
+            new("onayBekleyen", "Nav.PendingApprovals"),
+            new("sozlesmeGoruntule", "Nav.ViewContracts"),
+            new("arsiv", "Nav.Archive"),
+            new("auditLog", "Nav.AuditLog"),
         ],
         // Admin, sözleşme iş akışına hiç katılmaz — tek sorumluluğu hesap yönetimidir.
         UserRole.Admin =>
         [
-            new("kullaniciYonetimi", "Kullanıcı Yönetimi"),
+            new("kullaniciYonetimi", "Nav.UserManagement"),
         ],
         _ => []
     };

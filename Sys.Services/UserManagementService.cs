@@ -65,7 +65,7 @@ public class UserManagementService
     private static void EnsureAdmin(User actingUser)
     {
         if (actingUser.Role != UserRole.Admin)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
     }
 
     public async Task<List<User>> GetAllUsersAsync(User actingUser)
@@ -81,7 +81,7 @@ public class UserManagementService
         // Bu yol eskiden hiçbir doğrulama yapmıyordu: yönetici yeni kullanıcıya "1"
         // şifresini verebiliyordu, oysa kullanıcının kendisi "12345" bile yapamıyordu.
         if (PasswordPolicy.Validate(initialPassword) is { } policyError)
-            throw new InvalidOperationException(policyError);
+            throw new AppException(policyError);
 
         var user = new User
         {
@@ -111,11 +111,11 @@ public class UserManagementService
         EnsureAdmin(actingUser);
 
         if (PasswordPolicy.Validate(newPassword) is { } policyError)
-            throw new InvalidOperationException(policyError);
+            throw new AppException(policyError);
 
         var user = await _users.GetByIdAsync(userId);
         if (user is null)
-            throw new InvalidOperationException("Kullanıcı bulunamadı.");
+            throw new AppException(AppError.UserNotFound);
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         // Şifre sıfırlanınca önceki hatalı giriş kilidi de temizlenir; aksi halde
@@ -141,11 +141,11 @@ public class UserManagementService
         EnsureAdmin(actingUser);
 
         if (disabled && actingUser.Id == userId)
-            throw new InvalidOperationException("Kendi hesabınızı devre dışı bırakamazsınız.");
+            throw new AppException(AppError.CannotDisableOwnAccount);
 
         var user = await _users.GetByIdAsync(userId);
         if (user is null)
-            throw new InvalidOperationException("Kullanıcı bulunamadı.");
+            throw new AppException(AppError.UserNotFound);
 
         user.IsDisabled = disabled;
         await _users.UpdateAsync(user);

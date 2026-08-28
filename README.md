@@ -20,6 +20,8 @@ SQL Server Express · PDFsharp (PDF) · ClosedXML (Excel) · BCrypt.Net
 - Şifre politikası ve yönetici tarafından belirlenen şifreler için zorunlu ilk
   değişim
 - Denetim kaydı (kim, ne zaman, ne yaptı) ve filtrelenebilir işlem geçmişi
+- **Açık/koyu tema ve Türkçe/İngilizce arayüz** — üst çubuktan değiştirilir,
+  tercih o bilgisayarda hatırlanır
 
 ## Katman Yapısı
 

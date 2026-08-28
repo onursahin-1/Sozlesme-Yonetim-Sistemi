@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Sys.UI.Localization;
 using Sys.UI.ViewModels;
 
 
@@ -23,11 +24,11 @@ public partial class NewRequestView : UserControl
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Dosya Seç",
+            Title = Strings.T("File.ChooseFile"),
             AllowMultiple = false,
             FileTypeFilter = new List<FilePickerFileType>
             {
-                new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
+                new(Strings.T("File.Supported")) { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
             }
         });
 

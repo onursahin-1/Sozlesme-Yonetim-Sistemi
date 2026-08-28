@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -39,7 +40,9 @@ public class DashboardUpcomingRowViewModel
         {
             if (_contract.EndDate is null) return "-";
             var days = (_contract.EndDate.Value.Date - DateTime.Today).Days;
-            return days == 0 ? "Bugün sona eriyor" : days > 0 ? $"{days} gün kaldı" : "Sona erdi";
+            return days == 0 ? Strings.T("Dash.EndsToday")
+             : days > 0 ? Strings.T("Card.DaysLeft", days)
+             : Strings.T("Dash.Ended");
         }
     }
 }
@@ -51,8 +54,9 @@ public class PendingWorkRowViewModel
 
     public PendingWorkRowViewModel(PendingWorkItem item) => _item = item;
 
-    public string Title => _item.Title;
-    public string Subtitle => _item.Subtitle;
+    public string Title => Strings.T(_item.Title);
+    // Servis metin değil ANAHTAR döndürüyor; çeviri burada yapılıyor.
+    public string Subtitle => Strings.T(_item.Subtitle);
     public string CountText => _item.Count.ToString();
     public string NavKey => _item.NavKey;
     public string ColorHex => _item.ColorHex;
@@ -64,9 +68,9 @@ public class PendingWorkRowViewModel
     public string WaitingText => _item.OldestWaitingDays switch
     {
         null => string.Empty,
-        0 => "Bugün geldi",
-        1 => "En eskisi 1 gündür bekliyor",
-        var d => $"En eskisi {d} gündür bekliyor"
+        0 => Strings.T("Dash.ArrivedToday"),
+        1 => Strings.T("Dash.OldestWaitingOne"),
+        var d => Strings.T("Dash.OldestWaiting", d)
     };
 
     // Bir haftayı aşan bekleme dikkat çekmeli; altındakiler nötr kalır.
@@ -80,7 +84,7 @@ public class CurrencyTotalRowViewModel
     {
         AmountText = CurrencyHelper.Format(total.Amount, total.Currency);
         Label = CurrencyHelper.Label(total.Currency);
-        CountText = $"{total.ContractCount} sözleşme";
+        CountText = Strings.T("Dash.ContractCount", total.ContractCount);
     }
 
     public string AmountText { get; }
@@ -145,8 +149,8 @@ public partial class DashboardViewModel : ViewModelBase
     // "3 sözleşmede ihlal" farklı şeyler; kart ihlal adedini gösterdiği için
     // sözleşme sayısı burada belirtiliyor.
     public string IhlalSubtitle => OpenViolations == 0
-        ? "açık ihlal yok"
-        : $"{Ihlal} sözleşmede, giderilmeyi bekliyor";
+        ? Strings.T("Dash.NoOpenViolations")
+        : Strings.T("Dash.ViolationsAcross", Ihlal);
 
     [ObservableProperty]
     public partial ObservableCollection<DashboardUpcomingRowViewModel> UpcomingEndings { get; set; } = new();
@@ -203,7 +207,7 @@ public partial class DashboardViewModel : ViewModelBase
     public bool TypeRowsClickable => _currentUser.Role is UserRole.Personel or UserRole.SYB;
 
     // Gidilecek bir yer yokken "tıklayın" diyen bir ipucu göstermemek için.
-    public string? TypeRowTooltip => TypeRowsClickable ? "Bu türdeki sözleşmeleri listele" : null;
+    public string? TypeRowTooltip => TypeRowsClickable ? Strings.T("Dash.TypeRowTooltip") : null;
 
     // --- Karşılama başlığı ---
     // Günün saatine göre selam; küçük bir dokunuş ama panelin "kişisel" hissini veriyor.
@@ -228,10 +232,10 @@ public partial class DashboardViewModel : ViewModelBase
     // günlük dilde neredeyse terk edilmiş, kurumsal bir arayüzde tuhaf duruyor.
     private static string GreetingForHour(int hour) => hour switch
     {
-        >= 5 and < 11 => "Günaydın",
-        >= 11 and < 17 => "İyi günler",
-        >= 17 and < 22 => "İyi akşamlar",
-        _ => "İyi geceler"
+        >= 5 and < 11 => Strings.T("Dash.GoodMorning"),
+        >= 11 and < 17 => Strings.T("Dash.GoodDay"),
+        >= 17 and < 22 => Strings.T("Dash.GoodEvening"),
+        _ => Strings.T("Dash.GoodNight")
     };
 
     public string TodayText => DateTime.Now.ToString("d MMMM yyyy, dddd",
@@ -325,7 +329,7 @@ public partial class DashboardViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Panel yüklenemedi: " + ex.Message;
+            ErrorMessage = Strings.T("Dash.LoadFailed", ex.Message);
         }
         finally
         {

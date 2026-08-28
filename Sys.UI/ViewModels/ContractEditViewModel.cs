@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -44,7 +45,7 @@ public partial class ContractEditViewModel : ViewModelBase
     // Etiket sabit "Yeni Bedel (TL)" yazıyordu; sözleşme EUR/USD ise yanlış bilgi
     // veriyordu. Seçilen sözleşmenin para birimine göre güncelleniyor.
     [ObservableProperty]
-    public partial string NewAmountLabel { get; set; } = "Yeni Bedel";
+    public partial string NewAmountLabel { get; set; } = Strings.T("Edit.NewAmount");
 
     [ObservableProperty]
     public partial DateTimeOffset? NewEndDate { get; set; }
@@ -168,7 +169,7 @@ public partial class ContractEditViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Err.ContractsLoadFailed", ex.Message);
         }
     }
 
@@ -183,7 +184,7 @@ public partial class ContractEditViewModel : ViewModelBase
         NewTotalAmountText = string.Empty;
         NewAmountLabel = value is null
             ? "YENİ BEDEL"
-            : $"YENİ BEDEL ({CurrencyHelper.Symbol(value.Currency)})";
+            : Strings.T("Edit.NewAmountWithCurrency", CurrencyHelper.Symbol(value.Currency));
         NewEndDate = null;
         NewDescription = string.Empty;
         NewCompanyName = string.Empty;
@@ -226,16 +227,16 @@ public partial class ContractEditViewModel : ViewModelBase
             AmountError = string.Empty;
 
             if (SelectedContract is null)
-                ContractError = "Bir sözleşme seçilmelidir.";
+                ContractError = Strings.T("Err.ContractRequired");
 
             if (string.IsNullOrWhiteSpace(Reason))
-                ReasonError = "Değişiklik gerekçesi zorunludur.";
+                ReasonError = Strings.T("Edit.ReasonRequired");
 
             decimal? newAmount = null;
             if (!string.IsNullOrWhiteSpace(NewTotalAmountText))
             {
                 if (!decimal.TryParse(NewTotalAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
-                    AmountError = "Yeni bedel geçerli, negatif olmayan bir sayı olmalı.";
+                    AmountError = Strings.T("Edit.AmountInvalid");
                 else
                     newAmount = parsed;
             }
@@ -244,7 +245,7 @@ public partial class ContractEditViewModel : ViewModelBase
                 !string.IsNullOrEmpty(ReasonError) ||
                 !string.IsNullOrEmpty(AmountError))
             {
-                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+                ErrorMessage = Strings.T("Err.FixFields");
                 return;
             }
 
@@ -274,7 +275,7 @@ public partial class ContractEditViewModel : ViewModelBase
                     }, _currentUser);
                 }
 
-                SuccessMessage = "Değişiklik talebi gönderildi. Sözleşme yeniden onay sürecine alındı.";
+                SuccessMessage = Strings.T("Edit.Submitted");
                 SelectedContract = null;
                 Reason = string.Empty;
                 NewTotalAmountText = string.Empty;

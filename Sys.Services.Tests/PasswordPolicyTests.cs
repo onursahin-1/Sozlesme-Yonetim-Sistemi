@@ -14,15 +14,19 @@ public class PasswordPolicyTests
     public void Validate_ValidPasswords_ReturnsNull(string password)
         => Assert.Null(PasswordPolicy.Validate(password));
 
+    // Hangi kuralın çiğnendiği de doğrulanıyor. Eskiden yalnızca "bir hata var mı"
+    // sorulabiliyordu çünkü dönen şey serbest metindi; artık kod döndüğü için hatanın
+    // DOĞRU hata olduğu da sınanabiliyor. Yanlış kuralın tetiklenmesi (örneğin kısa
+    // şifreye "rakam yok" demek) eskiden testten kaçardı.
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("Sifre1")]      // 6 karakter — eski kural bunu kabul ediyordu
-    [InlineData("sifresiz")]    // rakam yok
-    [InlineData("12345678")]    // harf yok
-    public void Validate_InvalidPasswords_ReturnsMessage(string? password)
-        => Assert.NotNull(PasswordPolicy.Validate(password));
+    [InlineData(null, AppError.PasswordEmpty)]
+    [InlineData("", AppError.PasswordEmpty)]
+    [InlineData("   ", AppError.PasswordEmpty)]
+    [InlineData("Sifre1", AppError.PasswordTooShort)]      // 6 karakter — eski kural bunu kabul ediyordu
+    [InlineData("sifresiz", AppError.PasswordNeedsDigit)]  // rakam yok
+    [InlineData("12345678", AppError.PasswordNeedsLetter)] // harf yok
+    public void Validate_InvalidPasswords_ReturnsMatchingError(string? password, AppError expected)
+        => Assert.Equal(expected, PasswordPolicy.Validate(password));
 
     // Kullanıcı adını veya ad-soyadı içermek serbest: kural bilinçli olarak
     // konulmadı, kullanıcıyı gereksiz yere zorlamamak için.
@@ -48,7 +52,7 @@ public class PasswordPolicyTests
     {
         var (service, _) = CreateUserService();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.CreateUserAsync(Admin(), "ayse", "Ayşe Yılmaz", UserRole.SYB, null, "1"));
     }
 
@@ -71,7 +75,7 @@ public class PasswordPolicyTests
         var (service, repo) = CreateUserService();
         await repo.AddAsync(new User { Username = "ayse", Role = UserRole.SYB });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.ResetPasswordAsync(Admin(), 1, "abc"));
     }
 

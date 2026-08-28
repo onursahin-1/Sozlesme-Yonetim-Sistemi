@@ -4,6 +4,8 @@ using Avalonia.Platform.Storage;
 using Sys.Domain;
 using Sys.UI.ViewModels;
 
+using Sys.UI.Localization;
+
 namespace Sys.UI.Views;
 
 public partial class ContractDetailView : UserControl
@@ -25,7 +27,7 @@ public partial class ContractDetailView : UserControl
 
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Dosyayı Kaydet",
+                Title = Strings.T("File.SaveAs"),
                 SuggestedFileName = attachment.FileName,
             });
 
@@ -39,7 +41,7 @@ public partial class ContractDetailView : UserControl
         }
         catch (System.Exception ex)
         {
-            vm.ErrorMessage = "Dosya indirilirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.DownloadFailed", ex.Message);
         }
     }
 
@@ -56,12 +58,12 @@ public partial class ContractDetailView : UserControl
 
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "PDF Olarak Kaydet",
+                Title = Strings.T("File.SavePdf"),
                 SuggestedFileName = vm.SuggestedPdfFileName,
                 DefaultExtension = "pdf",
                 FileTypeChoices = new[]
                 {
-                    new FilePickerFileType("PDF Belgesi") { Patterns = new[] { "*.pdf" } }
+                    new FilePickerFileType(Strings.T("File.PdfDocument")) { Patterns = new[] { "*.pdf" } }
                 },
             });
 
@@ -75,7 +77,7 @@ public partial class ContractDetailView : UserControl
         }
         catch (System.Exception ex)
         {
-            vm.ErrorMessage = "PDF oluşturulurken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.PdfFailed", ex.Message);
         }
     }
 
@@ -100,7 +102,7 @@ public partial class ContractDetailView : UserControl
         }
         catch (System.Exception ex)
         {
-            vm.ErrorMessage = "İhlal işlenirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("Det.ViolationFailed", ex.Message);
         }
     }
 
@@ -115,15 +117,15 @@ public partial class ContractDetailView : UserControl
             if (owner is null) return;
 
             var confirmed = await ConfirmDialog.ShowAsync(owner,
-                $"\"{attachment.FileName}\" dosyasını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-                "Evet, Sil");
+                Strings.T("Confirm.DeleteFile", attachment.FileName),
+                Strings.T("Confirm.DeleteFileButton"));
 
             if (confirmed)
                 vm.DeleteAttachmentCommand.Execute(attachment);
         }
         catch (System.Exception ex)
         {
-            vm.ErrorMessage = "Silme işlemi sırasında bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("Det.DeleteFailed", ex.Message);
         }
     }
 }

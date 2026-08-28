@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -28,9 +29,13 @@ public partial class ContractTerminationViewModel : ViewModelBase
         "Zorunlu Fesih (Mücbir Sebep)"
     };
 
+    // Bu üç dizge SEÇİLDİĞİNDE VERİTABANINA yazılır; çevrilmiyorlar. Fesih türü,
+    // ödeme periyodu ve firma türü listeleriyle aynı kural: kaydedilen değer dile
+    // göre değişirse, İngilizce açılmış bir kaydı Türkçe açan kişi başka bir şey
+    // görür ve iki kayıt karşılaştırılamaz hale gelir.
     public string[] CompensationDirections { get; } =
     {
-        "Tazminat yok",
+        NoCompensation,
         "Biz ödüyoruz",
         "Karşı taraf ödüyor"
     };
@@ -55,7 +60,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
 
     // Tazminat, sözleşmenin para biriminde ödenir; etiket sabit "TL" yazıyordu.
     [ObservableProperty]
-    public partial string CompensationLabel { get; set; } = "Fesih Tazminatı";
+    public partial string CompensationLabel { get; set; } = Strings.T("Term.Compensation");
 
     // --- Seçilen sözleşmenin MEVCUT künyesi ---
     //
@@ -126,7 +131,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
     {
         CompensationLabel = value is null
             ? "FESİH TAZMİNATI"
-            : $"FESİH TAZMİNATI ({CurrencyHelper.Symbol(value.Currency)})";
+            : Strings.T("Term.CompensationWithCurrency", CurrencyHelper.Symbol(value.Currency));
 
         ContractError = string.Empty;
         SuccessMessage = string.Empty;
@@ -153,7 +158,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
         if (contract?.EndDate is null) return "-";
 
         var days = (contract.EndDate.Value.Date - DateTime.Today).Days;
-        return days > 0 ? $"{days} gün kaldı" : "Sona erdi";
+        return days > 0 ? $"{days} gün kaldı" : Strings.T("Term.Ended");
     }
 
     // --- Haklı feshin dayanağı ---
@@ -246,7 +251,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Err.ContractsLoadFailed", ex.Message);
         }
     }
 
@@ -263,6 +268,10 @@ public partial class ContractTerminationViewModel : ViewModelBase
         SelectedFileName = string.Empty;
     }
 
+    // "Tazminat yok" hem LİSTEDE GÖRÜNEN metin hem de "yön seçilmedi" işareti.
+    // İkisi de aynı dizge olmalı — çünkü ikisi de veritabanına yazılan değerin
+    // ta kendisi. Sabit olarak tutuluyor ki liste ile karşılaştırma birbirinden
+    // ayrı düşmesin.
     private const string NoCompensation = "Tazminat yok";
 
     // Tüm alanlar birlikte doğrulanır ve her mesaj kendi alanının altında gösterilir;
@@ -278,34 +287,34 @@ public partial class ContractTerminationViewModel : ViewModelBase
         FileError = string.Empty;
 
         if (SelectedContract is null)
-            ContractError = "Bir sözleşme seçilmelidir.";
+            ContractError = Strings.T("Err.ContractRequired");
 
         if (string.IsNullOrWhiteSpace(Reason))
-            ReasonError = "Fesih gerekçesi zorunludur.";
+            ReasonError = Strings.T("Term.ReasonRequired");
 
         if (TerminationDate is null)
         {
-            DateError = "Fesih tarihi zorunludur.";
+            DateError = Strings.T("Term.DateRequired");
         }
         else if (SelectedContract?.StartDate is { } start && TerminationDate.Value.Date < start.Date)
         {
             // Sözleşme başlamadan feshedilemez. Bu kontrol hiç yoktu; geçmişe dönük
             // herhangi bir tarih kabul ediliyordu.
-            DateError = $"Fesih tarihi, sözleşme başlangıcından ({start:dd.MM.yyyy}) önce olamaz.";
+            DateError = Strings.T("Term.DateBeforeStart", start.ToString("dd.MM.yyyy"));
         }
         else if (SelectedContract?.EndDate is { } end && TerminationDate.Value.Date > end.Date)
         {
-            DateError = $"Fesih tarihi, sözleşme bitişinden ({end:dd.MM.yyyy}) sonra olamaz; sözleşme o tarihte zaten sona eriyor.";
+            DateError = Strings.T("Term.DateAfterEnd", end.ToString("dd.MM.yyyy"));
         }
 
         if (string.IsNullOrEmpty(SelectedFilePath))
-            FileError = "Fesih bildirimi / tutanak (PDF) zorunludur.";
+            FileError = Strings.T("Term.FileRequired");
 
         var hasAmountText = !string.IsNullOrWhiteSpace(CompensationAmountText);
         if (hasAmountText)
         {
             if (!decimal.TryParse(CompensationAmountText, NumberStyles.Any, CultureInfo.GetCultureInfo("tr-TR"), out var parsed) || parsed < 0)
-                CompensationError = "Tazminat tutarı geçerli, negatif olmayan bir sayı olmalı.";
+                CompensationError = Strings.T("Term.AmountInvalid");
             else
                 compensation = parsed;
         }
@@ -313,7 +322,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
         // Tutar kutusu yön seçilmeden açılmadığı için "tutar var ama yön yok" durumu
         // arayüzde oluşamıyor; geriye yönü seçip tutarı boş bırakma ihtimali kalıyor.
         if (string.IsNullOrEmpty(CompensationError) && IsCompensationEnabled && compensation is null or 0)
-            CompensationError = "Tazminat yönü seçildiğinde tutar girilmelidir.";
+            CompensationError = Strings.T("Term.AmountRequiredWithDirection");
 
         // Yön "Tazminat yok" ise tutar kaydedilmez; sıfır da yazılmaz.
         if (!IsCompensationEnabled) compensation = null;
@@ -326,7 +335,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
 
         if (!valid)
         {
-            ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+            ErrorMessage = Strings.T("Err.FixFields");
             compensation = null;
         }
 
@@ -373,7 +382,7 @@ public partial class ContractTerminationViewModel : ViewModelBase
                 SelectedFileName = string.Empty;
                 TerminationDate = DateTimeOffset.Now;
                 await LoadAsync();
-                SuccessMessage = "Fesih talebi gönderildi. SYB son kontrolü ve ardından Müdür onayı bekleniyor.";
+                SuccessMessage = Strings.T("Term.Submitted");
             }
             catch (Exception ex)
             {

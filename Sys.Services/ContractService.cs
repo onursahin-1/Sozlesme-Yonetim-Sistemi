@@ -197,15 +197,15 @@ public class ContractService
                 var yaratilacak = await _contracts.CountByStatusesAsync(null, ContractStatus.Talep);
                 if (yaratilacak > 0)
                     items.Add(new PendingWorkItem(
-                        "Sözleşmeye dönüştürülecek talepler",
-                        "Onaylanmış talepler sözleşme oluşturulmayı bekliyor",
+                        "Work.RequestsToConvert",
+                        "Work.RequestsToConvertSub",
                         yaratilacak, "sozlesmeYarat", "#7C3AED"));
 
                 var sonKontrol = await _contracts.CountByStageAsync(1);
                 if (sonKontrol > 0)
                     items.Add(new PendingWorkItem(
-                        "Son kontrolünüzde bekleyenler",
-                        "SYB onayı verilmemiş sözleşmeler",
+                        "Work.AwaitingYourFinalCheck",
+                        "Work.AwaitingYourFinalCheckSub",
                         sonKontrol, "sozlesmeKontrol", "#B06A00")
                     { OldestWaitingDays = await OldestWaitingDaysAsync(1) });
                 break;
@@ -214,8 +214,8 @@ public class ContractService
                 var mudurOnay = await _contracts.CountByStageAsync(2);
                 if (mudurOnay > 0)
                     items.Add(new PendingWorkItem(
-                        "Onayınızda bekleyenler",
-                        "Yönetim onayı verilmemiş sözleşmeler",
+                        "Work.AwaitingYourApproval",
+                        "Work.AwaitingYourApprovalSub",
                         mudurOnay, "onayBekleyen", "#2D6EA8")
                     { OldestWaitingDays = await OldestWaitingDaysAsync(2) });
                 break;
@@ -224,8 +224,8 @@ public class ContractService
                 var reddedilen = await _contracts.CountRejectedRequestsAsync(userId);
                 if (reddedilen > 0)
                     items.Add(new PendingWorkItem(
-                        "Düzeltme bekleyen talepleriniz",
-                        "Reddedilmiş, yeniden gönderilmesi gereken talepler",
+                        "Work.RequestsNeedingFix",
+                        "Work.RequestsNeedingFixSub",
                         reddedilen, "talepList", "#A32D2D"));
                 break;
         }
@@ -298,7 +298,7 @@ public class ContractService
         User currentUser, string? userText, DateTime? startDate, DateTime? endDate, string? action)
     {
         if (currentUser.Role != UserRole.Mudur)
-            throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
+            throw new AppException(AppError.NoAuditLogAccess);
 
         return await _contracts.GetAuditLogsForExportAsync(userText, startDate, endDate, action, MaxExportRows);
     }
@@ -377,7 +377,7 @@ public class ContractService
     private static void EnsureCanCreateRequest(User actingUser)
     {
         if (actingUser.Role is not (UserRole.Personel or UserRole.SYB))
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
     }
 
     // "Yürürlükte" sayılan durumlar: sözleşme onay zincirini tamamlamış ve henüz
@@ -398,19 +398,18 @@ public class ContractService
     // Zaten devam eden bir düzenleme/fesih varken ikincisinin başlatılması da burada
     // engelleniyor: PreviousStatusBeforeEdit/BeforeTermination tek değer tuttuğu için
     // ikinci istek birincinin geri dönüş noktasını eziyordu.
+    // "islem" bir METİN değil ANAHTAR: hata mesajında geçen "düzenleme/fesih/ihlal
+    // bildirimi" kelimesi de çevrilmeli. Servis burada da metin üretmiyor.
     private static void EnsureContractIsLive(Contract contract, string islem)
     {
         if (!LiveStatuses.Contains(contract.Status))
-            throw new InvalidOperationException(
-                $"Bu sözleşme için {islem} işlemi yapılamaz: sözleşme yürürlükte değil.");
+            throw new AppException(AppError.ContractNotLive, islem);
 
         if (contract.PendingEdit)
-            throw new InvalidOperationException(
-                "Bu sözleşmede onay bekleyen bir düzenleme talebi var; sonuçlanmadan yeni işlem yapılamaz.");
+            throw new AppException(AppError.PendingEditExists);
 
         if (contract.PendingTermination)
-            throw new InvalidOperationException(
-                "Bu sözleşmede onay bekleyen bir fesih talebi var; sonuçlanmadan yeni işlem yapılamaz.");
+            throw new AppException(AppError.PendingTerminationExists);
     }
 
     // Yenilenebilecek sözleşmeler: süresi dolmuş ya da dolmak üzere olanlar.
@@ -476,13 +475,13 @@ public class ContractService
         // böylece Müdür/Admin talep düzenleyemez.
         var existing = await GetContractDetailAsync(contract.Id, actingUser);
         if (existing is null)
-            throw new InvalidOperationException("Bu talebi düzenleme yetkiniz yok.");
+            throw new AppException(AppError.CannotEditRequest);
         // Reddedilip kapatılan talep, iade edilenden farklı olarak yeniden gönderilemez —
         // kullanıcının nedenini anlaması için ayrı bir mesaj veriliyor.
         if (existing.Status == ContractStatus.Reddedildi)
-            throw new InvalidOperationException("Bu talep reddedilerek kapatılmıştır, yeniden gönderilemez. Gerekiyorsa yeni bir talep oluşturun.");
+            throw new AppException(AppError.RequestClosedByRejection);
         if (existing.Status != ContractStatus.Talep)
-            throw new InvalidOperationException("Bu talep artık düzenlenemez, işlem görmüş.");
+            throw new AppException(AppError.RequestAlreadyProcessed);
         await _contracts.UpdateRequestAsync(contract);
         await LogAuditAsync(contract.Id, "TalepGüncellendi", actingUser.Id, $"{contract.Title} talebi düzenlenip yeniden gönderildi.");
 
@@ -506,16 +505,16 @@ public class ContractService
     public async Task RejectRequestAsync(Contract contract, User actingUser, string? note, bool allowResubmit)
     {
         if (actingUser.Role != UserRole.SYB)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
         // Sözleşmeye dönüşmüş kayıtlar bu yoldan reddedilemez; onların yeri onay
         // zinciridir (DecideApprovalAsync). Aksi halde onay aşamasındaki bir sözleşme
         // zincir atlanarak kapatılabilirdi.
         if (contract.Status != ContractStatus.Talep)
-            throw new InvalidOperationException("Yalnızca henüz sözleşmeye dönüşmemiş talepler reddedilebilir.");
+            throw new AppException(AppError.OnlyUnconvertedRequestsCanBeRejected);
 
         if (string.IsNullOrWhiteSpace(note))
-            throw new InvalidOperationException("Reddetme işlemi için bir gerekçe girilmelidir.");
+            throw new AppException(AppError.RejectionNoteRequired);
 
         // Aynı kural, iki farklı insan davranışı: başkasının talebini REDDETMEK bir
         // karar, kendi talebini GERİ ÇEKMEK bir vazgeçme. Kayıtlarda da ayrılıyor;
@@ -571,14 +570,14 @@ public class ContractService
     public async Task AddAttachmentAsync(Attachment attachment, User actingUser)
     {
         if (actingUser.Role == UserRole.Admin)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
         // Kullanıcının bu sözleşmeye erişimi var mı? GetContractDetailAsync, Personel
         // için başkasının sözleşmesinde null döner — böylece bir kullanıcı görmediği
         // bir sözleşmeye dosya ekleyemez.
         var contract = await GetContractDetailAsync(attachment.ContractId, actingUser);
         if (contract is null)
-            throw new InvalidOperationException("Bu sözleşmeye dosya ekleme yetkiniz yok.");
+            throw new AppException(AppError.NoAttachmentAccess);
 
         // Yükleyen bilgisi çağıranın gönderdiği değere bırakılmaz.
         attachment.UploadedByUserId = actingUser.Id;
@@ -619,7 +618,7 @@ public class ContractService
     public async Task DeleteAttachmentAsync(Attachment attachment, User actingUser)
     {
         if (actingUser.Role != UserRole.SYB)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
         await _attachments.DeleteAsync(attachment.Id);
 
@@ -639,26 +638,26 @@ public class ContractService
     public async Task FinalizeContractAsync(Contract contract, List<ContractItem> items, List<Attachment> attachments, User actingUser)
     {
         if (actingUser.Role != UserRole.SYB)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
         // Yalnızca bekleyen bir talep sözleşmeye dönüştürülebilir. Bu kontrol olmadan
         // reddedilip kapatılmış bir talep (ya da hâlihazırda yürürlükteki bir sözleşme)
         // yeniden onay zincirinin başına gönderilebilirdi.
         if (contract.Status != ContractStatus.Talep)
-            throw new InvalidOperationException("Bu talep sözleşmeye dönüştürülemez; artık bekleyen bir talep değil.");
+            throw new AppException(AppError.RequestNoLongerPending);
 
         // Tarih doğrulaması sadece sihirbaz ekranında vardı; servis hiç bakmıyordu.
         // Tarihsiz bir sözleşme "Aktif" olabiliyordu — o durumda kalan gün
         // hesaplanamıyor, bakım işi süresi dolmuşları hiç göremiyor ve sözleşme
         // sonsuza kadar yürürlükte kalıyordu.
         if (contract.StartDate is null || contract.EndDate is null)
-            throw new InvalidOperationException("Sözleşmenin başlangıç ve bitiş tarihi girilmelidir.");
+            throw new AppException(AppError.DatesRequired);
 
         if (contract.EndDate.Value.Date <= contract.StartDate.Value.Date)
-            throw new InvalidOperationException("Bitiş tarihi, başlangıç tarihinden sonra olmalıdır.");
+            throw new AppException(AppError.EndDateBeforeStart);
 
         if (items.Count == 0)
-            throw new InvalidOperationException("Sözleşmede en az bir bedel kalemi bulunmalıdır.");
+            throw new AppException(AppError.AtLeastOneItemRequired);
 
         contract.TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice);
         contract.Status = ContractStatus.OnayBekliyor;
@@ -768,12 +767,12 @@ public class ContractService
         {
             1 => ("SYB Son Kontrol", UserRole.SYB),
             2 => ("Müdür (YK) Onayı", UserRole.Mudur),
-            _ => throw new InvalidOperationException("Bu aşamada onay/red işlemi yapılamaz.")
+            _ => throw new AppException(AppError.ApprovalNotAvailableAtThisStage)
         };
         if (actingUser.Role != expectedRole)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
         if (decision == ApprovalDecision.Red && string.IsNullOrWhiteSpace(note))
-            throw new InvalidOperationException("Reddetme işlemi için bir gerekçe girilmelidir.");
+            throw new AppException(AppError.RejectionNoteRequired);
         // Bildirim metninde kullanılacak konu, aşağıdaki durum değişikliklerinden ÖNCE
         // saklanır: karar uygulandığında PendingEdit/PendingTermination temizlenebiliyor.
         var bildirimKonusu = contract.PendingTermination ? "fesih talebi"
@@ -1001,9 +1000,9 @@ public class ContractService
         string? newDescription = null, string? newCompanyName = null, string? newTaxNo = null, string? newPaymentPeriod = null)
     {
         if (actingUser.Role != UserRole.SYB)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
-        EnsureContractIsLive(contract, "düzenleme");
+        EnsureContractIsLive(contract, "Op.Edit");
 
         var revision = new ContractRevision
         {
@@ -1053,12 +1052,12 @@ public class ContractService
     public async Task ReportViolationAsync(Contract contract, User reporter, string violationType, DateTime violationDate, string description)
     {
         if (reporter.Role == UserRole.Mudur)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
         // Kontrol olmadan, süresi dolmuş ya da feshedilmiş bir sözleşmeye ihlal
         // bildirildiğinde Status = Ihlal atanıyor ve arşivdeki kayıt yeniden
         // yürürlükteymiş gibi listeye geri dönüyordu.
-        EnsureContractIsLive(contract, "ihlal bildirimi");
+        EnsureContractIsLive(contract, "Op.Violation");
 
         var violation = new Violation
         {
@@ -1095,13 +1094,13 @@ public class ContractService
     public async Task ResolveViolationAsync(Contract contract, Violation violation, User actingUser, string? note)
     {
         if (actingUser.Role != UserRole.SYB)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
         if (violation.IsResolved)
-            throw new InvalidOperationException("Bu ihlal zaten giderildi olarak işaretlenmiş.");
+            throw new AppException(AppError.ViolationAlreadyResolved);
 
         if (string.IsNullOrWhiteSpace(note))
-            throw new InvalidOperationException("İhlalin nasıl giderildiği yazılmalıdır.");
+            throw new AppException(AppError.ResolutionNoteRequired);
 
         violation.ResolvedAt = DateTime.Now;
         violation.ResolvedByUserId = actingUser.Id;
@@ -1202,9 +1201,9 @@ public class ContractService
     public async Task RequestTerminationAsync(Contract contract, User actingUser, string terminationType, DateTime terminationDate, string reason, decimal? compensationAmount, string compensationDirection)
     {
         if (actingUser.Role != UserRole.SYB)
-            throw new InvalidOperationException("Bu işlemi yapma yetkiniz yok.");
+            throw new AppException(AppError.NotAuthorized);
 
-        EnsureContractIsLive(contract, "fesih");
+        EnsureContractIsLive(contract, "Op.Termination");
 
         var termination = new ContractTermination
         {
@@ -1241,7 +1240,7 @@ public class ContractService
     public async Task<List<string>> GetAuditLogUserOptionsAsync(User currentUser)
     {
         if (currentUser.Role != UserRole.Mudur)
-            throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
+            throw new AppException(AppError.NoAuditLogAccess);
         return await _contracts.GetAuditLogUserOptionsAsync();
     }
 
@@ -1250,7 +1249,7 @@ public class ContractService
         DateTime? startDate, DateTime? endDate, string? action = null)
     {
         if (currentUser.Role != UserRole.Mudur)
-            throw new InvalidOperationException("Bu işlem geçmişini görüntüleme yetkiniz yok.");
+            throw new AppException(AppError.NoAuditLogAccess);
         return await _contracts.GetAuditLogsPagedAsync(page, pageSize, userText, startDate, endDate, action);
     }
 }

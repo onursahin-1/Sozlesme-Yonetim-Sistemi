@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 using System.Collections.Generic;
 
 namespace Sys.UI.ViewModels;
@@ -48,14 +49,22 @@ public partial class ContractListViewModel : ViewModelBase
     // Seçenekler sabit bir listeden değil VERİDEN geliyor: sözleşme türü serbest
     // metin olarak da girilebiliyor ve sabit listede olmayan bir tür filtreyle hiç
     // bulunamaz hâle gelirdi.
-    public const string AllTypes = "Tüm türler";
+    // "Tüm türler" hem AÇILIR LİSTEDE GÖRÜNEN METİN hem de "filtre yok" anlamına
+    // gelen İŞARET değeri. İkisi aynı dizge olduğu için metin çevrilince işaret de
+    // değişiyor — bu, bu projede defalarca canımızı yakan desenin ta kendisi.
+    //
+    // Burada kabul edilebilir olmasının tek sebebi: dil değiştiğinde kabuk açık
+    // sayfayı baştan kuruyor, yani liste ve seçili değer aynı anda yeni dilde
+    // doğuyor. Eski dildeki bir işaretle yeni dildeki bir işaret hiçbir zaman
+    // karşılaştırılmıyor. Sayfa yeniden kurulmasaydı filtre sessizce bozulurdu.
+    public static string AllTypes => Strings.T("List.AllTypes");
 
     [ObservableProperty]
-    public partial ObservableCollection<string> TypeOptions { get; set; } = new() { AllTypes };
+    public partial ObservableCollection<string> TypeOptions { get; set; } = new() { Strings.T("List.AllTypes") };
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedType { get; set; } = AllTypes;
+    public partial string SelectedType { get; set; } = Strings.T("List.AllTypes");
 
     partial void OnSelectedTypeChanged(string value)
     {
@@ -105,7 +114,7 @@ public partial class ContractListViewModel : ViewModelBase
     public bool CanGoPrevious => CurrentPage > 1;
     public bool CanGoNext => CurrentPage < TotalPages;
     public bool ShowPager => TotalCount > PageSize;
-    public string PageInfoText => $"Sayfa {CurrentPage} / {TotalPages}  ·  Toplam {TotalCount} kayıt";
+    public string PageInfoText => Strings.T("List.PageInfo", CurrentPage, TotalPages, TotalCount);
 
     // Filtre butonlarında hangisinin seçili olduğunu görsel olarak belirtmek ve
     // sonuç bulunamadığında "filtreleri temizle" aksiyonunu göstermek için kullanılır.
@@ -206,7 +215,7 @@ public partial class ContractListViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Talep reddedilirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("List.RejectFailed", ex.Message);
             return false;
         }
         finally
@@ -233,18 +242,17 @@ public partial class ContractListViewModel : ViewModelBase
         {
             var rows = await _contractService.GetContractsForExportAsync(_currentUser, SelectedFilter, SearchText, TypeFilter);
 
-            Exporting.ExcelExporter.ExportContracts(rows, destinationPath, "Sözleşmeler");
-            await _contractService.LogExportAsync(_currentUser, "Sözleşme listesi", rows.Count);
+            Exporting.ExcelExporter.ExportContracts(rows, destinationPath, Strings.T("Nav.Contracts"));
+            await _contractService.LogExportAsync(_currentUser, Strings.T("List.ExportName"), rows.Count);
 
             if (rows.Count >= ContractService.MaxExportRows)
-                ErrorMessage = $"Aktarma {ContractService.MaxExportRows} kayıtla sınırlandı. " +
-                               "Tümünü almak için filtreyi daraltıp tekrar deneyin.";
+                ErrorMessage = Strings.T("List.ExportCapped", ContractService.MaxExportRows);
 
             Printing.DocumentPrinter.Open(destinationPath);
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Excel'e aktarılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("List.ExportFailed", ex.Message);
         }
         finally
         {
@@ -356,7 +364,7 @@ public partial class ContractListViewModel : ViewModelBase
         catch (Exception ex)
         {
             if (token != _loadToken) return;
-            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("List.LoadFailed", ex.Message);
         }
         finally
         {

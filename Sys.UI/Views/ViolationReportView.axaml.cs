@@ -5,6 +5,8 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Sys.UI.ViewModels;
 
+using Sys.UI.Localization;
+
 namespace Sys.UI.Views;
 
 public partial class ViolationReportView : UserControl
@@ -25,11 +27,11 @@ public partial class ViolationReportView : UserControl
 
             var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Dosya Seç",
+                Title = Strings.T("File.ChooseFile"),
                 AllowMultiple = false,
                 FileTypeFilter = new List<FilePickerFileType>
                 {
-                    new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
+                    new(Strings.T("File.Supported")) { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
                 }
             });
 
@@ -44,7 +46,7 @@ public partial class ViolationReportView : UserControl
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Dosya seçilirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.PickFailed", ex.Message);
         }
     }
 
@@ -64,17 +66,15 @@ public partial class ViolationReportView : UserControl
             if (owner is null) return;
 
             var confirmed = await ConfirmDialog.ShowAsync(owner,
-                $"\"{vm.CurrentTitle}\" sözleşmesi için ihlal bildirilecek.\n\n" +
-                "Sözleşme hemen \"İhlal Mevcut\" durumuna geçecek ve kayıt sözleşmenin " +
-                "geçmişinde kalıcı olacak. Devam etmek istiyor musunuz?",
-                "Evet, İhlali Bildir");
+                Strings.T("Confirm.ViolationAsk", vm.CurrentTitle),
+                Strings.T("Confirm.ViolationButton"));
 
             if (confirmed)
                 vm.SubmitCommand.Execute(null);
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "İhlal bildirilirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("Vio.ReportFailed", ex.Message);
         }
     }
 }

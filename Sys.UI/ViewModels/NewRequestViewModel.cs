@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -27,11 +28,11 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
     [NotifyPropertyChangedFor(nameof(SubmitButtonText))]
     public partial bool IsBusy { get; set; }
 
-    public string SubmitButtonText => IsBusy
-        ? "Gönderiliyor..."
-        : IsEditMode ? "Kaydet ve Yeniden Gönder"
-        : IsRenewal ? "Yenileme Talebini Gönder"
-        : "Onaya Gönder";
+    public string SubmitButtonText => Strings.T(
+        IsBusy ? "Req.Submitting"
+        : IsEditMode ? "Req.SaveAndResubmit"
+        : IsRenewal ? "Req.SubmitRenewal"
+        : "Req.SubmitForApproval");
 
     public event Action? CancelRequested;
 
@@ -242,28 +243,28 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
             SuccessMessage = string.Empty;
             ClearFieldErrors();
 
-            if (string.IsNullOrWhiteSpace(Title)) TitleError = "Konu / başlık zorunludur.";
-            if (string.IsNullOrWhiteSpace(Type)) TypeError = "Sözleşme türü seçilmelidir.";
-            if (string.IsNullOrWhiteSpace(Description)) DescriptionError = "İşin tanımı zorunludur.";
-            if (string.IsNullOrWhiteSpace(CompanyName)) CompanyNameError = "Firma adı zorunludur.";
+            if (string.IsNullOrWhiteSpace(Title)) TitleError = Strings.T("Req.TitleRequired");
+            if (string.IsNullOrWhiteSpace(Type)) TypeError = Strings.T("Req.TypeRequired");
+            if (string.IsNullOrWhiteSpace(Description)) DescriptionError = Strings.T("Req.DescriptionRequired");
+            if (string.IsNullOrWhiteSpace(CompanyName)) CompanyNameError = Strings.T("Req.CompanyRequired");
 
             if (string.IsNullOrWhiteSpace(TaxNo))
-                TaxNoError = "Vergi no zorunludur.";
+                TaxNoError = Strings.T("Req.TaxNoRequired");
             else if (TaxNo.Length != 10 || !TaxNo.All(char.IsDigit))
-                TaxNoError = "Vergi no 10 haneli ve yalnızca rakamlardan oluşmalıdır.";
+                TaxNoError = Strings.T("Req.TaxNoInvalid");
 
             decimal amount = 0;
             if (!string.IsNullOrWhiteSpace(EstimatedAmountText))
             {
                 if (!decimal.TryParse(EstimatedAmountText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), out amount))
-                    AmountError = "Geçerli bir tutar girin (örn. 12.500,00).";
+                    AmountError = Strings.T("Req.AmountInvalid");
                 else if (amount < 0)
-                    AmountError = "Tutar negatif olamaz.";
+                    AmountError = Strings.T("Req.AmountNegative");
             }
 
             if (HasFieldErrors)
             {
-                ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+                ErrorMessage = Strings.T("Req.FixFields");
                 return;
             }
 
@@ -304,7 +305,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
                         }, _currentUser);
                     }
 
-                    SuccessMessage = "Talep güncellendi ve yeniden gönderildi.";
+                    SuccessMessage = Strings.T("Req.UpdatedAndResent");
                     SelectedFilePath = null;
                     SelectedFileName = string.Empty;
                     return;
@@ -342,7 +343,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
                     }, _currentUser);
                 }
 
-                SuccessMessage = "Talep başarıyla oluşturuldu.";
+                SuccessMessage = Strings.T("Req.Created");
                 Title = string.Empty;
                 Type = string.Empty;
                 CompanyName = string.Empty;
@@ -357,7 +358,7 @@ public partial class NewRequestViewModel : ViewModelBase, IEscapeHandler
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Hata: " + ex.Message;
+                ErrorMessage = Strings.T("Err.Prefix", ex.Message);
             }
         }
         finally

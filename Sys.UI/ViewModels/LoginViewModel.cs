@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -59,7 +60,7 @@ public partial class LoginViewModel : ViewModelBase
 
             if (string.IsNullOrWhiteSpace(ForgotUsername))
             {
-                ForgotMessage = "Lütfen kullanıcı adınızı girin.";
+                ForgotMessage = Strings.T("Login.UsernameRequired");
                 return;
             }
 
@@ -76,7 +77,7 @@ public partial class LoginViewModel : ViewModelBase
             // Kullanıcı adı sistemde olsun ya da olmasın HER ZAMAN aynı mesaj gösterilir.
             // Aksi halde giriş ekranı, hangi kullanıcı adlarının var olduğunu deneyerek
             // öğrenmeye yarayan bir araca dönüşürdü.
-            ForgotMessage = "Talebiniz alındı. Sistem yöneticiniz sizinle iletişime geçecek.";
+            ForgotMessage = Strings.T("Login.RequestReceived");
             ForgotUsername = string.Empty;
         }
         finally
@@ -99,7 +100,7 @@ public partial class LoginViewModel : ViewModelBase
         var result = await _authService.LoginAsync(Username, Password);
         if (!result.Success)
         {
-            ErrorMessage = result.ErrorMessage ?? "Giriş başarısız.";
+            ErrorMessage = result.Error is { } code ? ErrorText.Of(code, result.ErrorArgs) : Strings.T("Login.Failed");
             return;
         }
 

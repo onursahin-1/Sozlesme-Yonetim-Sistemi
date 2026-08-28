@@ -21,7 +21,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Aktif };
         var personel = new User { Role = UserRole.Personel };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.EditContractAsync(contract, personel, "Bedel Değişikliği", "gerekçe", null, null));
     }
 
@@ -32,7 +32,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Aktif };
         var mudur = new User { Role = UserRole.Mudur };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.EditContractAsync(contract, mudur, "Bedel Değişikliği", "gerekçe", null, null));
     }
 
@@ -56,7 +56,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Aktif };
         var mudur = new User { Role = UserRole.Mudur };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.ReportViolationAsync(contract, mudur, "Gecikme", DateTime.Today, "açıklama"));
     }
 
@@ -91,7 +91,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Aktif };
         var personel = new User { Role = UserRole.Personel };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RequestTerminationAsync(contract, personel, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
     }
 
@@ -102,7 +102,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Aktif };
         var mudur = new User { Role = UserRole.Mudur };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RequestTerminationAsync(contract, mudur, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
     }
 
@@ -125,7 +125,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Talep };
         var personel = new User { Role = UserRole.Personel };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), personel));
     }
 
@@ -136,7 +136,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Talep };
         var mudur = new User { Role = UserRole.Mudur };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), mudur));
     }
 
@@ -183,7 +183,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Talep };
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.FinalizeContractAsync(contract, BirKalem(), new List<Attachment>(), syb));
     }
 
@@ -195,7 +195,7 @@ public class ContractServiceAuthorizationTests
         contract.EndDate = contract.StartDate;
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.FinalizeContractAsync(contract, BirKalem(), new List<Attachment>(), syb));
     }
 
@@ -207,7 +207,7 @@ public class ContractServiceAuthorizationTests
         var contract = HazirTalep();
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), syb));
     }
 
@@ -217,7 +217,7 @@ public class ContractServiceAuthorizationTests
         var service = CreateService(out _);
         var mudur = new User { Id = 7, Role = UserRole.Mudur };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.CreateRequestAsync(new Contract(), mudur));
     }
 
@@ -227,7 +227,7 @@ public class ContractServiceAuthorizationTests
         var service = CreateService(out _);
         var admin = new User { Id = 9, Role = UserRole.Admin };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.CreateRequestAsync(new Contract(), admin));
     }
 
@@ -263,7 +263,7 @@ public class ContractServiceAuthorizationTests
         var service = CreateService(out _);
         var mudur = new User { Id = 7, Role = UserRole.Mudur };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.UpdateRequestAsync(new Contract { Id = 1 }, mudur));
     }
 
@@ -273,7 +273,7 @@ public class ContractServiceAuthorizationTests
         var service = CreateService(out _);
         var admin = new User { Id = 9, Role = UserRole.Admin };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.AddAttachmentAsync(new Attachment { ContractId = 1 }, admin));
     }
 
@@ -286,7 +286,7 @@ public class ContractServiceAuthorizationTests
         var service = CreateService(out _);
         var personel = new User { Id = 42, Role = UserRole.Personel };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.AddAttachmentAsync(new Attachment { ContractId = 123 }, personel));
     }
 
@@ -302,7 +302,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Talep };
         var user = new User { Id = 5, Role = role };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RejectRequestAsync(contract, user, "gerekçe", true));
     }
 
@@ -313,7 +313,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Talep };
         var syb = new User { Id = 3, Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RejectRequestAsync(contract, syb, "   ", true));
     }
 
@@ -326,7 +326,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.OnayBekliyor, Stage = 1 };
         var syb = new User { Id = 3, Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RejectRequestAsync(contract, syb, "gerekçe", false));
     }
 
@@ -377,7 +377,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = status };
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.EditContractAsync(contract, syb, "Bedel Değişikliği", "gerekçe", null, null));
     }
 
@@ -392,7 +392,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = status };
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.ReportViolationAsync(contract, syb, "Gecikme", DateTime.Today, "açıklama"));
     }
 
@@ -403,7 +403,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Feshedildi };
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RequestTerminationAsync(contract, syb, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
     }
 
@@ -417,7 +417,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Aktif, PendingEdit = true };
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.RequestTerminationAsync(contract, syb, "İhbarlı Fesih", DateTime.Today, "gerekçe", null, "Tazminat yok"));
     }
 
@@ -447,7 +447,7 @@ public class ContractServiceAuthorizationTests
         var (contract, violation) = IhlalliSozlesme();
         var user = new User { Id = 5, Role = role };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.ResolveViolationAsync(contract, violation, user, "giderildi"));
     }
 
@@ -458,7 +458,7 @@ public class ContractServiceAuthorizationTests
         var (contract, violation) = IhlalliSozlesme();
         var syb = new User { Id = 3, Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.ResolveViolationAsync(contract, violation, syb, "   "));
     }
 
@@ -470,7 +470,7 @@ public class ContractServiceAuthorizationTests
         violation.ResolvedAt = DateTime.Now;
         var syb = new User { Id = 3, Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.ResolveViolationAsync(contract, violation, syb, "tekrar"));
     }
 
@@ -527,7 +527,7 @@ public class ContractServiceAuthorizationTests
         var contract = new Contract { Status = ContractStatus.Reddedildi };
         var syb = new User { Id = 3, Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.FinalizeContractAsync(contract, new List<ContractItem>(), new List<Attachment>(), syb));
     }
 

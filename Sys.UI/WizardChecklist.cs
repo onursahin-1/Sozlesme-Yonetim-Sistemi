@@ -1,3 +1,5 @@
+﻿using Sys.UI.Localization;
+
 namespace Sys.UI;
 
 // Yeni sözleşme için veri giriş kontrol listesi.
@@ -14,12 +16,15 @@ namespace Sys.UI;
 // kararı değil. Bu yüzden asıl yerleri veri girişinin sonu.
 public static class WizardChecklist
 {
-    public static readonly string[] Labels =
-    {
-        "Kapsam, talebin konusuyla örtüşüyor",
-        "Bedel kalemleri ve toplam tutar doğru",
-        "Firma bilgileri doğru (Vergi No, SAP Cari Kodu)",
-        "Başlangıç/Bitiş tarihleri ve ödeme periyodu doğru",
-        "Sözleşme dosyası yüklendi; ek ve teminat belgeleri tam",
-    };
+    // Alan (readonly) değil ÖZELLİK: metinler o anki dilden çözülüyor. Sabit dizi
+    // olsaydı uygulama açılışındaki dile kilitlenir, geçiş yapıldığında liste eski
+    // dilde kalırdı.
+    public static string[] Labels =>
+    [
+        Strings.T("Check.New1"),
+        Strings.T("Check.New2"),
+        Strings.T("Check.New3"),
+        Strings.T("Check.New4"),
+        Strings.T("Check.New5"),
+    ];
 }

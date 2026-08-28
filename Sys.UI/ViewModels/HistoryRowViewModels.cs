@@ -1,5 +1,6 @@
 ﻿using System;
 using Sys.Domain;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -20,7 +21,7 @@ internal static class OutcomeStyle
         false => "Reddedildi",
         // Bu alanlar eklenmeden önce oluşmuş kayıtlarda sonuç bilinmiyor; "Onay
         // bekliyor" demek yanıltıcı olurdu, açıkça belirsiz olduğunu yazıyoruz.
-        _ => "Sonuç bekliyor"
+        _ => Strings.T("Hist.AwaitingResult")
     };
 
     public static string ColorHex(bool? isApproved) => isApproved switch
@@ -76,18 +77,18 @@ public class RevisionRowViewModel
     public string ChangedAtText => _revision.ChangedAt.ToString("dd.MM.yyyy HH:mm");
 
     public string PreviousAmountText =>
-        "Önceki bedel: " + _revision.PreviousTotalAmount.ToString("N2") + _currencySuffix;
+        Strings.T("Hist.PreviousAmount") + _revision.PreviousTotalAmount.ToString("N2") + _currencySuffix;
 
     public bool HasPreviousEndDate => _revision.PreviousEndDate.HasValue;
     public string PreviousEndDateText =>
-        "Önceki bitiş: " + (_revision.PreviousEndDate?.ToString("dd.MM.yyyy") ?? "-");
+        Strings.T("Hist.PreviousEnd") + (_revision.PreviousEndDate?.ToString("dd.MM.yyyy") ?? "-");
 
     // Kaydedilen ama hiçbir ekranda gösterilmeyen alanlar artık burada.
     public bool HasPreviousCompany => !string.IsNullOrWhiteSpace(_revision.PreviousCompanyName);
-    public string PreviousCompanyText => "Önceki firma: " + _revision.PreviousCompanyName;
+    public string PreviousCompanyText => Strings.T("Hist.PreviousCompany") + _revision.PreviousCompanyName;
 
     public bool HasPreviousPaymentPeriod => !string.IsNullOrWhiteSpace(_revision.PreviousPaymentPeriod);
-    public string PreviousPaymentPeriodText => "Önceki ödeme koşulu: " + _revision.PreviousPaymentPeriod;
+    public string PreviousPaymentPeriodText => Strings.T("Hist.PreviousPayment") + _revision.PreviousPaymentPeriod;
 }
 
 // İhlal kayıtları veritabanına yazılıyordu ama HİÇBİR ekranda gösterilmiyordu:
@@ -112,7 +113,7 @@ public class ViolationRowViewModel
     public string Description => _violation.Description;
     public bool HasDescription => !string.IsNullOrWhiteSpace(_violation.Description);
 
-    public string ViolationDateText => "İhlal tarihi: " + _violation.ViolationDate.ToString("dd.MM.yyyy");
+    public string ViolationDateText => Strings.T("Hist.ViolationDate") + _violation.ViolationDate.ToString("dd.MM.yyyy");
     public string ReportedAtText => _violation.ReportedAt.ToString("dd.MM.yyyy HH:mm");
 
     // --- Çözüm durumu ---
@@ -134,7 +135,7 @@ public class ViolationRowViewModel
     public bool HasResolution => IsResolved && !string.IsNullOrWhiteSpace(_violation.ResolutionNote);
 
     public string ResolutionText =>
-        $"Giderildi ({_violation.ResolvedAt:dd.MM.yyyy HH:mm}): {_violation.ResolutionNote}";
+        Strings.T("Hist.Resolved", _violation.ResolvedAt?.ToString("dd.MM.yyyy HH:mm"), _violation.ResolutionNote);
 }
 
 public class TerminationRowViewModel
@@ -154,10 +155,10 @@ public class TerminationRowViewModel
     public string CardBorderHex => OutcomeStyle.CardBorderHex(_termination.IsApproved);
 
     public string RequestedAtText => _termination.RequestedAt.ToString("dd.MM.yyyy HH:mm");
-    public string TerminationDateText => "Fesih tarihi: " + _termination.TerminationDate.ToString("dd.MM.yyyy");
+    public string TerminationDateText => Strings.T("Hist.TerminationDate") + _termination.TerminationDate.ToString("dd.MM.yyyy");
 
     public bool HasCompensation => _termination.CompensationAmount.HasValue;
     public string CompensationText =>
-        "Tazminat: " + (_termination.CompensationAmount?.ToString("N2") ?? "-") +
+        Strings.T("Hist.Compensation") + (_termination.CompensationAmount?.ToString("N2") ?? "-") +
         " TL — " + _termination.CompensationDirection;
 }

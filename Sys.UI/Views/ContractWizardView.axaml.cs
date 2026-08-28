@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Sys.UI.Localization;
 using Sys.Domain;
 using Sys.UI.ViewModels;
 
@@ -30,11 +31,11 @@ public partial class ContractWizardView : UserControl
 
             var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Dosya Seç",
+                Title = Strings.T("File.ChooseFile"),
                 AllowMultiple = true,
                 FileTypeFilter = new List<FilePickerFileType>
                 {
-                    new("Desteklenen Dosyalar") { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
+                    new(Strings.T("File.Supported")) { Patterns = new[] { "*.pdf", "*.docx", "*.xlsx", "*.jpg", "*.png" } }
                 }
             });
 
@@ -49,7 +50,7 @@ public partial class ContractWizardView : UserControl
         }
         catch (Exception ex)
         {
-            vm.ErrorMessage = "Dosya seçilirken bir hata oluştu: " + ex.Message;
+            vm.ErrorMessage = Strings.T("File.PickFailed", ex.Message);
         }
     }
     private void OnAmountLostFocus(object? sender, RoutedEventArgs e) => AmountFormatHelper.Format(sender);

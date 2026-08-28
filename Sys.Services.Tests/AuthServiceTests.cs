@@ -52,11 +52,13 @@ public class AuthServiceTests
         Assert.Equal("ayse", result.User!.Username);
     }
 
-    // Var olmayan kullanıcı ile yanlış şifre AYNI mesajı vermeli. Farklı mesaj
+    // Var olmayan kullanıcı ile yanlış şifre AYNI sebebi vermeli. Farklı sebep
     // verilseydi giriş ekranı, hangi kullanıcı adlarının var olduğunu sızdıran
     // bir araca dönüşürdü.
+    //
+    // Test artık metni değil KODU karşılaştırıyor: metin çevrilebilir, kural değil.
     [Fact]
-    public async Task LoginAsync_UnknownUserAndWrongPassword_GiveSameMessage()
+    public async Task LoginAsync_UnknownUserAndWrongPassword_GiveSameError()
     {
         var (service, _, _, _, _) = Create(Account());
 
@@ -65,7 +67,8 @@ public class AuthServiceTests
 
         Assert.False(unknown.Success);
         Assert.False(wrongPassword.Success);
-        Assert.Equal(unknown.ErrorMessage, wrongPassword.ErrorMessage);
+        Assert.Equal(unknown.Error, wrongPassword.Error);
+        Assert.Equal(AppError.InvalidCredentials, unknown.Error);
     }
 
     [Fact]

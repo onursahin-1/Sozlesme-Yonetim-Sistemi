@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -67,7 +68,7 @@ public partial class ArchiveViewModel : ViewModelBase
     public bool CanGoPrevious => CurrentPage > 1;
     public bool CanGoNext => CurrentPage < TotalPages;
     public bool ShowPager => TotalCount > PageSize;
-    public string PageInfoText => $"{CurrentPage} / {TotalPages}  ·  {TotalCount} kayıt";
+    public string PageInfoText => Strings.T("Arc.PageInfo", CurrentPage, TotalPages, TotalCount);
 
     public bool IsEmpty => !IsLoading && AvailableContracts.Count == 0;
     public bool HasActiveFilters => SelectedFilter != "tumu" || !string.IsNullOrWhiteSpace(SearchText);
@@ -196,7 +197,7 @@ public partial class ArchiveViewModel : ViewModelBase
         catch (Exception ex)
         {
             if (token != _loadToken) return;
-            ErrorMessage = "Arşiv yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Arc.LoadFailed", ex.Message);
         }
         finally
         {
@@ -244,18 +245,17 @@ public partial class ArchiveViewModel : ViewModelBase
             var rows = await _contractService.GetArchivedContractsForExportAsync(
                 _currentUser, SelectedFilter, SearchText);
 
-            Exporting.ExcelExporter.ExportContracts(rows, destinationPath, "Arşiv");
-            await _contractService.LogExportAsync(_currentUser, "Arşiv listesi", rows.Count);
+            Exporting.ExcelExporter.ExportContracts(rows, destinationPath, Strings.T("Nav.Archive"));
+            await _contractService.LogExportAsync(_currentUser, Strings.T("Arc.ExportName"), rows.Count);
 
             if (rows.Count >= ContractService.MaxExportRows)
-                ErrorMessage = $"Aktarma {ContractService.MaxExportRows} kayıtla sınırlandı. " +
-                               "Tümünü almak için filtreyi daraltıp tekrar deneyin.";
+                ErrorMessage = Strings.T("List.ExportCapped", ContractService.MaxExportRows);
 
             Printing.DocumentPrinter.Open(destinationPath);
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Excel'e aktarılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("List.ExportFailed", ex.Message);
         }
     }
 
@@ -331,7 +331,7 @@ public partial class ArchiveViewModel : ViewModelBase
 
             if (full is null)
             {
-                ErrorMessage = "Bu sözleşmeyi görüntüleme yetkiniz yok.";
+                ErrorMessage = Strings.T("Arc.NoAccess");
                 return;
             }
 
@@ -375,10 +375,10 @@ public partial class ArchiveViewModel : ViewModelBase
                 if (term is not null)
                 {
                     HasTerminationInfo = true;
-                    TerminationInfo =
-                        $"Fesih Türü: {term.TerminationType}\n" +
-                        $"Fesih Tarihi: {term.TerminationDate.ToString("dd.MM.yyyy", tr)}\n" +
-                        $"Gerekçe: {term.Reason}";
+                    TerminationInfo = Strings.T("Arc.TerminationDetail",
+                        term.TerminationType,
+                        term.TerminationDate.ToString("dd.MM.yyyy", tr),
+                        term.Reason);
                 }
             }
             else if (full.Status == ContractStatus.Reddedildi)
@@ -386,19 +386,16 @@ public partial class ArchiveViewModel : ViewModelBase
                 HasRejectionInfo = true;
                 var tarih = full.LastRejectedAt?.ToString("dd.MM.yyyy HH:mm", tr) ?? "-";
                 var gerekce = string.IsNullOrWhiteSpace(full.LastRejectionNote)
-                    ? "belirtilmemiş"
+                    ? Strings.T("Card.NoReason")
                     : full.LastRejectionNote!;
 
-                RejectionInfo =
-                    $"Red Tarihi: {tarih}\n" +
-                    $"Gerekçe: {gerekce}\n" +
-                    "Bu talep sözleşmeye dönüşmeden kapatılmıştır.";
+                RejectionInfo = Strings.T("Arc.RejectionDetail", tarih, gerekce);
             }
         }
         catch (Exception ex)
         {
             if (requestId == _loadRequestId)
-                ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
+                ErrorMessage = Strings.T("Arc.DetailLoadFailed", ex.Message);
         }
     }
 
@@ -435,7 +432,7 @@ public partial class ArchiveViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "PDF oluşturulamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Arc.PdfFailed", ex.Message);
         }
     }
 
@@ -455,7 +452,7 @@ public partial class ArchiveViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Yazdırma başlatılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Arc.PrintFailed", ex.Message);
         }
     }
 
@@ -470,7 +467,7 @@ public partial class ArchiveViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Dosya açılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Arc.FileOpenFailed", ex.Message);
         }
     }
 }

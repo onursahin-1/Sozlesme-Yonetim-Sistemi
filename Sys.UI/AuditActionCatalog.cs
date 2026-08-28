@@ -36,39 +36,45 @@ public static class AuditActionCatalog
         Olumsuz     // red, silme, erişim kısıtlama
     }
 
-    public sealed record ActionInfo(string Key, string Label, Category Category, Tone Tone);
+    // Label değil LabelKey: gösterilecek metin çeviri sözlüğünden çözülüyor.
+    // Key ise VERİTABANINDA yazan değer — o hiçbir zaman çevrilmez.
+    public sealed record ActionInfo(string Key, string LabelKey, Category Category, Tone Tone)
+    {
+        public string Label => Localization.Strings.T(LabelKey);
+    }
 
     // Sıra, filtre açılır listesindeki sırayı belirler: kategori kategori gruplanmış.
     private static readonly List<ActionInfo> All = new()
     {
-        new("TalepOluşturuldu",        "Talep Oluşturuldu",            Category.Talep,    Tone.Notr),
-        new("TalepGüncellendi",        "Talep Güncellendi",            Category.Talep,    Tone.Notr),
-        new("TalepİadeEdildi",         "Talep İade Edildi",            Category.Talep,    Tone.Uyari),
-        new("TalepReddedildi",         "Talep Reddedildi (Kapatıldı)", Category.Talep,    Tone.Olumsuz),
+        new("TalepOluşturuldu", "Act.TalepOluşturuldu",            Category.Talep,    Tone.Notr),
+        new("TalepGüncellendi", "Act.TalepGüncellendi",            Category.Talep,    Tone.Notr),
+        new("TalepİadeEdildi", "Act.TalepİadeEdildi",            Category.Talep,    Tone.Uyari),
+        new("TalepGeriÇekildi", "Act.TalepGeriÇekildi", Category.Talep,    Tone.Uyari),
+        new("TalepReddedildi", "Act.TalepReddedildi", Category.Talep,    Tone.Olumsuz),
 
-        new("SözleşmeOluşturuldu",     "Sözleşme Oluşturuldu",         Category.Sozlesme, Tone.Notr),
-        new("SözleşmeDüzenlendi",      "Sözleşme Düzenlendi",          Category.Sozlesme, Tone.Notr),
-        new("FesihTalebiOluşturuldu",  "Fesih Talebi Oluşturuldu",     Category.Sozlesme, Tone.Uyari),
-        new("İhlalBildirildi",         "İhlal Bildirildi",             Category.Sozlesme, Tone.Olumsuz),
-        new("İhlalGiderildi",          "İhlal Giderildi",              Category.Sozlesme, Tone.Olumlu),
+        new("SözleşmeOluşturuldu", "Act.SözleşmeOluşturuldu",         Category.Sozlesme, Tone.Notr),
+        new("SözleşmeDüzenlendi", "Act.SözleşmeDüzenlendi",          Category.Sozlesme, Tone.Notr),
+        new("FesihTalebiOluşturuldu", "Act.FesihTalebiOluşturuldu",     Category.Sozlesme, Tone.Uyari),
+        new("İhlalBildirildi", "Act.İhlalBildirildi",             Category.Sozlesme, Tone.Olumsuz),
+        new("İhlalGiderildi", "Act.İhlalGiderildi",              Category.Sozlesme, Tone.Olumlu),
 
-        new("Onaylandı",               "Onaylandı",                    Category.Karar,    Tone.Olumlu),
-        new("Reddedildi",              "Reddedildi",                   Category.Karar,    Tone.Olumsuz),
+        new("Onaylandı", "Act.Onaylandı",                    Category.Karar,    Tone.Olumlu),
+        new("Reddedildi", "Act.Reddedildi",                   Category.Karar,    Tone.Olumsuz),
 
-        new("EkGörüntülendi",          "Ek Görüntülendi",              Category.Erisim,   Tone.Notr),
-        new("Ekİndirildi",             "Ek İndirildi",                 Category.Erisim,   Tone.Notr),
-        new("EkSilindi",               "Ek Silindi",                   Category.Erisim,   Tone.Olumsuz),
-        new("SözleşmeYazdırıldı",      "Sözleşme Yazdırıldı",          Category.Erisim,   Tone.Notr),
+        new("EkGörüntülendi", "Act.EkGörüntülendi",              Category.Erisim,   Tone.Notr),
+        new("Ekİndirildi", "Act.Ekİndirildi",                 Category.Erisim,   Tone.Notr),
+        new("EkSilindi", "Act.EkSilindi",                   Category.Erisim,   Tone.Olumsuz),
+        new("SözleşmeYazdırıldı", "Act.SözleşmeYazdırıldı",          Category.Erisim,   Tone.Notr),
         // Dışa aktarma toplu veri çıkışıdır; tek bir sözleşmenin yazdırılmasından
         // daha dikkat çekici olduğu için uyarı tonunda.
-        new("ListeDışaAktarıldı",      "Liste Excel'e Aktarıldı",      Category.Erisim,   Tone.Uyari),
+        new("ListeDışaAktarıldı", "Act.ListeDışaAktarıldı",      Category.Erisim,   Tone.Uyari),
 
-        new("KullanıcıOluşturuldu",    "Kullanıcı Oluşturuldu",        Category.Hesap,    Tone.Notr),
-        new("ŞifreSıfırlandı",         "Şifre Sıfırlandı (Yönetici)",  Category.Hesap,    Tone.Uyari),
-        new("ŞifreDeğiştirildi",       "Şifre Değiştirildi",           Category.Hesap,    Tone.Notr),
-        new("HesapDevreDışıBırakıldı", "Hesap Devre Dışı Bırakıldı",   Category.Hesap,    Tone.Olumsuz),
-        new("HesapEtkinleştirildi",    "Hesap Etkinleştirildi",        Category.Hesap,    Tone.Olumlu),
-        new("HesapKilitlendi",         "Hesap Kilitlendi",             Category.Hesap,    Tone.Olumsuz),
+        new("KullanıcıOluşturuldu", "Act.KullanıcıOluşturuldu",        Category.Hesap,    Tone.Notr),
+        new("ŞifreSıfırlandı", "Act.ŞifreSıfırlandı",  Category.Hesap,    Tone.Uyari),
+        new("ŞifreDeğiştirildi", "Act.ŞifreDeğiştirildi",           Category.Hesap,    Tone.Notr),
+        new("HesapDevreDışıBırakıldı", "Act.HesapDevreDışıBırakıldı",   Category.Hesap,    Tone.Olumsuz),
+        new("HesapEtkinleştirildi", "Act.HesapEtkinleştirildi",        Category.Hesap,    Tone.Olumlu),
+        new("HesapKilitlendi", "Act.HesapKilitlendi",             Category.Hesap,    Tone.Olumsuz),
     };
 
     private static readonly Dictionary<string, ActionInfo> ByKey =

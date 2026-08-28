@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -232,7 +233,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Err.ContractsLoadFailed", ex.Message);
         }
     }
 
@@ -270,7 +271,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
 
             if (full is null)
             {
-                ErrorMessage = "Bu sözleşmeyi görüntüleme yetkiniz yok.";
+                ErrorMessage = Strings.T("Det.NoAccess");
                 return;
             }
 
@@ -305,8 +306,8 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
                 {
                     IsRenewal = true;
                     RenewalSourceText = s.EndDate is { } end
-                        ? $"{s.RefNo} numaralı sözleşmenin yenilemesidir (önceki dönem {end.ToString("dd.MM.yyyy", tr)} tarihinde sona erdi)."
-                        : $"{s.RefNo} numaralı sözleşmenin yenilemesidir.";
+                        ? Strings.T("Det.RenewalOfWithEnd", s.RefNo, end.ToString("dd.MM.yyyy", tr))
+                        : Strings.T("Det.RenewalOf", s.RefNo);
                 }
             }
 
@@ -339,7 +340,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         catch (Exception ex)
         {
             if (requestId == _loadRequestId)
-                ErrorMessage = "Sözleşme detayı yüklenirken bir hata oluştu: " + ex.Message;
+                ErrorMessage = Strings.T("Det.DetailLoadFailed", ex.Message);
         }
         finally
         {
@@ -390,7 +391,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "PDF oluşturulamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Det.PdfFailed", ex.Message);
         }
     }
 
@@ -412,7 +413,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
 
             var today = DateTime.Today;
             if (end.Date < today) return "Tamamlandı";
-            return end.Date <= today.AddDays(30) ? "Bitiş Yaklaşıyor" : "Aktif";
+            return end.Date <= today.AddDays(30) ? Strings.T("Card.StatusExpiring") : "Aktif";
         }
     }
 
@@ -430,7 +431,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "İhlal giderildi olarak işaretlenemedi: " + ex.Message;
+            ErrorMessage = Strings.T("Det.ViolationResolveFailed", ex.Message);
         }
     }
 
@@ -452,7 +453,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Yazdırma başlatılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Det.PrintFailed", ex.Message);
         }
     }
 
@@ -472,7 +473,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Dosya açılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("Det.FileOpenFailed", ex.Message);
         }
     }
 
@@ -488,7 +489,7 @@ public partial class ContractDetailViewModel : ViewModelBase, IEscapeHandler
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Dosya indirilemedi: " + ex.Message;
+            ErrorMessage = Strings.T("File.DownloadFailed", ex.Message);
         }
     }
 

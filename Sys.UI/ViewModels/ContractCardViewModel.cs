@@ -1,6 +1,7 @@
 ﻿using System;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -58,7 +59,7 @@ public class ContractCardViewModel
     // de işleyebildiği için ikisi tek butonda toplanıyordu ve ekranda "kendi talebini
     // reddet" gibi tuhaf bir iş görünüyordu.
     public bool IsOwnRequest { get; }
-    public string RejectRequestLabel => IsOwnRequest ? "Talebi Geri Çek" : "Talebi Reddet";
+    public string RejectRequestLabel => Strings.T(IsOwnRequest ? "Card.WithdrawRequest" : "Card.RejectRequest");
 
     // SYB rolündeki kullanıcı için: bu kart "Son Kontrol" (aşama 1 onayı) işlemini mi bekliyor?
     public bool NeedsSybSonKontrol => _isSyb && Status == ContractStatus.OnayBekliyor && Stage == 1;
@@ -77,14 +78,14 @@ public class ContractCardViewModel
         ? ReturnBadgeText
         : Status switch
         {
-            ContractStatus.Talep => "Talep",
-            ContractStatus.OnayBekliyor => "Onay Bekliyor" + StageDetail,
-            ContractStatus.Aktif => "Aktif",
-            ContractStatus.Uyari => "Bitiş Yaklaşıyor",
-            ContractStatus.Ihlal => "İhlal Mevcut",
-            ContractStatus.Tamamlandi => "Tamamlandı",
-            ContractStatus.Feshedildi => "Feshedildi",
-            ContractStatus.Reddedildi => "Reddedildi",
+            ContractStatus.Talep => Strings.T("Card.StatusRequest"),
+            ContractStatus.OnayBekliyor => Strings.T("Status.PendingApproval") + StageDetail,
+            ContractStatus.Aktif => Strings.T("Status.Live"),
+            ContractStatus.Uyari => Strings.T("Card.StatusExpiring"),
+            ContractStatus.Ihlal => Strings.T("Card.StatusInViolation"),
+            ContractStatus.Tamamlandi => Strings.T("Card.StatusCompleted"),
+            ContractStatus.Feshedildi => Strings.T("Card.StatusTerminated"),
+            ContractStatus.Reddedildi => Strings.T("Card.StatusRejected"),
             _ => Status.ToString()
         };
 
@@ -105,10 +106,10 @@ public class ContractCardViewModel
     // Kişinin kendi geri çekmesi: red aşama 0'dan geldi ve talep zaten onun.
     public bool IsSelfWithdrawn => IsReturned && _contract.LastRejectedStage == 0 && IsOwnRequest;
 
-    public string ReturnBadgeText =>
-        IsReturnedFromManagement ? "Yönetimden Döndü"
-        : IsSelfWithdrawn ? "Geri Çekildi"
-        : "İade Edildi";
+    public string ReturnBadgeText => Strings.T(
+        IsReturnedFromManagement ? "Card.BadgeFromManagement"
+        : IsSelfWithdrawn ? "Card.BadgeWithdrawn"
+        : "Card.BadgeReturned");
 
     // Kapatma: talep nihai olarak reddedildi, yeniden gönderilemez.
     public bool IsClosedRejected => Status == ContractStatus.Reddedildi;
@@ -127,11 +128,11 @@ public class ContractCardViewModel
         get
         {
             var note = string.IsNullOrWhiteSpace(_contract.LastRejectionNote)
-                ? "belirtilmemiş"
+                ? Strings.T("Card.NoReason")
                 : _contract.LastRejectionNote;
 
             if (IsClosedRejected)
-                return $"Talep reddedildi ve kapatıldı. Gerekçe: {note}";
+                return Strings.T("Card.NoteClosed", note);
 
             // Aynı olay, bakan kişiye göre farklı bir şey söyler. SYB için bu bir
             // İŞ ("Son Kontrol tekrar yapılmalı"); talebi açan Personel için bir
@@ -139,17 +140,15 @@ public class ContractCardViewModel
             // Herkese aynı cümleyi göstermek, Personel'e üstlenemeyeceği bir görev
             // veriyordu.
             if (IsSentBackToSyb)
-                return _isSyb
-                    ? $"Yönetim onayından döndü — Son Kontrol tekrar yapılmalı. Gerekçe: {note}"
-                    : $"Yönetim onayından döndü; SYB yeniden inceliyor. Gerekçe: {note}";
+                return Strings.T(_isSyb ? "Card.NoteBackToFinalCheck" : "Card.NoteBackInfo", note);
 
             if (IsReturnedFromManagement)
-                return $"Yönetim onayından döndü — düzeltip yeniden gönderin. Gerekçe: {note}";
+                return Strings.T("Card.NoteFixAndResend", note);
 
             if (IsSelfWithdrawn)
-                return $"Talebi geri çektiniz; düzeltip yeniden gönderebilirsiniz. Gerekçe: {note}";
+                return Strings.T("Card.NoteWithdrawn", note);
 
-            return $"Düzeltilmek üzere iade edildi. Gerekçe: {note}";
+            return Strings.T("Card.NoteReturned", note);
         }
     }
 
@@ -159,14 +158,16 @@ public class ContractCardViewModel
         {
             var who = Stage switch
             {
-                1 => "SYB Son Kontrol",
-                2 => "YK Onayı",
+                1 => Strings.T("Card.StageFinalCheck"),
+                2 => Strings.T("Card.StageManagement"),
                 _ => null
             };
 
             if (who is null) return string.Empty;
 
-            return _contract.PendingTermination ? $" ({who} — Fesih)" : $" ({who})";
+            return _contract.PendingTermination
+                ? $" ({who} — {Strings.T("Card.StageTermination")})"
+                : $" ({who})";
         }
     }
 
@@ -205,12 +206,12 @@ public class ContractCardViewModel
         {
             if (Status == ContractStatus.Reddedildi)
                 return _contract.LastRejectedAt is { } rejectedAt
-                    ? "Reddedildi: " + rejectedAt.ToString("dd.MM.yyyy")
-                    : "Reddedildi";
+                    ? Strings.T("Card.RejectedOn") + rejectedAt.ToString("dd.MM.yyyy")
+                    : Strings.T("Card.StatusRejected");
 
             return _contract.EndDate is { } endDate
-                ? "Bitiş: " + endDate.ToString("dd.MM.yyyy")
-                : "Tarih girilmemiş";
+                ? Strings.T("Card.EndsOn") + endDate.ToString("dd.MM.yyyy")
+                : Strings.T("Card.NoDate");
         }
     }
 
@@ -220,7 +221,7 @@ public class ContractCardViewModel
         {
             if (_contract.EndDate is null) return "-";
             var days = (_contract.EndDate.Value.Date - DateTime.Today).Days;
-            return days > 0 ? $"{days} gün kaldı" : "Sona erdi";
+            return days > 0 ? Strings.T("Card.DaysLeft", days) : Strings.T("Term.Ended");
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sys.UI.Localization"
              xmlns:conv="using:Sys.UI.Converters"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
@@ -79,9 +80,9 @@
 				<Border Background="{DynamicResource DangerSoftBg}" BorderBrush="{DynamicResource DangerSoftBorder}" BorderThickness="1"
 						CornerRadius="10" Padding="16,13">
 					<StackPanel Spacing="3">
-						<TextBlock Text="İhlal bildirimi onaya gitmez, anında geçerli olur" FontSize="13"
+						<TextBlock Text="{Binding [Vio.NoApprovalNeeded], Source={x:Static loc:Strings.Current}}" FontSize="13"
 								   FontWeight="SemiBold" Foreground="{DynamicResource DangerBase}"/>
-						<TextBlock Text="Kaydettiğinizde sözleşme &quot;İhlal Mevcut&quot; durumuna geçer ve SYB'ye bildirim gönderilir. Kayıt sözleşmenin geçmişinde kalıcıdır."
+						<TextBlock Text="{Binding [Vio.EffectNotice], Source={x:Static loc:Strings.Current}}"
 								   FontSize="11.5" Foreground="{DynamicResource DangerTextAlt}" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
@@ -112,22 +113,22 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Sözleşme ve İhlal" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Vio.Section], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{Binding [Form.RequiredHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="İLGİLİ SÖZLEŞME"/>
+								<Run Text="{Binding [Vio.RelatedContract], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<ComboBox HorizontalAlignment="Stretch"
 									  ItemsSource="{Binding AvailableContracts}"
 									  SelectedItem="{Binding SelectedContract}"
-									  PlaceholderText="Sözleşme seçin...">
+									  PlaceholderText="{Binding [Vio.PickerPlaceholder], Source={x:Static loc:Strings.Current}}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate x:DataType="domain:Contract">
 										<TextBlock TextTrimming="CharacterEllipsis">
@@ -140,14 +141,14 @@
 							</ComboBox>
 							<TextBlock Classes="fieldError" Text="{Binding ContractError}"
 									   IsVisible="{Binding ContractError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-							<TextBlock Classes="formHint" Text="İhlal bildirilebilecek uygun sözleşme yok."
+							<TextBlock Classes="formHint" Text="{Binding [Vio.NoEligible], Source={x:Static loc:Strings.Current}}"
 									   IsVisible="{Binding !AvailableContracts.Count}"/>
 						</StackPanel>
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel">
-									<Run Text="İHLAL TÜRÜ"/>
+									<Run Text="{Binding [Vio.Type], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<ComboBox HorizontalAlignment="Stretch"
@@ -156,7 +157,7 @@
 							</StackPanel>
 							<StackPanel Grid.Column="1">
 								<TextBlock Classes="formLabel">
-									<Run Text="İHLAL TARİHİ"/>
+									<Run Text="{Binding [Vio.Date], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 								</TextBlock>
 								<DatePicker SelectedDate="{Binding ViolationDate}"/>
@@ -167,16 +168,16 @@
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="AÇIKLAMA"/>
+								<Run Text="{Binding [Vio.Description], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<TextBox Text="{Binding Description}" AcceptsReturn="True" Height="120"
 									 TextWrapping="Wrap" AcceptsTab="False"
-									 PlaceholderText="İhlalin ayrıntılı açıklaması, belge referansları, kanıtlar..."/>
+									 PlaceholderText="{Binding [Vio.DescriptionPlaceholder], Source={x:Static loc:Strings.Current}}"/>
 							<TextBlock Classes="fieldError" Text="{Binding DescriptionError}"
 									   IsVisible="{Binding DescriptionError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 							<TextBlock Classes="formHint"
-									   Text="Bu metin sözleşme geçmişinde kalıcı olarak saklanır ve fesih kararına dayanak oluşturabilir."/>
+									   Text="{Binding [Vio.DescriptionHint], Source={x:Static loc:Strings.Current}}"/>
 						</StackPanel>
 					</StackPanel>
 				</Border>
@@ -193,9 +194,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Destekleyici Belge" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Vio.SupportingDoc], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="İsteğe bağlı — yazışma, tutanak, fotoğraf veya rapor."
+								<TextBlock Text="{Binding [Vio.SupportingHint], Source={x:Static loc:Strings.Current}}"
 										   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
@@ -210,7 +211,7 @@
 								<Button Classes="flat" HorizontalAlignment="Center" Click="OnPickFileClick">
 									<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 											CornerRadius="8" Padding="18,9">
-										<TextBlock Text="Dosya Seç" Foreground="{DynamicResource TextBody}" FontSize="12.5"
+										<TextBlock Text="{Binding [Form.ChooseFile], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
 												   FontWeight="SemiBold"/>
 									</Border>
 								</Button>
@@ -228,10 +229,10 @@
 										   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 										   TextTrimming="CharacterEllipsis"/>
 								<Button Grid.Column="2" Classes="flat" Click="OnPickFileClick" VerticalAlignment="Center">
-									<TextBlock Text="Değiştir" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
+									<TextBlock Text="{Binding [Form.Change], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
 								</Button>
 								<Button Grid.Column="3" Classes="flat" Command="{Binding ClearFileCommand}" VerticalAlignment="Center">
-									<TextBlock Text="Kaldır" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
+									<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
 								</Button>
 							</Grid>
 						</Border>
@@ -248,7 +249,7 @@
 				<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="18,16">
 					<StackPanel Spacing="14">
-						<TextBlock Classes="sectionLabel" Text="İLGİLİ SÖZLEŞME"/>
+						<TextBlock Classes="sectionLabel" Text="{Binding [Vio.RelatedContract], Source={x:Static loc:Strings.Current}}"/>
 
 						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
 									Spacing="14">
@@ -265,17 +266,17 @@
 
 							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
 								<StackPanel Grid.Column="0" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="BAŞLANGIÇ"/>
+									<TextBlock Classes="summaryLabel" Text="{Binding [Field.StartDate], Source={x:Static loc:Strings.Current}}"/>
 									<TextBlock Text="{Binding CurrentStartText}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 								<StackPanel Grid.Column="1" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="BİTİŞ"/>
+									<TextBlock Classes="summaryLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
 									<TextBlock Text="{Binding CurrentEndText}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 							</Grid>
 						</StackPanel>
 
-						<TextBlock Text="Soldan bir sözleşme seçin." FontSize="12.5" Foreground="{DynamicResource TextDisabledAlt}"
+						<TextBlock Text="{Binding [Vio.PickFromLeft], Source={x:Static loc:Strings.Current}}" FontSize="12.5" Foreground="{DynamicResource TextDisabledAlt}"
 								   IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNull}}"/>
 					</StackPanel>
 				</Border>
@@ -288,7 +289,7 @@
 						Background="{DynamicResource DangerSoftBgFaint}" BorderBrush="{DynamicResource DangerBorderFaint}" BorderThickness="1"
 						CornerRadius="12" Padding="18,16">
 					<StackPanel Spacing="12">
-						<TextBlock Classes="sectionLabel" Text="ÖNCEKİ İHLALLER" Foreground="{DynamicResource DangerMuted}"/>
+						<TextBlock Classes="sectionLabel" Text="{Binding [Vio.PreviousViolations], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerMuted}"/>
 						<ItemsControl ItemsSource="{Binding ExistingViolations}">
 							<ItemsControl.ItemTemplate>
 								<DataTemplate x:DataType="vm:ViolationRowViewModel">
@@ -316,7 +317,7 @@
 						IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
 						IsEnabled="{Binding !IsBusy}" Click="OnSubmitClick">
 					<Border Background="{DynamicResource DangerSolid}" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="İhlali Bildir" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
+						<TextBlock Text="{Binding [Vio.Submit], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
 								   FontWeight="SemiBold" HorizontalAlignment="Center"/>
 					</Border>
 				</Button>

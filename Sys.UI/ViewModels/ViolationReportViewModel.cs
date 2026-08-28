@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Infrastructure;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -120,7 +121,7 @@ public partial class ViolationReportViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Sözleşmeler yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Err.ContractsLoadFailed", ex.Message);
         }
     }
 
@@ -167,7 +168,7 @@ public partial class ViolationReportViewModel : ViewModelBase
         catch (Exception ex)
         {
             if (token == _detailLoadToken)
-                ErrorMessage = "Sözleşmenin ihlal geçmişi yüklenemedi: " + ex.Message;
+                ErrorMessage = Strings.T("Vio.HistoryLoadFailed", ex.Message);
         }
     }
 
@@ -194,31 +195,31 @@ public partial class ViolationReportViewModel : ViewModelBase
         DescriptionError = string.Empty;
 
         if (SelectedContract is null)
-            ContractError = "Bir sözleşme seçilmelidir.";
+            ContractError = Strings.T("Err.ContractRequired");
 
         if (string.IsNullOrWhiteSpace(Description))
-            DescriptionError = "Açıklama zorunludur.";
+            DescriptionError = Strings.T("Vio.DescriptionRequired");
 
         if (ViolationDate is null)
         {
-            DateError = "İhlal tarihi zorunludur.";
+            DateError = Strings.T("Vio.DateRequired");
         }
         // Tarih hiç doğrulanmıyordu: gelecek tarihli ya da sözleşme başlamadan önceki
         // bir ihlal kabul ediliyordu. İkisi de mantıksız — ihlal yaşanmış bir olaydır.
         else if (ViolationDate.Value.Date > DateTime.Today)
         {
-            DateError = "İhlal tarihi gelecekte olamaz.";
+            DateError = Strings.T("Vio.DateInFuture");
         }
         else if (SelectedContract?.StartDate is { } start && ViolationDate.Value.Date < start.Date)
         {
-            DateError = $"İhlal tarihi, sözleşme başlangıcından ({start:dd.MM.yyyy}) önce olamaz.";
+            DateError = Strings.T("Vio.DateBeforeStart", start.ToString("dd.MM.yyyy"));
         }
 
         var valid = string.IsNullOrEmpty(ContractError)
                  && string.IsNullOrEmpty(DateError)
                  && string.IsNullOrEmpty(DescriptionError);
 
-        if (!valid) ErrorMessage = "Lütfen işaretli alanları düzeltin.";
+        if (!valid) ErrorMessage = Strings.T("Err.FixFields");
         return valid;
     }
 
@@ -265,7 +266,7 @@ public partial class ViolationReportViewModel : ViewModelBase
                 SelectedFileName = string.Empty;
                 ViolationDate = DateTimeOffset.Now;
                 await LoadAsync();
-                SuccessMessage = "İhlal bildirimi kaydedildi. Sözleşme \"İhlal Mevcut\" durumuna geçti ve SYB'ye bildirim gönderildi.";
+                SuccessMessage = Strings.T("Vio.Saved");
             }
             catch (Exception ex)
             {

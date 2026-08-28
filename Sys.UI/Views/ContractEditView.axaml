@@ -1,5 +1,6 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:domain="using:Sys.Domain"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -80,9 +81,9 @@
 				<Border Background="{DynamicResource WarningSoftBg}" BorderBrush="{DynamicResource WarningSoftBorder}" BorderThickness="1"
 						CornerRadius="10" Padding="16,13">
 					<StackPanel Spacing="3">
-						<TextBlock Text="Değişiklik yeniden onaya gider" FontSize="13"
+						<TextBlock Text="{Binding [Edit.GoesToApproval], Source={x:Static loc:Strings.Current}}" FontSize="13"
 								   FontWeight="SemiBold" Foreground="{DynamicResource WarningTextAlt}"/>
-						<TextBlock Text="Sözleşme, SYB Son Kontrol ve Yönetim (YK) onayından geçene kadar mevcut haliyle yürürlükte kalır. Önceki değerler revizyon geçmişine kaydedilir."
+						<TextBlock Text="{Binding [Edit.ApprovalNotice], Source={x:Static loc:Strings.Current}}"
 								   FontSize="11.5" Foreground="{DynamicResource WarningTextAlt}" TextWrapping="Wrap"/>
 					</StackPanel>
 				</Border>
@@ -113,22 +114,22 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Sözleşme ve Değişiklik Türü" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Edit.TypeSection], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="Yıldızlı (*) alanlar zorunludur." FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
+								<TextBlock Text="{Binding [Form.RequiredHint], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
 						<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 						<StackPanel>
 							<TextBlock Classes="formLabel">
-								<Run Text="SÖZLEŞME"/>
+								<Run Text="{Binding [Edit.Contract], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<ComboBox HorizontalAlignment="Stretch"
 									  ItemsSource="{Binding AvailableContracts}"
 									  SelectedItem="{Binding SelectedContract}"
-									  PlaceholderText="Değiştirilecek sözleşmeyi seçin...">
+									  PlaceholderText="{Binding [Edit.PickerPlaceholder], Source={x:Static loc:Strings.Current}}">
 								<ComboBox.ItemTemplate>
 									<DataTemplate x:DataType="domain:Contract">
 										<TextBlock TextTrimming="CharacterEllipsis">
@@ -141,13 +142,13 @@
 							</ComboBox>
 							<TextBlock Classes="fieldError" Text="{Binding ContractError}"
 									   IsVisible="{Binding ContractError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-							<TextBlock Classes="currentValue" Text="Değiştirilebilecek uygun sözleşme yok."
+							<TextBlock Classes="currentValue" Text="{Binding [Edit.NoEligible], Source={x:Static loc:Strings.Current}}"
 									   IsVisible="{Binding !AvailableContracts.Count}"/>
 						</StackPanel>
 
 						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}">
 							<TextBlock Classes="formLabel">
-								<Run Text="NE DEĞİŞİYOR?"/>
+								<Run Text="{Binding [Edit.WhatChanges], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<ComboBox HorizontalAlignment="Stretch"
@@ -157,12 +158,12 @@
 
 						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}">
 							<TextBlock Classes="formLabel">
-								<Run Text="DEĞİŞİKLİK GEREKÇESİ"/>
+								<Run Text="{Binding [Edit.Reason], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text=" *" Foreground="{DynamicResource DangerText}"/>
 							</TextBlock>
 							<TextBox Text="{Binding Reason}" AcceptsReturn="True" Height="100" TextWrapping="Wrap"
 									 AcceptsTab="False"
-									 PlaceholderText="Neden bu değişikliğe ihtiyaç var? Onaycılar bu metni okuyacak."/>
+									 PlaceholderText="{Binding [Edit.ReasonPlaceholder], Source={x:Static loc:Strings.Current}}"/>
 							<TextBlock Classes="fieldError" Text="{Binding ReasonError}"
 									   IsVisible="{Binding ReasonError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 						</StackPanel>
@@ -182,9 +183,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Yeni Değerler" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Edit.NewValues], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="Yalnızca değişen alanları doldurun; boş bıraktıklarınız aynı kalır."
+								<TextBlock Text="{Binding [Edit.OnlyChangedHint], Source={x:Static loc:Strings.Current}}"
 										   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
@@ -193,59 +194,59 @@
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
 								<TextBlock Classes="formLabel" Text="{Binding NewAmountLabel}"/>
-								<TextBox Text="{Binding NewTotalAmountText}" PlaceholderText="0,00"
+								<TextBox Text="{Binding NewTotalAmountText}" PlaceholderText="{Binding [Req.AmountPlaceholder], Source={x:Static loc:Strings.Current}}"
 										 LostFocus="OnAmountLostFocus" TextChanged="OnAmountTextChanged"/>
 								<TextBlock Classes="fieldError" Text="{Binding AmountError}"
 										   IsVisible="{Binding AmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 								<TextBlock Classes="currentValue">
-									<Run Text="Mevcut: "/>
+									<Run Text="{Binding [Edit.Current], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text="{Binding CurrentAmountText}" FontWeight="SemiBold"/>
 								</TextBlock>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
-								<TextBlock Classes="formLabel" Text="YENİ BİTİŞ TARİHİ"/>
+								<TextBlock Classes="formLabel" Text="{Binding [Edit.NewEndDate], Source={x:Static loc:Strings.Current}}"/>
 								<DatePicker SelectedDate="{Binding NewEndDate}"/>
 								<TextBlock Classes="currentValue">
-									<Run Text="Mevcut: "/>
+									<Run Text="{Binding [Edit.Current], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text="{Binding CurrentEndText}" FontWeight="SemiBold"/>
 								</TextBlock>
 							</StackPanel>
 						</Grid>
 
 						<StackPanel>
-							<TextBlock Classes="formLabel" Text="YENİ KAPSAM / İŞ TANIMI"/>
+							<TextBlock Classes="formLabel" Text="{Binding [Edit.NewScope], Source={x:Static loc:Strings.Current}}"/>
 							<TextBox Text="{Binding NewDescription}" AcceptsReturn="True" Height="80"
 									 TextWrapping="Wrap" AcceptsTab="False"/>
 							<TextBlock Classes="currentValue">
-								<Run Text="Mevcut: "/>
+								<Run Text="{Binding [Edit.Current], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text="{Binding CurrentDescription}"/>
 							</TextBlock>
 						</StackPanel>
 
 						<Grid ColumnDefinitions="*,*" ColumnSpacing="18">
 							<StackPanel Grid.Column="0">
-								<TextBlock Classes="formLabel" Text="YENİ FİRMA ADI"/>
+								<TextBlock Classes="formLabel" Text="{Binding [Edit.NewCompany], Source={x:Static loc:Strings.Current}}"/>
 								<TextBox Text="{Binding NewCompanyName}"/>
 								<TextBlock Classes="currentValue">
-									<Run Text="Mevcut: "/>
+									<Run Text="{Binding [Edit.Current], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text="{Binding CurrentCompanyName}" FontWeight="SemiBold"/>
 								</TextBlock>
 							</StackPanel>
 							<StackPanel Grid.Column="1">
-								<TextBlock Classes="formLabel" Text="YENİ VERGİ NO"/>
+								<TextBlock Classes="formLabel" Text="{Binding [Edit.NewTaxNo], Source={x:Static loc:Strings.Current}}"/>
 								<TextBox Text="{Binding NewTaxNo}" MaxLength="10"/>
 								<TextBlock Classes="currentValue">
-									<Run Text="Mevcut: "/>
+									<Run Text="{Binding [Edit.Current], Source={x:Static loc:Strings.Current}}"/>
 									<Run Text="{Binding CurrentTaxNo}" FontWeight="SemiBold"/>
 								</TextBlock>
 							</StackPanel>
 						</Grid>
 
 						<StackPanel>
-							<TextBlock Classes="formLabel" Text="YENİ ÖDEME KOŞULLARI"/>
+							<TextBlock Classes="formLabel" Text="{Binding [Edit.NewPaymentTerms], Source={x:Static loc:Strings.Current}}"/>
 							<TextBox Text="{Binding NewPaymentPeriod}"/>
 							<TextBlock Classes="currentValue">
-								<Run Text="Mevcut: "/>
+								<Run Text="{Binding [Edit.Current], Source={x:Static loc:Strings.Current}}"/>
 								<Run Text="{Binding CurrentPaymentPeriod}" FontWeight="SemiBold"/>
 							</TextBlock>
 						</StackPanel>
@@ -265,9 +266,9 @@
 										   HorizontalAlignment="Center" VerticalAlignment="Center"/>
 							</Border>
 							<StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
-								<TextBlock Classes="display" Text="Ek Belge" FontSize="15.5"
+								<TextBlock Classes="display" Text="{Binding [Edit.SupportingDoc], Source={x:Static loc:Strings.Current}}" FontSize="15.5"
 										   FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"/>
-								<TextBlock Text="İsteğe bağlı — zeyilname, yazışma veya destekleyici belge."
+								<TextBlock Text="{Binding [Edit.SupportingHint], Source={x:Static loc:Strings.Current}}"
 										   FontSize="11" Foreground="{DynamicResource TextFaintAlt}"/>
 							</StackPanel>
 						</Grid>
@@ -282,7 +283,7 @@
 								<Button Classes="flat" HorizontalAlignment="Center" Click="OnPickFileClick">
 									<Border Background="{DynamicResource SurfaceButton}" BorderBrush="{DynamicResource BorderStrongAlt}" BorderThickness="1"
 											CornerRadius="8" Padding="18,9">
-										<TextBlock Text="Dosya Seç" Foreground="{DynamicResource TextBody}" FontSize="12.5"
+										<TextBlock Text="{Binding [Form.ChooseFile], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextBody}" FontSize="12.5"
 												   FontWeight="SemiBold"/>
 									</Border>
 								</Button>
@@ -300,10 +301,10 @@
 										   Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
 										   TextTrimming="CharacterEllipsis"/>
 								<Button Grid.Column="2" Classes="flat" Click="OnPickFileClick" VerticalAlignment="Center">
-									<TextBlock Text="Değiştir" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
+									<TextBlock Text="{Binding [Form.Change], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource AccentBase}" FontSize="11.5"/>
 								</Button>
 								<Button Grid.Column="3" Classes="flat" Command="{Binding ClearFileCommand}" VerticalAlignment="Center">
-									<TextBlock Text="Kaldır" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
+									<TextBlock Text="{Binding [Form.Remove], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="11.5"/>
 								</Button>
 							</Grid>
 						</Border>
@@ -320,7 +321,7 @@
 				<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderCard}" BorderThickness="1"
 						CornerRadius="12" Padding="18,16">
 					<StackPanel Spacing="14">
-						<TextBlock Classes="sectionLabel" Text="MEVCUT SÖZLEŞME"/>
+						<TextBlock Classes="sectionLabel" Text="{Binding [Edit.CurrentContract], Source={x:Static loc:Strings.Current}}"/>
 
 						<StackPanel IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
 									Spacing="14">
@@ -336,30 +337,30 @@
 							<Border Background="{DynamicResource SurfaceDivider}" Height="1"/>
 
 							<StackPanel Spacing="3">
-								<TextBlock Classes="summaryLabel" Text="BEDEL"/>
+								<TextBlock Classes="summaryLabel" Text="{Binding [List.ColAmount], Source={x:Static loc:Strings.Current}}"/>
 								<TextBlock Classes="display" Text="{Binding CurrentAmountText}" FontSize="19"
 										   FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
 							</StackPanel>
 
 							<Grid ColumnDefinitions="*,*" ColumnSpacing="10">
 								<StackPanel Grid.Column="0" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="BAŞLANGIÇ"/>
+									<TextBlock Classes="summaryLabel" Text="{Binding [Field.StartDate], Source={x:Static loc:Strings.Current}}"/>
 									<TextBlock Text="{Binding CurrentStartText}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 								<StackPanel Grid.Column="1" Spacing="3">
-									<TextBlock Classes="summaryLabel" Text="BİTİŞ"/>
+									<TextBlock Classes="summaryLabel" Text="{Binding [Field.EndDate], Source={x:Static loc:Strings.Current}}"/>
 									<TextBlock Text="{Binding CurrentEndText}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}"/>
 								</StackPanel>
 							</Grid>
 
 							<StackPanel Spacing="3">
-								<TextBlock Classes="summaryLabel" Text="ÖDEME KOŞULLARI"/>
+								<TextBlock Classes="summaryLabel" Text="{Binding [Edit.PaymentTerms], Source={x:Static loc:Strings.Current}}"/>
 								<TextBlock Text="{Binding CurrentPaymentPeriod}" FontSize="12.5"
 										   Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
 							</StackPanel>
 						</StackPanel>
 
-						<TextBlock Text="Soldan bir sözleşme seçin." FontSize="12.5" Foreground="{DynamicResource TextDisabledAlt}"
+						<TextBlock Text="{Binding [Edit.PickFromLeft], Source={x:Static loc:Strings.Current}}" FontSize="12.5" Foreground="{DynamicResource TextDisabledAlt}"
 								   IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNull}}"/>
 					</StackPanel>
 				</Border>
@@ -368,7 +369,7 @@
 						IsVisible="{Binding SelectedContract, Converter={x:Static ObjectConverters.IsNotNull}}"
 						IsEnabled="{Binding !IsBusy}" Command="{Binding SubmitCommand}">
 					<Border Background="{DynamicResource WarningSolid}" CornerRadius="9" Padding="18,12">
-						<TextBlock Text="Değişiklik Talebini Gönder" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
+						<TextBlock Text="{Binding [Edit.Submit], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextOnAccent}" FontSize="13"
 								   FontWeight="SemiBold" HorizontalAlignment="Center" TextWrapping="Wrap"
 								   TextAlignment="Center"/>
 					</Border>

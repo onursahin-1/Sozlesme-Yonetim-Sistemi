@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sys.Domain;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -95,14 +96,17 @@ public class ContractStepViewModel
     {
         var steps = new List<ContractStepViewModel>
         {
-            new("Talep oluşturuldu", ContractStepState.Completed, contract.CreatedAt)
+            new(Strings.T("Step.RequestCreated"), ContractStepState.Completed, contract.CreatedAt)
         };
 
         foreach (var log in contract.ApprovalLogs.OrderBy(l => l.ActionDate).ThenBy(l => l.Id))
         {
             var approved = log.Decision == ApprovalDecision.Onay;
+            // StepName VERİTABANINDAN geliyor: o anki adımın adı, olduğu gibi
+            // kaydedilmiş bir kayıt. Çevrilmiyor — geçmişi yeniden yazmak olurdu.
+            // Sonuç eki ise ekranda üretiliyor, o çevriliyor.
             steps.Add(new ContractStepViewModel(
-                $"{log.StepName} — {(approved ? "Onaylandı" : "Reddedildi")}",
+                Strings.T("Step.WithLog", log.StepName, Strings.T(approved ? "Step.Approved" : "Step.Rejected")),
                 approved ? ContractStepState.Completed : ContractStepState.Rejected,
                 log.ActionDate,
                 log.Note));
@@ -126,10 +130,10 @@ public class ContractStepViewModel
         if (lastLog is null || lastLog.Decision != ApprovalDecision.Red) return null;
 
         if (lastLog.StepName.Contains("Düzenleme", StringComparison.OrdinalIgnoreCase))
-            return "Düzenleme talebi reddedildi; sözleşme değişiklik öncesi değerleriyle yürürlükte kaldı.";
+            return Strings.T("Step.EditRejectedNote");
 
         if (lastLog.StepName.Contains("Fesih", StringComparison.OrdinalIgnoreCase))
-            return "Fesih talebi reddedildi; sözleşme yürürlükte kalmaya devam ediyor.";
+            return Strings.T("Step.TerminationRejectedNote");
 
         return null;
     }
@@ -142,41 +146,41 @@ public class ContractStepViewModel
         {
             case ContractStatus.Talep:
                 return contract.WasRejected
-                    ? new ContractStepViewModel("Düzeltme bekleniyor", ContractStepState.Current, null, contract.LastRejectionNote)
-                    : new ContractStepViewModel("Sözleşme hazırlanmayı bekliyor (SYB)", ContractStepState.Current);
+                    ? new ContractStepViewModel(Strings.T("Step.AwaitingFix"), ContractStepState.Current, null, contract.LastRejectionNote)
+                    : new ContractStepViewModel(Strings.T("Step.AwaitingContract"), ContractStepState.Current);
 
             case ContractStatus.OnayBekliyor:
                 var bekleyen = contract.Stage switch
                 {
-                    1 => "SYB son kontrolü bekleniyor",
-                    2 => "Yönetim (YK) onayı bekleniyor",
-                    _ => "Onay bekleniyor"
+                    1 => Strings.T("Step.AwaitingFinalCheck"),
+                    2 => Strings.T("Step.AwaitingManagement"),
+                    _ => Strings.T("Step.AwaitingApproval")
                 };
-                var ek = contract.PendingTermination ? " (fesih talebi)"
-                    : contract.PendingEdit ? " (düzenleme talebi)"
+                var ek = contract.PendingTermination ? Strings.T("Step.SuffixTermination")
+                    : contract.PendingEdit ? Strings.T("Step.SuffixEdit")
                     : string.Empty;
                 return new ContractStepViewModel(bekleyen + ek, ContractStepState.Current);
 
             case ContractStatus.Aktif:
-                return new ContractStepViewModel("Yürürlükte", ContractStepState.Current, null, LastRejectionExplanation(contract));
+                return new ContractStepViewModel(Strings.T("Step.InForce"), ContractStepState.Current, null, LastRejectionExplanation(contract));
 
             case ContractStatus.Uyari:
-                return new ContractStepViewModel("Yürürlükte — bitiş tarihi yaklaşıyor", ContractStepState.Current,
+                return new ContractStepViewModel(Strings.T("Step.InForceExpiring"), ContractStepState.Current,
                     null, LastRejectionExplanation(contract));
 
             case ContractStatus.Ihlal:
-                return new ContractStepViewModel("Yürürlükte — ihlal bildirimi var", ContractStepState.Rejected,
+                return new ContractStepViewModel(Strings.T("Step.InForceViolation"), ContractStepState.Rejected,
                     null, LastRejectionExplanation(contract));
 
             case ContractStatus.Tamamlandi:
-                return new ContractStepViewModel("Süresi doldu — tamamlandı", ContractStepState.Completed);
+                return new ContractStepViewModel(Strings.T("Step.Completed"), ContractStepState.Completed);
 
             case ContractStatus.Feshedildi:
-                return new ContractStepViewModel("Feshedildi", ContractStepState.Rejected);
+                return new ContractStepViewModel(Strings.T("Step.Terminated"), ContractStepState.Rejected);
 
             // Talep hiç sözleşmeye dönüşmeden kapatıldı; süreç burada bitiyor.
             case ContractStatus.Reddedildi:
-                return new ContractStepViewModel("Talep reddedildi — kapatıldı",
+                return new ContractStepViewModel(Strings.T("Step.RequestClosed"),
                     ContractStepState.Rejected, contract.LastRejectedAt, contract.LastRejectionNote);
 
             default:

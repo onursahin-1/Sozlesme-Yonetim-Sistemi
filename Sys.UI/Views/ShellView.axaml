@@ -1,6 +1,7 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:conv="using:Sys.UI.Converters"
+             xmlns:loc="using:Sys.UI.Localization"
              xmlns:vm="using:Sys.UI.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -31,6 +32,24 @@
 					   Height="34" Stretch="Uniform" HorizontalAlignment="Left"
 					   VerticalAlignment="Center" Margin="8,0,0,0"/>
 				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+
+					<!--
+					  Dil geçişi. Tema anahtarıyla aynı desen ama ikon yerine KOD yazıyor:
+					  bir bayrak simgesi dili değil ülkeyi gösterir (İngilizce tek bir ülkeye
+					  ait değil), soyut bir "dünya" ikonu ise hangi dile geçileceğini
+					  söylemez. Düğme, geçilecek dilin kodunu gösteriyor.
+					-->
+					<Button Classes="flat" VerticalAlignment="Center"
+							Command="{Binding ToggleLanguageCommand}"
+							ToolTip.Tip="{Binding LanguageToggleTooltip}">
+						<Panel Width="38" Height="38" Background="Transparent">
+							<Border Background="{DynamicResource ShellTopBarChip}" CornerRadius="8" Width="34" Height="34"/>
+							<TextBlock Text="{Binding LanguageToggleText}"
+									   Foreground="{DynamicResource ShellTopBarIcon}"
+									   FontSize="12" FontWeight="Bold"
+									   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						</Panel>
+					</Button>
 
 					<!--
 					  Tema geçişi. Tek bir düğme; iki seçenekli bir liste yerine anahtar
@@ -67,7 +86,7 @@
 					<Button Classes="flat" VerticalAlignment="Center"
                             IsVisible="{Binding ShowNotificationBell}"
                             Command="{Binding ToggleNotificationPanelCommand}"
-                            ToolTip.Tip="Bildirimler">
+                            ToolTip.Tip="{Binding NotificationsTooltip}">
 						<!-- Background="Transparent": tüm kutu hit-test edilebilir olsun diye -->
 						<Panel Width="38" Height="38" Background="Transparent">
 							<Border Background="{DynamicResource ShellTopBarChip}" CornerRadius="8" Width="34" Height="34"/>
@@ -197,7 +216,7 @@
 				<Border Background="Transparent" CornerRadius="5" Padding="12,9">
 					<StackPanel Orientation="Horizontal" Spacing="10">
 						<TextBlock Text="🔑" FontSize="12" VerticalAlignment="Center"/>
-						<TextBlock Text="Şifre Değiştir" Foreground="{DynamicResource TextPrimary}" FontSize="12.5" VerticalAlignment="Center"/>
+						<TextBlock Text="{Binding [Nav.ChangePassword], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextPrimary}" FontSize="12.5" VerticalAlignment="Center"/>
 					</StackPanel>
 				</Border>
 			</Button>
@@ -209,7 +228,7 @@
 				<Border Background="Transparent" CornerRadius="5" Padding="12,9">
 					<StackPanel Orientation="Horizontal" Spacing="10">
 						<TextBlock Text="⏻" FontSize="12" Foreground="{DynamicResource DangerBase}" VerticalAlignment="Center"/>
-						<TextBlock Text="Çıkış Yap" Foreground="{DynamicResource DangerBase}" FontSize="12.5" VerticalAlignment="Center"/>
+						<TextBlock Text="{Binding [Shell.Logout], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource DangerBase}" FontSize="12.5" VerticalAlignment="Center"/>
 					</StackPanel>
 				</Border>
 			</Button>
@@ -237,7 +256,7 @@
 								Command="{Binding MarkAllNotificationsReadCommand}">
 							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 									CornerRadius="7" Padding="10,5">
-								<TextBlock Text="Tümünü okundu işaretle" FontSize="11" Foreground="{DynamicResource AccentBase}"/>
+								<TextBlock Text="{Binding [Notif.MarkAllRead], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource AccentBase}"/>
 							</Border>
 						</Button>
 						<Button Classes="flat" IsVisible="{Binding HasReadNotifications}"
@@ -245,7 +264,7 @@
 								ToolTip.Tip="Okunmuş bildirimlerin hepsini siler">
 							<Border Background="{DynamicResource SurfaceCard}" BorderBrush="{DynamicResource BorderInput}" BorderThickness="1"
 									CornerRadius="7" Padding="10,5">
-								<TextBlock Text="Okunanları sil" FontSize="11" Foreground="{DynamicResource DangerBase}"/>
+								<TextBlock Text="{Binding [Notif.DeleteRead], Source={x:Static loc:Strings.Current}}" FontSize="11" Foreground="{DynamicResource DangerBase}"/>
 							</Border>
 						</Button>
 					</StackPanel>
@@ -254,9 +273,9 @@
 
 			<StackPanel DockPanel.Dock="Top" Spacing="6" Margin="18,28"
 						IsVisible="{Binding HasNoNotifications}">
-				<TextBlock Text="Henüz bildiriminiz yok." Foreground="{DynamicResource TextMuted}" FontSize="12.5"
+				<TextBlock Text="{Binding [Notif.Empty], Source={x:Static loc:Strings.Current}}" Foreground="{DynamicResource TextMuted}" FontSize="12.5"
 						   HorizontalAlignment="Center"/>
-				<TextBlock Text="Onay, red ve yaklaşan bitiş uyarıları burada görünür."
+				<TextBlock Text="{Binding [Notif.EmptyHint], Source={x:Static loc:Strings.Current}}"
 						   Foreground="{DynamicResource TextFaintAlt}" FontSize="11" HorizontalAlignment="Center"
 						   TextAlignment="Center" TextWrapping="Wrap"/>
 			</StackPanel>

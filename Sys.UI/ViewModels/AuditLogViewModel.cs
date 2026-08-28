@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -21,7 +22,7 @@ public class AuditLogRowViewModel
 
     public string DateText => _log.ActionDate.ToString("dd.MM.yyyy");
     public string TimeText => _log.ActionDate.ToString("HH:mm");
-    public string UserText => _log.ActingUser?.FullName ?? ("Kullanıcı #" + _log.ActingUserId);
+    public string UserText => _log.ActingUser?.FullName ?? Strings.T("Audit.UnknownUser", _log.ActingUserId);
 
     // Etiket ve renkler tek katalogdan geliyor; buradaki switch son eklenen
     // işlemleri (TalepİadeEdildi, TalepReddedildi, İhlalGiderildi) kaçırıyordu.
@@ -70,7 +71,7 @@ public partial class AuditLogViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
-    public partial string SelectedUser { get; set; } = "Tümü";
+    public partial string SelectedUser { get; set; } = Strings.T("Common.All");
 
     [ObservableProperty]
     public partial DateTimeOffset? StartDate { get; set; }
@@ -84,7 +85,10 @@ public partial class AuditLogViewModel : ViewModelBase
     public ObservableCollection<string> ActionOptions { get; } = new(
         new[] { TumIslemler }.Concat(AuditActionCatalog.Actions.Select(a => a.Label)));
 
-    private const string TumIslemler = "Tüm işlemler";
+    // Açılır listede görünen metin AYNI ZAMANDA "filtre yok" işareti. Sözleşme
+    // listesindeki AllTypes ile aynı durum: dil değişince sayfa baştan kurulduğu
+    // için işaret ve liste birlikte yenileniyor.
+    private static string TumIslemler => Strings.T("Audit.AllActions");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasActiveFilters))]
@@ -93,7 +97,7 @@ public partial class AuditLogViewModel : ViewModelBase
     partial void OnSelectedActionChanged(string value) => ReloadFromFirstPage();
 
     public bool HasActiveFilters =>
-        (SelectedUser is not null && SelectedUser != "Tümü")
+        (SelectedUser is not null && SelectedUser != Strings.T("Common.All"))
         || SelectedAction != TumIslemler
         || StartDate is not null
         || EndDate is not null;
@@ -118,7 +122,7 @@ public partial class AuditLogViewModel : ViewModelBase
     public partial string ErrorMessage { get; set; } = string.Empty;
 
     public int TotalPages => TotalCount == 0 ? 1 : (int)Math.Ceiling(TotalCount / (double)PageSize);
-    public string PageInfoText => $"Sayfa {CurrentPage} / {TotalPages} ({TotalCount} kayıt)";
+    public string PageInfoText => Strings.T("Audit.PageInfo", CurrentPage, TotalPages, TotalCount);
     public bool CanGoPrevious => CurrentPage > 1;
     public bool CanGoNext => CurrentPage < TotalPages;
 
@@ -141,7 +145,7 @@ public partial class AuditLogViewModel : ViewModelBase
     private async Task ClearFilters()
     {
         _isInitializing = true;
-        SelectedUser = "Tümü";
+        SelectedUser = Strings.T("Common.All");
         SelectedAction = TumIslemler;
         StartDate = null;
         EndDate = null;
@@ -185,7 +189,7 @@ public partial class AuditLogViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Kullanıcı listesi yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Audit.UserListFailed", ex.Message);
         }
         finally
         {
@@ -221,24 +225,23 @@ public partial class AuditLogViewModel : ViewModelBase
                 _currentUser, userFilter, start, end, actionFilter);
 
             Exporting.ExcelExporter.ExportAuditLogs(rows, destinationPath);
-            await _contractService.LogExportAsync(_currentUser, "İşlem geçmişi", rows.Count);
+            await _contractService.LogExportAsync(_currentUser, Strings.T("Audit.ExportName"), rows.Count);
 
             if (rows.Count >= ContractService.MaxExportRows)
-                ErrorMessage = $"Aktarma {ContractService.MaxExportRows} kayıtla sınırlandı. " +
-                               "Tümünü almak için tarih aralığını daraltıp tekrar deneyin.";
+                ErrorMessage = Strings.T("Audit.ExportCapped", ContractService.MaxExportRows);
 
             Printing.DocumentPrinter.Open(destinationPath);
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Excel'e aktarılamadı: " + ex.Message;
+            ErrorMessage = Strings.T("List.ExportFailed", ex.Message);
         }
     }
 
     // Sayfalama ve dışa aktarma aynı filtreleri kullanıyor; tek yerden üretiliyor.
     private (string? User, DateTime? Start, DateTime? End, string? Action) CurrentFilters()
     {
-        string? userFilter = string.IsNullOrEmpty(SelectedUser) || SelectedUser == "Tümü" ? null : SelectedUser;
+        string? userFilter = string.IsNullOrEmpty(SelectedUser) || SelectedUser == Strings.T("Common.All") ? null : SelectedUser;
 
         // Açılır listede okunabilir etiket görünüyor; sorguya ham işlem adı gider.
         string? actionFilter = SelectedAction == TumIslemler
@@ -266,7 +269,7 @@ public partial class AuditLogViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "İşlem geçmişi yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Audit.LoadFailed", ex.Message);
         }
         finally
         {

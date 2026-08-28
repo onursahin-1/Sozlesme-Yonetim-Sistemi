@@ -206,7 +206,7 @@ public class ContractServiceApprovalTests
         var contract = new Contract { Stage = 1, Status = ContractStatus.OnayBekliyor };
         var mudur = new User { Role = UserRole.Mudur }; // Stage 1'de SYB beklenir, Müdür değil
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.DecideApprovalAsync(contract, mudur, ApprovalDecision.Onay, null));
     }
 
@@ -217,7 +217,7 @@ public class ContractServiceApprovalTests
         var contract = new Contract { Stage = 3, Status = ContractStatus.Aktif }; // 3 = zaten aktif, onay/red aşaması değil
         var syb = new User { Role = UserRole.SYB };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<AppException>(
             () => service.DecideApprovalAsync(contract, syb, ApprovalDecision.Onay, null));
     }
 

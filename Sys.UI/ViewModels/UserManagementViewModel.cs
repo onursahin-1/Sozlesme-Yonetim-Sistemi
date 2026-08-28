@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Sys.Domain;
 using Sys.Services;
+using Sys.UI.Localization;
 
 namespace Sys.UI.ViewModels;
 
@@ -41,7 +42,7 @@ public partial class UserRowViewModel : ObservableObject
         }
     }
 
-    public string DepartmentText => string.IsNullOrWhiteSpace(Department) ? "Departman belirtilmemiş" : Department!;
+    public string DepartmentText => string.IsNullOrWhiteSpace(Department) ? Strings.T("Usr.NoDepartment") : Department!;
 
     // Yönetici kendi hesabını devre dışı bırakamaz (servis de engelliyor). Buton
     // gösterilip tıklandığında hata vermek yerine baştan gizleniyor.
@@ -49,10 +50,10 @@ public partial class UserRowViewModel : ObservableObject
     public bool CanToggleDisabled => !IsSelf;
 
     public bool IsDisabled => _user.IsDisabled;
-    public string StatusLabel => IsDisabled ? "Devre Dışı" : "Aktif";
+    public string StatusLabel => Strings.T(IsDisabled ? "Usr.Disabled" : "Usr.Active");
     public string StatusColorHex => IsDisabled ? "DangerBase" : "SuccessBase";
     public string StatusBgHex => IsDisabled ? "DangerSoftBg" : "SuccessSoftBg";
-    public string ToggleButtonLabel => IsDisabled ? "Etkinleştir" : "Devre Dışı Bırak";
+    public string ToggleButtonLabel => Strings.T(IsDisabled ? "Usr.Enable" : "Usr.Disable");
 
     // Dolu renkli buton yerine çerçeveli/soluk zemin: bu iki eylem listede her satırda
     // tekrar ettiği için dolu kırmızı/yeşil butonlar ekranı gereksiz yere gürültülü
@@ -108,7 +109,7 @@ public class ResetRequestRowViewModel
     public string? MatchedFullName { get; }
 
     public string DisplayText => MatchedFullName is null
-        ? $"\"{Username}\" — bu kullanıcı adı sistemde bulunamadı"
+        ? Strings.T("Usr.NotFound", Username)
         : $"{MatchedFullName} ({Username})";
 
     public string TimeText => _request.RequestedAt.ToString("dd.MM.yyyy HH:mm");
@@ -134,10 +135,16 @@ public partial class UserManagementViewModel : ViewModelBase
     public string[] RoleFilterOptions { get; } =
         new[] { TumRoller }.Concat(Enum.GetValues<UserRole>().Select(UserRoleHelper.ToLabel)).ToArray();
 
-    private const string TumRoller = "Tüm roller";
-    private const string TumDurumlar = "Tümü";
+    // Açılır listede görünen metin AYNI ZAMANDA "filtre yok" işareti; sabit
+    // olamaz çünkü dile bağlı. Dil değişince sayfa baştan kurulduğu için işaret
+    // ve liste birlikte yenileniyor.
+    private static string TumRoller => Strings.T("Usr.AllRoles");
+    private static string TumDurumlar => Strings.T("Common.All");
 
-    public string[] StatusFilterOptions { get; } = { TumDurumlar, "Aktif", "Devre Dışı" };
+    // Alan değil ÖZELLİK: seçenekler o anki dilden kuruluyor. Sabit dizi olsaydı
+    // uygulama açılışındaki dile kilitlenirdi.
+    public string[] StatusFilterOptions =>
+        [TumDurumlar, Strings.T("Usr.Active"), Strings.T("Usr.Disabled")];
 
     // Kaynak liste; ekranda gösterilen Users bunun filtrelenmiş hâli.
     private List<UserRowViewModel> _allUsers = new();
@@ -198,9 +205,9 @@ public partial class UserManagementViewModel : ViewModelBase
         if (SelectedRoleFilter != TumRoller)
             query = query.Where(u => u.RoleLabel == SelectedRoleFilter);
 
-        if (SelectedStatusFilter == "Aktif")
+        if (SelectedStatusFilter == Strings.T("Usr.Active"))
             query = query.Where(u => !u.IsDisabled);
-        else if (SelectedStatusFilter == "Devre Dışı")
+        else if (SelectedStatusFilter == Strings.T("Usr.Disabled"))
             query = query.Where(u => u.IsDisabled);
 
         Users = new ObservableCollection<UserRowViewModel>(query);
@@ -218,7 +225,7 @@ public partial class UserManagementViewModel : ViewModelBase
     public partial ObservableCollection<ResetRequestRowViewModel> ResetRequests { get; set; } = new();
 
     public bool HasResetRequests => ResetRequests.Count > 0;
-    public string ResetRequestHeader => $"Bekleyen Şifre Sıfırlama Talepleri ({ResetRequests.Count})";
+    public string ResetRequestHeader => Strings.T("Usr.PendingResets", ResetRequests.Count);
 
     [ObservableProperty]
     public partial string ErrorMessage { get; set; } = string.Empty;
@@ -279,7 +286,7 @@ public partial class UserManagementViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Kullanıcılar yüklenirken bir hata oluştu: " + ex.Message;
+            ErrorMessage = Strings.T("Usr.LoadFailed", ex.Message);
         }
         finally
         {
@@ -358,7 +365,7 @@ public partial class UserManagementViewModel : ViewModelBase
 
             if (string.IsNullOrWhiteSpace(NewUsername) || string.IsNullOrWhiteSpace(NewFullName) || string.IsNullOrWhiteSpace(NewPassword))
             {
-                ErrorMessage = "Kullanıcı adı, ad soyad ve şifre zorunludur.";
+                ErrorMessage = Strings.T("Usr.FieldsRequired");
                 return;
             }
 
@@ -366,7 +373,7 @@ public partial class UserManagementViewModel : ViewModelBase
             // Ekranda kabul edilip serviste reddedilen bir şifre olmasın.
             if (PasswordPolicy.Validate(NewPassword) is { } policyError)
             {
-                ErrorMessage = policyError;
+                ErrorMessage = ErrorText.Of(policyError);
                 return;
             }
 
@@ -417,7 +424,7 @@ public partial class UserManagementViewModel : ViewModelBase
 
             if (PasswordPolicy.Validate(row.NewPasswordText) is { } policyError)
             {
-                ErrorMessage = policyError;
+                ErrorMessage = ErrorText.Of(policyError);
                 return;
             }
 
@@ -428,7 +435,7 @@ public partial class UserManagementViewModel : ViewModelBase
                 // Kullanıcının bunu ilk girişinde değiştireceğini yöneticinin bilmesi
                 // gerekiyor: aksi halde "şifreyi verdim ama çalışmıyor" diye geri döner.
                 SuccessMessage = $"{row.FullName} kullanıcısının şifresi sıfırlandı. " +
-                                 "Kullanıcı ilk girişinde kendi şifresini belirleyecek.";
+                                 Strings.T("Usr.FirstLoginNotice");
                 row.IsResettingPassword = false;
                 row.NewPasswordText = string.Empty;
 
